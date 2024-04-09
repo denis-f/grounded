@@ -1,0 +1,3 @@
+Replicate Volume
+D1 -0.001304
+D2 -0.001664
