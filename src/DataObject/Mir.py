@@ -1,4 +1,4 @@
 class Mir:
-    def __init__(self, identifiant, coordonnees):
-        self.identifiant = identifiant
-        self.coordonnees = coordonnees
+    def __init__(self, identifiant: int, coordonnees: tuple[float]):
+        self.identifiant: int = identifiant
+        self.coordonnees: tuple[float] = coordonnees
