@@ -7,7 +7,7 @@ class Image:
         self.chemin: str = chemin
         self.mirs_visibles: list[Mir] = mirs_visibles
 
-    def supprimer_mir_unique(self):
+    def supprimer_mirs_uniques(self):
         mir_to_remove = []
         i = 0
         while i < len(self.mirs_visibles):

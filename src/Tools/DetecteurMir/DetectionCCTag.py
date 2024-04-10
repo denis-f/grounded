@@ -36,6 +36,6 @@ class DetectionCCTag:
                                  text=True)
         liste_image = parsing_result(process.communicate()[0])
         for image in liste_image:
-            image.supprimer_mir_unique()
+            image.supprimer_mirs_uniques()
 
         return liste_image
