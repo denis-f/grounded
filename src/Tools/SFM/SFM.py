@@ -1,20 +1,21 @@
 from abc import ABC, abstractmethod
+from src.DataObject import Image
 
 
-class OutilPhotogrammatrique(ABC):
+class SFM(ABC):
 
     @abstractmethod
-    def generer_nuages_de_points(self, photos_avant: list, photo_apres: list):
+    def detection_points_homologues(self):
         pass
 
     @abstractmethod
-    def calculer_coordonnees_3d(self, coordonnees_2d: tuple[float, float]):
+    def calibration(self):
         pass
 
     @abstractmethod
-    def detection_points_homologues(self, chemin_dossier_entree: str, chemin_dossier_sortie: str):
+    def generer_nuages_de_points(self):
         pass
 
     @abstractmethod
-    def calculer_surface(self, ):
+    def calculer_coordonnees_3d_mirs(self, image: Image):
         pass

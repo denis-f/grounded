@@ -23,6 +23,19 @@ class Image:
         for mir in mir_to_remove:  # suppression des mir isolés
             self.mirs_visibles.remove(mir)
 
+    def get_string_coordonnees_mirs(self):
+        coordonnees = ""
+        for i in range(len(self.mirs_visibles)):
+            mir_courante = self.mirs_visibles[i]
+            coordonnees += f"{mir_courante.coordonnees[0]} {mir_courante.coordonnees[1]}"
+            if i != len(self.mirs_visibles)-1:
+                coordonnees += '\n'
+
+        return coordonnees
+
+    def get_nom_image_sans_extension(self):
+        return self.nom.split(".")[0]
+
     def __str__(self):
         affichage_mir = "\n"
         for mir in self.mirs_visibles:

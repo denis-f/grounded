@@ -32,8 +32,8 @@ class DetectionCCTag:
 
     def detection_mirs(self, chemin_dossier_image) -> list[Image]:
         process = subprocess.Popen(["./detection", "-n", "3", "-i", chemin_dossier_image], stdout=subprocess.PIPE,
-                                  stderr=subprocess.STDOUT,
-                                 text=True)
+                                   stderr=subprocess.STDOUT,
+                                   text=True)
         liste_image = parsing_result(process.communicate()[0])
         for image in liste_image:
             image.supprimer_mirs_uniques()
