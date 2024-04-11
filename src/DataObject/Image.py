@@ -1,11 +1,11 @@
-from .Mir import Mir
+from .Mire import Mire
 
 
 class Image:
-    def __init__(self, nom: str, chemin: str, mirs_visibles: list[Mir]):
+    def __init__(self, nom: str, chemin: str, mirs_visibles: list[Mire]):
         self.nom: str = nom
         self.chemin: str = chemin
-        self.mirs_visibles: list[Mir] = mirs_visibles
+        self.mirs_visibles: list[Mire] = mirs_visibles
 
     def supprimer_mirs_uniques(self):
         mir_to_remove = []

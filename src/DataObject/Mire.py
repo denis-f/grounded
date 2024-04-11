@@ -1,4 +1,4 @@
-class Mir:
+class Mire:
     def __init__(self, identifiant: int, coordonnees: tuple[float, float]):
         self.identifiant: int = identifiant
         self.coordonnees: tuple[float, float] = coordonnees
