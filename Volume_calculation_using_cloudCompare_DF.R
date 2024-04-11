@@ -55,8 +55,15 @@ library(prettymapr)
 
 # | Find zone of prospection    (CLOUDCOMPARE)   ProspectZone      Fabrice Vinatier  | ----------------------------------------------
 ProspectZone=function(pathRef,pathCompared,pathCLOUDS){
-  if(Sys.info()["sysname"]=="Windows") pathToProgram="C:/PROGRA~1/CloudCompare/CloudCompare"
-  if(Sys.info()["sysname"]=="Linux")  pathToProgram="cloudcompare.CloudCompare"
+  if(Sys.info()["sysname"]=="Windows") {
+    pathToProgram="C:/PROGRA~1/CloudCompare/CloudCompare"
+    CCoption_output="-OUTPUT_RASTER_Z_and_SF" #DF pour MAJ version CloudCompare v>2.12.0
+    
+  }
+  if(Sys.info()["sysname"]=="Linux")  {
+    pathToProgram="cloudcompare.CloudCompare"
+    CCoption_output="-OUTPUT_RASTER_Z" #DF valable pour version CloudCompare < v2.12.0
+  }
   
   # Cloud to cloud difference using cloud compare, then rasterization of the cloud difference
   system(paste(pathToProgram,"-SILENT",
@@ -64,11 +71,12 @@ ProspectZone=function(pathRef,pathCompared,pathCLOUDS){
                "-O","-GLOBAL_SHIFT",paste(c(0,0,0),collapse=" "),pathCompared,
                "-c2c_dist -MAX_DIST 0.1",
                "-AUTO_SAVE OFF",
-               "-RASTERIZE -GRID_STEP 0.001 -EMPTY_FILL INTERP -OUTPUT_RASTER_Z",collapse=" "),ignore.stderr = TRUE,ignore.stdout = TRUE)
-  # Selection of the type of survey using the character string pathRef
-  typeReleve=strsplit(tail(strsplit(pathRef,"/")[[1]],1),"_")[[1]][3]
-  method=strsplit(pathRef,"/")[[1]][11]
-  zoneStudy=strsplit(pathRef,"/")[[1]][1]
+               "-RASTERIZE -GRID_STEP 0.001 -EMPTY_FILL INTERP",CCoption_output,collapse=" "),ignore.stderr = TRUE,ignore.stdout = TRUE) #DF pour MAJ version CloudCompare v2.12.0
+  
+  # Selection of the type of survey using the character string pathRef #DF TODO=> à supprimer car inutile
+  typeReleve=strsplit(tail(strsplit(pathRef,"/")[[1]],1),"_")[[1]][3] #DF TODO=> à supprimer car inutile
+  method=strsplit(pathRef,"/")[[1]][11] #DF TODO=> à supprimer car inutile
+  zoneStudy=strsplit(pathRef,"/")[[1]][1] #DF TODO=> à supprimer car inutile
   
   # Estimation of the hole contour (in 2D)
   tmp=rast(paste(pathCLOUDS,dir(pathCLOUDS,pattern="_C2C_DIST_MAX_DIST_0.1_RASTER_Z_"),sep=""),lyrs=2) # downloading the raster of cloud difference
@@ -92,7 +100,7 @@ delimitateHoles=function(pathCLOUDS=pathDIR,rasterZone=rast_sel,tol_simplify=0.0
   vCLUMP=disagg(vCLUMP)                # Splitting multiple polygons
 #print(roundness(vCLUMP))
   vCLUMP=vCLUMP[roundness(vCLUMP)>K.Cox.threshold] # Discarding "non-round" polygons
-  vCLUMP=vCLUMP[expanse(vCLUMP)>minimal_hole_area]
+  vCLUMP=vCLUMP[expanse(vCLUMP)>minimal_hole_area] #DF TODO> à supprimer car probablement inutile ?
 #print(roundness(vCLUMP))
   vCLUMP=buffer(vCLUMP,width=width_buffer) # Enlargement of polygon area
   vCLUMP=vCLUMP[order(crds(vCLUMP)[,1]),]   # Reordering the multiple polygons from left to right #DF /!\ça a pas l'air de marcher
@@ -122,15 +130,21 @@ rasterizeClouds=function(pathRef,pathCompared,pathCLOUDS){
 
 # | Volume calculation    (CLOUDCOMPARE)         calcVol           Fabrice Vinatier  | ----------------------------------------------
 calcVol=function(pathRef,pathCompared,pathCLOUDS,holes){
-  if(Sys.info()["sysname"]=="Windows")pathToProgram="C:/PROGRA~1/CloudCompare/CloudCompare"
-  if(Sys.info()["sysname"]=="Linux")  pathToProgram="cloudcompare.CloudCompare"
+  if(Sys.info()["sysname"]=="Windows") {
+    pathToProgram="C:/PROGRA~1/CloudCompare/CloudCompare"
+    dir_delim="[\\]"
+  }
+  if(Sys.info()["sysname"]=="Linux")  {
+    pathToProgram="cloudcompare.CloudCompare"
+    dir_delim="/"
+  }
 
   
   # Get new filenames
-  listFilesRef=dir(pathCLOUDS,pattern=gsub(".ply","_SOR_",tail(strsplit(pathRef,"/")[[1]],1)))
+  listFilesRef=dir(pathCLOUDS,pattern=gsub(".ply","_SOR_",tail(strsplit(pathRef,dir_delim)[[1]],1)))
   listFilesRef=listFilesRef[grep(".bin",listFilesRef)]
   pathRefNew=paste(pathCLOUDS,listFilesRef,sep="")
-  listFilesCompared=dir(pathCLOUDS,pattern=gsub(".ply","_SOR_",tail(strsplit(pathCompared,"/")[[1]],1)))
+  listFilesCompared=dir(pathCLOUDS,pattern=gsub(".ply","_SOR_",tail(strsplit(pathCompared,dir_delim)[[1]],1)))
   listFilesCompared=listFilesCompared[grep(".bin",listFilesCompared)]
   pathComparedNew=paste(pathCLOUDS,listFilesCompared,sep="")
   
@@ -173,7 +187,7 @@ calcVol=function(pathRef,pathCompared,pathCLOUDS,holes){
     cropRef=paste(pathCLOUDS,cloudCROPED[grep("_0_",cloudCROPED)],sep="")
     cropCompared=paste(pathCLOUDS,cloudCROPED[grep("_1_",cloudCROPED)],sep="")
     # Volume calculation between the comparison and the reference clouds
-    system(paste("cloudcompare.CloudCompare","-SILENT",
+    system(paste(pathToProgram,"-SILENT",
                  "-O","-GLOBAL_SHIFT",paste(c(0,0,0),collapse=" "),cropCompared, 
                  "-O","-GLOBAL_SHIFT",paste(c(0,0,0),collapse=" "),cropRef,
                  "-VOLUME -GRID_STEP 0.001",
@@ -194,10 +208,10 @@ calcVol=function(pathRef,pathCompared,pathCLOUDS,holes){
   data.frame(Replicate=repD,Volume=vols)
 }
 
-# | Filtering multiple ply                       filterRRF         Fabrice Vinatier  | ----------------------------------------------
-# useful for flash lidar data
-filterRRF=function(pathIN=pathRef,pathOUT="IN/2018-10_Mauguio/Flash_Lidar/Fosse1_H3_V_Avant.ply"){
-  # Selection of all ply files
+# | Filtering multiple ply                       filterRRF         Fabrice Vinatier  | ---------------------------------------------- #DF TODO=> fonction à supprimer car inutile
+# useful for flash lidar data 
+filterRRF=function(pathIN=pathRef,pathOUT="IN/2018-10_Mauguio/Flash_Lidar/Fosse1_H3_V_Avant.ply"){ 
+  # Selection of all ply files 
   filesPLY=sapply(dir(pathIN,pattern=".ply$"),function(file_sel){vcgPlyRead(paste(pathIN,"/",file_sel,sep=""))$vb},simplify="array")
   # Application of a median filter on depth
   medPLY=apply(filesPLY,1:2,median)
@@ -225,7 +239,9 @@ path1=file.choose()
 #file_scale_factor="/home/feurer/Documents/0_PROJETS/2023-202x_VALO_densito_operationelle/2023-2024_Stage_chaine_traitement/DATA/AF1H1_copy_clouds_and_scale/scale_factor_matrix.txt"
 
 # Suppression of the residual cloudCompare files
-endFile=strsplit(path0,"/")
+if(Sys.info()["sysname"]=="Windows") dir_delim="[\\]"
+if(Sys.info()["sysname"]=="Linux")  dir_delim="/"
+endFile=strsplit(path0,dir_delim)
 pathDIR=sub(endFile[[1]][length(endFile[[1]])],"",path0)
 file.remove(paste(pathDIR,dir(pathDIR,pattern="_C2C_"),sep=""),showWarnings=F)
 file.remove(paste(pathDIR,dir(pathDIR,pattern="_SOR"),sep=""),showWarnings=F)
@@ -243,8 +259,8 @@ plot(zone_tot,main=basename(path0)) # Plotting the prospecting zone
 #rast_sel=crop(zone_tot,zone_sel) # cropping of the prospecting zone
 #plot(rast_sel) 
 rast_sel=zone_tot
-#giving an arbitrary metric coordinate system to be able to ysae the expanse function
-crs(rast_sel)<-"epsg:32632"
+#giving an arbitrary metric coordinate system to be able to ysae the expanse function #DF TODO=> à supprimer car inutile
+crs(rast_sel)<-"epsg:32632" #DF TODO=> à supprimer car inutile
 
 #calculating/automatically detecting the individual holes
 print("Detecting Holes")
@@ -273,9 +289,9 @@ print(res)
 text(holes_sel,paste(res$Replicate," \n ",res$Volume*1000000))
 
 #export des résultats
-write.table(res,paste(pathDIR,"results.txt",sep=""),quote=F,row.names=F)
+write.table(res,paste(pathDIR,sub('\\.ply$', '',basename(endFile[[1]][length(endFile[[1]])]) ),"_results.txt",sep=""),quote=F,row.names=F)
 
-pdf(paste(pathDIR,"results.pdf",sep=""), width = 8, height = 8)
+pdf(paste(pathDIR,sub('\\.ply$', '',basename(endFile[[1]][length(endFile[[1]])]) ),"_results.pdf",sep=""), width = 8, height = 8)
 plot(zone_tot,main=basename(path0))
 plot(holes_sel,add=T)
 text(holes_sel,paste(res$Replicate," \n ",res$Volume*1000000))
