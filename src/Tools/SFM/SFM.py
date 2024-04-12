@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from src.DataObject import Image
+from src.DataObject import PointCloud
 
 
 class SFM(ABC):
@@ -13,9 +14,9 @@ class SFM(ABC):
         pass
 
     @abstractmethod
-    def generer_nuages_de_points(self):
+    def generer_nuages_de_points(self) -> tuple[PointCloud, PointCloud]:
         pass
 
     @abstractmethod
-    def calculer_coordonnees_3d_mirs(self, image: Image):
+    def calculer_coordonnees_3d_mires(self, image: Image):
         pass

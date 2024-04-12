@@ -1,16 +1,14 @@
-from src.Tools.DetecteurMir.DetectionCCTag import DetectionCCTag
+from src.Tools.DetecteurMire.DetectionCCTag import DetectionCCTag
 from src.Tools.SFM import MicMac
+from src.Tools.TraiteurNuage3D import CloudCompare
+from DataObject import PointCloud
 
 #detect = DetectionCCTag()
-#images = detect.detection_mirs("../../02-Essaies/00_DATA")
-#print(images)
+#images = detect.detection_mires("../../02-Essaies/00_DATA")
 
-m = MicMac("/opt/micmac/bin/mm3d", "../../Dossier_photo_test/avant", "../../Dossier_photo_test/apres")
+#m = MicMac("/opt/micmac/bin/mm3d", "../../Dossier_photo_test/avant", "../../Dossier_photo_test/apres")
 
-m.detection_points_homologues()
-print("detection des points homologues terminé")
-m.calibration()
-print("calibration terminée")
-m.generer_nuages_de_points()
-print("génération du nuage de points terminé")
+c = CloudCompare()
 
+c.mise_a_echelle(PointCloud("../../02-Essaies/plyFiles/C3DC_avant.ply"), 0.08173343)
+c.mise_a_echelle(PointCloud("../../02-Essaies/plyFiles/C3DC_apres.ply"), 0.08173343)
