@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from src.DataObject import Image, PointCloud, Mire3D
+from Grounded.DataObject import Image, PointCloud, Mire3D
 
 
 class SFM(ABC):

@@ -1,5 +1,5 @@
 from .SFM import SFM
-from src.DataObject import Image, File, PointCloud, Mire2D, Mire3D
+from Grounded.DataObject import Image, File, PointCloud, Mire2D, Mire3D
 
 import subprocess
 import os

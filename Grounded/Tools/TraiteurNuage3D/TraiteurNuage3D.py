@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from src.DataObject import PointCloud
+from Grounded.DataObject import PointCloud
 
 
 class TraiteurNuage3D(ABC):

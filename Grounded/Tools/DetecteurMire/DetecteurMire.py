@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from src.DataObject import Image
+from Grounded.DataObject import Image
 
 
 class DetecteurMire(ABC):

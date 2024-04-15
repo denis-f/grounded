@@ -1,7 +1,7 @@
 from .TraiteurNuage3D import TraiteurNuage3D
-from src.DataObject import PointCloud
-from src.DataObject import File
-from src.DataObject import PointCloud
+from Grounded.DataObject import PointCloud
+from Grounded.DataObject import File
+from Grounded.DataObject import PointCloud
 
 import subprocess
 import os

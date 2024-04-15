@@ -1,7 +1,7 @@
 import os
 
-from src.DataObject import Image
-from src.DataObject import Mire2D
+from Grounded.DataObject import Image
+from Grounded.DataObject import Mire2D
 from .DetecteurMire import DetecteurMire
 
 import subprocess
