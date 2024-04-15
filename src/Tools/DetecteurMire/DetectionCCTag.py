@@ -1,3 +1,5 @@
+import os
+
 from src.DataObject import Image
 from src.DataObject import Mire2D
 from .DetecteurMire import DetecteurMire
@@ -33,10 +35,15 @@ def parsing_result(resultat: str) -> list[Image]:
 
 class DetectionCCTag(DetecteurMire):
 
-    def detection_mires(self, chemin_dossier_image) -> list[Image]:
-        process = subprocess.Popen(["./detection", "-n", "3", "-i", chemin_dossier_image], stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT,
-                                   text=True)
-        liste_image = parsing_result(process.communicate()[0])
+    def __init__(self, detection_cctag_directory):
+        self.detection_cctag_directory = detection_cctag_directory
 
+    def detection_mires(self, chemin_dossier_image) -> list[Image]:
+        current_dir = os.path.abspath(os.curdir)
+        chemin_absolue_dossier_image = os.path.abspath(chemin_dossier_image)
+        os.chdir(self.detection_cctag_directory)
+        process = subprocess.Popen(["./detection", "-n", "3", "-i", chemin_absolue_dossier_image],
+                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        liste_image = parsing_result(process.communicate()[0])
+        os.chdir(current_dir)
         return liste_image

@@ -15,10 +15,11 @@ m = MicMac("/opt/micmac/bin/mm3d")
 #m.calibration()
 #m.generer_nuages_de_points()
 c = CloudCompare()
-d = DetectionCCTag()
+d = DetectionCCTag("/opt/CCTag/")
 #c.mise_a_echelle(PointCloud("../../02-Essaies/plyFiles/C3DC_avant.ply"), 0.08173343)
 #c.mise_a_echelle(PointCloud("../../02-Essaies/plyFiles/C3DC_apres.ply"), 0.08173343)
 
 analyser = DensityAnalyser(m, d, c)
-analyser.analyse_volume("../../Dossier_photo_test/avant", "../../Dossier_photo_test/apres")
+analyser.analyse_volume("/home/francoin/Documents/Projet_Densite_Sol/Dossier_photo_test/avant",
+                        "/home/francoin/Documents/Projet_Densite_Sol/Dossier_photo_test/apres")
 
