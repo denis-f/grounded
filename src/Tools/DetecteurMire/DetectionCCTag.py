@@ -1,5 +1,5 @@
 from src.DataObject import Image
-from src.DataObject import Mire
+from src.DataObject import Mire2D
 from .DetecteurMire import DetecteurMire
 
 import subprocess
@@ -16,7 +16,7 @@ def parsing_result(resultat: str) -> list[Image]:
         if ligne.endswith("1") and not "frame" in ligne:
             infos_mire = ligne.split(" ")
             tableau_image[compteur].mires_visibles.append(
-                (Mire(int(infos_mire[2]), (float(infos_mire[0]), float(infos_mire[1]))))
+                (Mire2D(int(infos_mire[2]), (float(infos_mire[0]), float(infos_mire[1]))))
             )
 
         if ligne.startswith("Done"):

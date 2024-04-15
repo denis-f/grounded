@@ -1,35 +1,35 @@
-from .Mire import Mire
+from .Mire2D import Mire2D
 from .File import File
 
 
 class Image(File):
-    def __init__(self, path: str, mires_visibles: list[Mire]):
+    def __init__(self, path: str, mires_visibles: list[Mire2D]):
         super().__init__(path)
-        self.mires_visibles: list[Mire] = mires_visibles
+        self.mires_visibles: list[Mire2D] = mires_visibles
 
     def supprimer_mires_uniques(self):
-        mir_to_remove = []
+        mire_to_remove = []
         i = 0
         while i < len(self.mires_visibles):
-            mir_courant = self.mires_visibles[i]
+            mire_courant = self.mires_visibles[i]
             # s'il n'est pas pair ou si le mir suivant n'est pas sa paire
-            if mir_courant.identifiant % 2 != 0 or (i != len(self.mires_visibles) - 1
-                                                    and self.mires_visibles[
-                                                        i + 1].identifiant != mir_courant.identifiant + 1):
-                mir_to_remove.append(mir_courant)
+            if mire_courant.identifiant % 2 != 0 or (i != len(self.mires_visibles) - 1
+                                                     and self.mires_visibles[
+                                                         i + 1].identifiant != mire_courant.identifiant + 1):
+                mire_to_remove.append(mire_courant)
                 i += 1
             else:
                 i += 2
 
-        for mir in mir_to_remove:  # suppression des mires isolées
-            self.mires_visibles.remove(mir)
+        for mire in mire_to_remove:  # suppression des mires isolées
+            self.mires_visibles.remove(mire)
 
-    def get_string_coordonnees_mirs(self):
+    def get_string_coordonnees_mires(self):
         coordonnees = ""
         for i in range(len(self.mires_visibles)):
             mir_courante = self.mires_visibles[i]
             coordonnees += f"{mir_courante.coordonnees[0]} {mir_courante.coordonnees[1]}"
-            if i != len(self.mires_visibles)-1:
+            if i != len(self.mires_visibles) - 1:
                 coordonnees += '\n'
 
         return coordonnees

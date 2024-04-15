@@ -16,7 +16,7 @@ class File:
         self.extension = self.name.split('.')[-1] if '.' in self.name else ''
 
     def get_name_without_extension(self):
-        return os.path.splitext(self.name)
+        return os.path.splitext(self.name)[0]
 
     def get_path_directory(self):
         return os.sep.join(self.path.split(os.sep)[:-1])

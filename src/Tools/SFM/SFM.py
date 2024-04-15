@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
-from src.DataObject import Image
-from src.DataObject import PointCloud
+from src.DataObject import Image, PointCloud, Mire3D
 
 
 class SFM(ABC):
 
     @abstractmethod
-    def detection_points_homologues(self):
+    def detection_points_homologues(self, chemin_dossier_avant: str, chemin_dossier_apres: str):
         pass
 
     @abstractmethod
@@ -18,5 +17,5 @@ class SFM(ABC):
         pass
 
     @abstractmethod
-    def calculer_coordonnees_3d_mires(self, image: Image):
+    def calculer_coordonnees_3d_mires(self, image: Image) -> list[Mire3D]:
         pass
