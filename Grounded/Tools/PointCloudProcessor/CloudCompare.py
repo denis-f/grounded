@@ -1,4 +1,4 @@
-from .TraiteurNuage3D import TraiteurNuage3D
+from .PointCloudProcessor import PointCloudProcessor
 from Grounded.DataObject import PointCloud
 from Grounded.DataObject import File
 from Grounded.DataObject import PointCloud
@@ -18,7 +18,7 @@ def deplacer_premier_fichier_avec_pattern(source_directory: str, destination_dir
                 raise Exception("Fichier introuvable")
 
 
-class CloudCompare(TraiteurNuage3D):
+class CloudCompare(PointCloudProcessor):
 
     def __init__(self):
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "cloudCompare_working_directory"))

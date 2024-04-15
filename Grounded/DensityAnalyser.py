@@ -2,7 +2,7 @@ import numpy as np
 
 from Tools.SFM import SFM
 from Tools.DetecteurMire import DetecteurMire
-from Tools.TraiteurNuage3D import TraiteurNuage3D
+from Tools.PointCloudProcessor import PointCloudProcessor
 from DataObject import PointCloud, Mire3D, Mire
 
 import statistics
@@ -92,7 +92,7 @@ def calculate_average_scale_factor(mires: list[Mire3D], reglet_size):
 
 class DensityAnalyser:
 
-    def __init__(self, sfm: SFM, detecteur_mire: DetecteurMire, point_cloud_processor: TraiteurNuage3D):
+    def __init__(self, sfm: SFM, detecteur_mire: DetecteurMire, point_cloud_processor: PointCloudProcessor):
         self.sfm = sfm
         self.detecteur_mire = detecteur_mire
         self.point_cloud_processor = point_cloud_processor

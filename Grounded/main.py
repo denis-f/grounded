@@ -1,6 +1,6 @@
 from Grounded.Tools.DetecteurMire.DetectionCCTag import DetectionCCTag
 from Grounded.Tools.SFM import MicMac
-from Grounded.Tools.TraiteurNuage3D import CloudCompare
+from Grounded.Tools.PointCloudProcessor import CloudCompare
 from Grounded.DensityAnalyser import DensityAnalyser
 
 
