@@ -33,9 +33,9 @@ def recuperer_mires_3d(image: Image, fichier_coordonnees_2d, fichier_coordonnees
     if not os.path.exists(fichier_filtered):
         for i in range(len(image.mires_visibles)):
             mire_courante = image.mires_visibles[i]
-            mires.append(Mire3D(mire_courante.identifiant, (coordonnees_3d[0][0],
-                                                            coordonnees_3d[0][1],
-                                                            coordonnees_3d[0][2])))
+            mires.append(Mire3D(mire_courante.identifiant, (coordonnees_3d[i][0],
+                                                            coordonnees_3d[i][1],
+                                                            coordonnees_3d[i][2])))
         return mires
 
     # si nous ne sommes dans aucun des cas suivant, alors seulement certaines coordonnées n'ont pas pu être reconnu,

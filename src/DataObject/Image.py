@@ -7,23 +7,6 @@ class Image(File):
         super().__init__(path)
         self.mires_visibles: list[Mire2D] = mires_visibles
 
-    def supprimer_mires_uniques(self):
-        mire_to_remove = []
-        i = 0
-        while i < len(self.mires_visibles):
-            mire_courant = self.mires_visibles[i]
-            # s'il n'est pas pair ou si le mir suivant n'est pas sa paire
-            if mire_courant.identifiant % 2 != 0 or (i != len(self.mires_visibles) - 1
-                                                     and self.mires_visibles[
-                                                         i + 1].identifiant != mire_courant.identifiant + 1):
-                mire_to_remove.append(mire_courant)
-                i += 1
-            else:
-                i += 2
-
-        for mire in mire_to_remove:  # suppression des mires isolées
-            self.mires_visibles.remove(mire)
-
     def get_string_coordonnees_mires(self):
         coordonnees = ""
         for i in range(len(self.mires_visibles)):
