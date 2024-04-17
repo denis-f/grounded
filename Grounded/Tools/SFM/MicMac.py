@@ -177,7 +177,7 @@ class MicMac(SFM):
         # créer le dossier de log s'il n'existe pas
         if not os.path.exists(log_directory):
             os.makedirs(log_directory)
-        nom_fichier_coordinates = os.path.join(log_directory, f"{image.get_nom_image_sans_extension()}_coord.txt")
+        nom_fichier_coordinates = os.path.join(log_directory, f"{image.get_name_without_extension()}_coord.txt")
 
         # on crée le fichier qui va contenir les coordonnées 2D de notre image.
         with open(nom_fichier_coordinates, 'w') as file:
@@ -185,15 +185,15 @@ class MicMac(SFM):
 
         # On récupère le nom de l'image dans l'espace de travail MicMac
         image_locale = recuperer_premier_fichier_avec_pattern(self.working_directory,
-                                                              image.get_nom_image_sans_extension())
+                                                              image.get_name_without_extension())
 
         # on génère nos coordonnées 3D dans un fichier
-        nom_fichier_coordinates_3d = os.path.join(log_directory, f"{image.get_nom_image_sans_extension()}_3D_coord.txt")
+        nom_fichier_coordinates_3d = os.path.join(log_directory, f"{image.get_name_without_extension()}_3D_coord.txt")
         subprocess.run([self.chemin_mm3d, "Im2XYZ", os.path.join(self.working_directory,
                                                                  f"PIMs-{self.zoom_final}{os.sep}Nuage-Depth-"
                                                                  f"{image_locale.name}.xml"),
                         nom_fichier_coordinates, nom_fichier_coordinates_3d])
 
-        nom_fichier_filtered = os.path.join(log_directory, f"Filtered_{image.get_nom_image_sans_extension()}_coord.txt")
+        nom_fichier_filtered = os.path.join(log_directory, f"Filtered_{image.get_name_without_extension()}_coord.txt")
 
         return recuperer_mires_3d(image, nom_fichier_coordinates, nom_fichier_coordinates_3d, nom_fichier_filtered)
