@@ -27,8 +27,15 @@ def recuperer_premier_fichier_avec_pattern(directory: str, pattern: str):
 
 
 class CloudCompare(PointCloudProcessor):
+    """
+    Cette classe implémente l'interface PointCloudProcessor et fournit des méthodes pour traiter les nuages de points
+    à l'aide de l'outil CloudCompare.
+    """
 
     def __init__(self):
+        """
+        Constructeur de la classe CloudCompare.
+        """
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "cloudCompare_working_directory"))
         os.makedirs(self.working_directory, exist_ok=True)
 
