@@ -5,9 +5,9 @@ class PointCloud(File):
 
     def __init__(self, path: str):
         """
-        Constructeur d'un object PointCloud
+        Constructeur d'un objet PointCloud.
 
-        Parameters :
-            path (str) = chemin menant au fichier du nuage de points
+        Args:
+            path (str): Le chemin menant au fichier du nuage de points.
         """
         super().__init__(path)

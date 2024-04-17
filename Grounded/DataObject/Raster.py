@@ -5,9 +5,9 @@ class Raster(File):
 
     def __init__(self, path: str):
         """
-        Constructeur d'un object Mire3D
+        Constructeur d'un objet Raster.
 
-        Parameters :
-            path (str) : chemin menant au fichier du raster
+        Args:
+            path (str): Le chemin menant au fichier du raster.
         """
         super().__init__(path)

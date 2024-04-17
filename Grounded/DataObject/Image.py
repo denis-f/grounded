@@ -5,25 +5,27 @@ from .File import File
 class Image(File):
     def __init__(self, path: str, mires_visibles: list[Mire2D]):
         """
-        Constructeur d'un objet Image
+        Constructeur d'un objet Image.
 
-        Parameters :
-            identifier (int) : entier représentant l'identifiant d'une Mire
+        Args:
+            path (str): Le chemin menant à l'image.
+            mires_visibles (list[Mire2D]): La liste des mires visibles dans l'image.
         """
         super().__init__(path)
         self.mires_visibles: list[Mire2D] = mires_visibles
 
     def get_string_coordinates_mires(self):
         """
-        Retourne une chaine de caractère contenant à chaque ligne les coordonnées séparées par un espace d'une mire
+        Retourne une chaîne de caractères contenant à chaque ligne les coordonnées séparées par un espace d'une mire
         contenu dans la variable mires_visibles.
+
         Exemple du format :
             x1 y1
             x2 y2
             x3 y3
 
-        Returns :
-            str : un string contenant les coordonnées des mires
+        Returns:
+            str: Une chaîne de caractères contenant les coordonnées des mires.
         """
         coordinates = ""
         for i in range(len(self.mires_visibles)):
@@ -36,10 +38,10 @@ class Image(File):
 
     def __str__(self):
         """
-        Renvoie une représentation d'une image au format texte
+        Renvoie une représentation d'une image au format texte.
 
-        Returns :
-            str : un string contenant les informations de l'image
+        Returns:
+            str: Une chaîne de caractères contenant les informations de l'image.
         """
         affichage_mir = "\n"
         for mir in self.mires_visibles:
