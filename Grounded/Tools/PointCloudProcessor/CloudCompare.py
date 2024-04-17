@@ -33,6 +33,16 @@ class CloudCompare(PointCloudProcessor):
         os.makedirs(self.working_directory, exist_ok=True)
 
     def mise_a_echelle(self, point_cloud: PointCloud, facteur: float) -> PointCloud:
+        """
+        Méthode abstraite pour effectuer une mise à l'échelle d'un nuage de points.
+
+        Arguments:
+            point_cloud (PointCloud): Le nuage de points à mettre à l'échelle.
+            facteur (float): Le facteur d'échelle à appliquer.
+
+        Returns:
+            PointCloud: Le nuage de points mis à l'échelle.
+        """
         nom_matrice = os.path.join(self.working_directory, "scale_factor_matrix.txt")
 
         # création de la matrice qui va permettre la transformation
@@ -62,6 +72,17 @@ class CloudCompare(PointCloudProcessor):
 
     def cloud_to_cloud_difference(self, point_cloud_before_excavation: PointCloud,
                                   point_cloud_after_excavation: PointCloud) -> Raster:
+        """
+        Méthode pour calculer la distance entre deux nuages de points.
+
+        Arguments:
+            point_cloud_before_excavation (PointCloud): Le nuage de points avant l'excavation.
+            point_cloud_after_excavation (PointCloud): Le nuage de points après l'excavation.
+
+        Returns:
+            Raster: Un objet Raster correspondant à un fichier raster représentant la distance
+            entre les deux nuages de points.
+        """
         subprocess.run(["cloudcompare.CloudCompare", "-SILENT",
                         "-O", "-GLOBAL_SHIFT", "0", "0", "0", point_cloud_before_excavation.path,
                         "-O", "-GLOBAL_SHIFT", "0", "0", "0", point_cloud_after_excavation.path,
