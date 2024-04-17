@@ -112,14 +112,37 @@ def creer_raccourci_dossier_dans_avec_prefix(dossier: str, dossier_raccourci: st
 
 
 class MicMac(SFM):
+    """
+    Cette classe hérite de l'interface SFM et implémente les méthodes nécessaires pour l'exécution de MicMac,
+    un logiciel de photogrammétrie.
+
+    Elle est utilisée pour effectuer diverses opérations telles que la détection de points homologues, la calibration
+    de la caméra, la génération de nuages de points, et le calcul des coordonnées 3D des mires dans une image.
+    """
 
     def __init__(self, chemin_mm3d: str):
+        """
+        Initialise une instance de la classe MicMac.
+
+        Arguments:
+            chemin_mm3d (str): Le chemin vers l'exécutable MicMac.
+        """
         self.chemin_mm3d = chemin_mm3d
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "micmac_working_directory"))
         self.distorsion_model = "FraserBasic"  # valeur par défaut
         self.zoom_final = "QuickMac"  # valeur par défaut
 
     def detection_points_homologues(self, chemin_dossier_avant: str, chemin_dossier_apres: str):
+        """
+        Méthode pour détecter les points homologues entre des images avant et après un événement.
+
+        Arguments :
+            chemin_dossier_avant (str): Le chemin vers le dossier contenant les images avant excavation.
+            chemin_dossier_apres (str): Le chemin vers le dossier contenant les images après excavation.
+
+        Returns :
+            None
+        """
         os.makedirs(self.working_directory, exist_ok=True)  # création du dossier de l'espace de travail micmac
 
         # création des raccourcis pour les fichiers avant
@@ -132,10 +155,30 @@ class MicMac(SFM):
                         f"{self.working_directory}{os.sep}.*JPG", "1000"])
 
     def calibration(self, distorsion_model: str = "FraserBasic"):
+        """
+        Méthode pour calibrer la caméra.
+
+        Arguments:
+            distorsion_model (str): Le modèle de distorsion à utiliser pour la calibration.
+
+        Returns:
+            None
+        """
         self.distorsion_model = distorsion_model
         subprocess.run([self.chemin_mm3d, "Tapas", distorsion_model, f"{self.working_directory}/.*JPG"])
 
     def generer_nuages_de_points(self, zoom_final: str = "QuickMac") -> tuple[PointCloud, PointCloud]:
+        """
+        Méthode pour générer des nuages de points avant/après excavation.
+
+        Arguments:
+            zoom_final (str): Le niveau de zoom final pour la génération des nuages de points.
+
+        Returns:
+            tuple[PointCloud, PointCloud]: Un tuple contenant deux objets PointCloud représentant les nuages de points
+            avant et après excavation.
+            tuple[0] ⇛ avant et tuple[1] ⇛ après
+        """
         self.zoom_final = zoom_final
         # On génère le nuage de points des photos d'avant excavation
         subprocess.run(
@@ -172,6 +215,15 @@ class MicMac(SFM):
             os.path.join(self.working_directory, "C3DC_1.ply"))
 
     def calculer_coordinates_3d_mires(self, image: Image) -> list[Mire3D]:
+        """
+        Méthode pour calculer les coordonnées 3D des mires d'une image.
+
+        Arguments:
+            image (Image): une image de type Image contenant des mires
+
+        Returns:
+            list[Mire3D]: Une liste d'objets Mire3D contenant les coordonnées 3D des mires.
+        """
         log_directory = os.path.join(self.working_directory, "calcul_coordinates")
 
         # créer le dossier de log s'il n'existe pas
