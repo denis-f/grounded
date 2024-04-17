@@ -113,7 +113,7 @@ def creer_raccourci_dossier_dans_avec_prefix(dossier: str, dossier_raccourci: st
 
 class MicMac(SFM):
     """
-    Cette classe hérite de l'interface SFM et implémente les méthodes nécessaires pour l'exécution de MicMac,
+    Implémente l'interface SFM et implémente les méthodes nécessaires pour l'exécution de MicMac,
     un logiciel de photogrammétrie.
 
     Elle est utilisée pour effectuer diverses opérations telles que la détection de points homologues, la calibration
@@ -124,8 +124,11 @@ class MicMac(SFM):
         """
         Initialise une instance de la classe MicMac.
 
-        Arguments:
+        Args:
             chemin_mm3d (str): Le chemin vers l'exécutable MicMac.
+
+        Returns:
+            None
         """
         self.chemin_mm3d = chemin_mm3d
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "micmac_working_directory"))
@@ -136,11 +139,11 @@ class MicMac(SFM):
         """
         Méthode pour détecter les points homologues entre des images avant et après un événement.
 
-        Arguments :
+        Args:
             chemin_dossier_avant (str): Le chemin vers le dossier contenant les images avant excavation.
             chemin_dossier_apres (str): Le chemin vers le dossier contenant les images après excavation.
 
-        Returns :
+        Returns:
             None
         """
         os.makedirs(self.working_directory, exist_ok=True)  # création du dossier de l'espace de travail micmac
@@ -158,7 +161,7 @@ class MicMac(SFM):
         """
         Méthode pour calibrer la caméra.
 
-        Arguments:
+        Args:
             distorsion_model (str): Le modèle de distorsion à utiliser pour la calibration.
 
         Returns:
@@ -171,11 +174,11 @@ class MicMac(SFM):
         """
         Méthode pour générer des nuages de points avant/après excavation.
 
-        Arguments:
+        Args:
             zoom_final (str): Le niveau de zoom final pour la génération des nuages de points.
 
         Returns:
-            tuple[PointCloud, PointCloud]: Un tuple contenant deux objets PointCloud représentant les nuages de points
+            Tuple[NuageDePoints, NuageDePoints]: Un tuple contenant deux objets NuageDePoints représentant les nuages de points
             avant et après excavation.
             tuple[0] ⇛ avant et tuple[1] ⇛ après
         """
@@ -216,13 +219,13 @@ class MicMac(SFM):
 
     def calculer_coordinates_3d_mires(self, image: Image) -> list[Mire3D]:
         """
-        Méthode pour calculer les coordonnées 3D des mires d'une image.
+        Méthode pour calculer les coordonnées 3D des cibles dans une image.
 
-        Arguments:
-            image (Image): une image de type Image contenant des mires
+        Args:
+            image (Image): un objet Image contenant des cibles
 
         Returns:
-            list[Mire3D]: Une liste d'objets Mire3D contenant les coordonnées 3D des mires.
+            List[Mire3D]: Une liste d'objets Mire3D contenant les coordonnées 3D des cibles.
         """
         log_directory = os.path.join(self.working_directory, "calcul_coordinates")
 

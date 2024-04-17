@@ -28,8 +28,8 @@ def recuperer_premier_fichier_avec_pattern(directory: str, pattern: str):
 
 class CloudCompare(PointCloudProcessor):
     """
-    Cette classe implémente l'interface PointCloudProcessor et fournit des méthodes pour traiter les nuages de points
-    à l'aide de l'outil CloudCompare.
+    Implémente l'interface PointCloudProcessor et fournit des méthodes pour traiter les nuages de points
+    en utilisant l'outil CloudCompare.
     """
 
     def __init__(self):
@@ -43,7 +43,7 @@ class CloudCompare(PointCloudProcessor):
         """
         Méthode abstraite pour effectuer une mise à l'échelle d'un nuage de points.
 
-        Arguments:
+        Args:
             point_cloud (PointCloud): Le nuage de points à mettre à l'échelle.
             facteur (float): Le facteur d'échelle à appliquer.
 
@@ -82,7 +82,7 @@ class CloudCompare(PointCloudProcessor):
         """
         Méthode pour calculer la distance entre deux nuages de points.
 
-        Arguments:
+        Args:
             point_cloud_before_excavation (PointCloud): Le nuage de points avant l'excavation.
             point_cloud_after_excavation (PointCloud): Le nuage de points après l'excavation.
 

@@ -15,7 +15,7 @@ class PointCloudProcessor(ABC):
         """
         Méthode abstraite pour effectuer une mise à l'échelle d'un nuage de points.
 
-        Arguments:
+        Args:
             point_cloud (PointCloud): Le nuage de points à mettre à l'échelle.
             facteur (float): Le facteur d'échelle à appliquer.
 
@@ -30,7 +30,7 @@ class PointCloudProcessor(ABC):
         """
         Méthode abstraite pour calculer la distance entre deux nuages de points.
 
-        Arguments:
+        Args:
             point_cloud_before_excavation (PointCloud): Le nuage de points avant l'excavation.
             point_cloud_after_excavation (PointCloud): Le nuage de points après l'excavation.
 

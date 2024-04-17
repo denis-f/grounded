@@ -4,19 +4,20 @@ from Grounded.DataObject import Image, PointCloud, Mire3D
 
 class SFM(ABC):
     """
-    Cette classe est une interface permettant d'interchanger les différents outils de type "SFM".
-    Les méthodes abstraites définies au sein de cette classe devront être implémenté par toutes les classes
-    non abstraites qui hériteront de cette classe
+    Interface pour les différents outils de Structure from Motion (SFM).
+
+    Les méthodes abstraites définies ici doivent être implémentées par toutes les classes
+    non abstraites héritant de cette interface.
     """
 
     @abstractmethod
     def detection_points_homologues(self, chemin_dossier_avant: str, chemin_dossier_apres: str):
         """
-        Méthode abstraite pour détecter les points homologues entre des images avant et après un événement.
+        Détecte les points homologues entre des images avant et après un événement.
 
-        Arguments :
-            chemin_dossier_avant (str): Le chemin vers le dossier contenant les images avant excavation.
-            chemin_dossier_apres (str): Le chemin vers le dossier contenant les images après excavation.
+        Args :
+            chemin_dossier_avant (str): Chemin vers le dossier contenant les images avant l'excavation.
+            chemin_dossier_apres (str): Chemin vers le dossier contenant les images après l'excavation.
 
         Returns :
             None
@@ -26,10 +27,10 @@ class SFM(ABC):
     @abstractmethod
     def calibration(self, distorsion_model):
         """
-        Méthode abstraite pour calibrer la caméra.
+        Calibre la caméra.
 
-        Arguments:
-            distorsion_model (str): Le modèle de distorsion à utiliser pour la calibration.
+        Args:
+            distorsion_model (str): Modèle de distorsion à utiliser pour la calibration.
 
         Returns:
             None
@@ -39,10 +40,10 @@ class SFM(ABC):
     @abstractmethod
     def generer_nuages_de_points(self, zoom_final: str) -> tuple[PointCloud, PointCloud]:
         """
-        Méthode pour générer des nuages de points avant/après excavation.
+        Génère des nuages de points avant/après excavation.
 
-        Arguments:
-            zoom_final (str): Le niveau de zoom final pour la génération des nuages de points.
+        Args:
+            zoom_final (str): Niveau de zoom final pour la génération des nuages de points.
 
         Returns:
             tuple[PointCloud, PointCloud]: Un tuple contenant deux objets PointCloud représentant les nuages de points
@@ -54,12 +55,12 @@ class SFM(ABC):
     @abstractmethod
     def calculer_coordinates_3d_mires(self, image: Image) -> list[Mire3D]:
         """
-        Méthode abstraite pour calculer les coordonnées 3D des mires d'une image.
+        Calcule les coordonnées 3D des mires dans une image.
 
-        Arguments:
-            image (Image): une image de type Image contenant des mires
+        Args:
+            image (Image): Une image contenant des mires.
 
         Returns:
             list[Mire3D]: Une liste d'objets Mire3D contenant les coordonnées 3D des mires.
-         """
+        """
         pass
