@@ -1,7 +1,5 @@
 from .PointCloudProcessor import PointCloudProcessor
-from Grounded.DataObject import PointCloud
-from Grounded.DataObject import File
-from Grounded.DataObject import PointCloud
+from Grounded.DataObject import File, PointCloud, Raster
 
 import subprocess
 import os
@@ -14,6 +12,16 @@ def deplacer_premier_fichier_avec_pattern(source_directory: str, destination_dir
             try:
                 os.rename(os.path.join(source_directory, file_name), os.path.join(destination_directory, file_name))
                 return PointCloud(os.path.join(destination_directory, file_name))
+            except FileNotFoundError:
+                raise Exception("Fichier introuvable")
+
+
+def recuperer_premier_fichier_avec_pattern(directory: str, pattern: str):
+    files = os.listdir(directory)
+    for file_name in files:
+        if pattern in file_name:
+            try:
+                return os.path.join(directory, file_name)
             except FileNotFoundError:
                 raise Exception("Fichier introuvable")
 
@@ -51,3 +59,20 @@ class CloudCompare(PointCloudProcessor):
 
         # on retourne le nouveau nuage de point
         return transformed_point_cloud
+
+    def cloud_to_cloud_difference(self, point_cloud_before_excavation: PointCloud,
+                                  point_cloud_after_excavation: PointCloud) -> Raster:
+        subprocess.run(["cloudcompare.CloudCompare", "-SILENT",
+                        "-O", "-GLOBAL_SHIFT", "0", "0", "0", point_cloud_before_excavation.path,
+                        "-O", "-GLOBAL_SHIFT", "0", "0", "0", point_cloud_after_excavation.path,
+                        "-c2c_dist", "-MAX_DIST", "0.1",
+                        "-AUTO_SAVE", "OFF",
+                        "-RASTERIZE", "-GRID_STEP", "0.001", "-EMPTY_FILL", "INTERP", "-OUTPUT_RASTER_Z"],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        postfix = "_C2C_DIST_MAX_DIST_0.1_RASTER_Z_"
+        raster_before = Raster(recuperer_premier_fichier_avec_pattern(self.working_directory,
+                                                                      point_cloud_before_excavation.get_name_without_extension()
+                                                                      + postfix
+                                                                      ))
+
+        return raster_before

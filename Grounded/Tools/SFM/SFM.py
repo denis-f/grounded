@@ -9,13 +9,13 @@ class SFM(ABC):
         pass
 
     @abstractmethod
-    def calibration(self):
+    def calibration(self, distorsion_model):
         pass
 
     @abstractmethod
-    def generer_nuages_de_points(self) -> tuple[PointCloud, PointCloud]:
+    def generer_nuages_de_points(self, zoom_final: str) -> tuple[PointCloud, PointCloud]:
         pass
 
     @abstractmethod
-    def calculer_coordonnees_3d_mires(self, image: Image) -> list[Mire3D]:
+    def calculer_coordinates_3d_mires(self, image: Image) -> list[Mire3D]:
         pass

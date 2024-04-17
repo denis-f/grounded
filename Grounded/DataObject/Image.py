@@ -7,15 +7,15 @@ class Image(File):
         super().__init__(path)
         self.mires_visibles: list[Mire2D] = mires_visibles
 
-    def get_string_coordonnees_mires(self):
-        coordonnees = ""
+    def get_string_coordinates_mires(self):
+        coordinates = ""
         for i in range(len(self.mires_visibles)):
             mir_courante = self.mires_visibles[i]
-            coordonnees += f"{mir_courante.coordonnees[0]} {mir_courante.coordonnees[1]}"
+            coordinates += f"{mir_courante.coordinates[0]} {mir_courante.coordinates[1]}"
             if i != len(self.mires_visibles) - 1:
-                coordonnees += '\n'
+                coordinates += '\n'
 
-        return coordonnees
+        return coordinates
 
     def get_nom_image_sans_extension(self):
         return self.name.split(".")[0]

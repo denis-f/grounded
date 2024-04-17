@@ -5,12 +5,12 @@ import subprocess
 import os
 
 
-def recuperer_mires_3d(image: Image, fichier_coordonnees_2d, fichier_coordonnees_3d, fichier_filtered) -> list[Mire3D]:
-    if not os.path.exists(fichier_coordonnees_3d):  # si le fichier contenant les coordonnées 3d n'est pas trouvé
-        raise FileNotFoundError(f"le fichier \"{fichier_coordonnees_3d}\" est introuvable")
+def recuperer_mires_3d(image: Image, fichier_coordinates_2d, fichier_coordinates_3d, fichier_filtered) -> list[Mire3D]:
+    if not os.path.exists(fichier_coordinates_3d):  # si le fichier contenant les coordonnées 3d n'est pas trouvé
+        raise FileNotFoundError(f"le fichier \"{fichier_coordinates_3d}\" est introuvable")
 
     # on ouvre le fichier de coordonnées 3d pour récupérer son contenu
-    with open(fichier_coordonnees_3d) as file:
+    with open(fichier_coordinates_3d) as file:
         contenu = file.read()
 
     mires = []
@@ -19,23 +19,23 @@ def recuperer_mires_3d(image: Image, fichier_coordonnees_2d, fichier_coordonnees
         return mires
 
     # ici, on parse les coordonnées 3d
-    coordonnees_3d = []
+    coordinates_3d = []
     if len(contenu) > 0:
-        tableau_coordonnees = contenu.split("\n")
-        for ligne_tableau in tableau_coordonnees:
-            coordonnees_separes = ligne_tableau.split(" ")
-            if len(coordonnees_separes) == 3:
-                coordonnees_3d.append((float(coordonnees_separes[0]), float(coordonnees_separes[1]),
-                                       float(coordonnees_separes[2])))
+        tableau_coordinates = contenu.split("\n")
+        for ligne_tableau in tableau_coordinates:
+            coordinates_separes = ligne_tableau.split(" ")
+            if len(coordinates_separes) == 3:
+                coordinates_3d.append((float(coordinates_separes[0]), float(coordinates_separes[1]),
+                                       float(coordinates_separes[2])))
 
     # si le fichier filtered n'existe pas, mais que le fichier de coordonnées 3d est non vide alors les coordonnées
     # sont dans le même ordre que stocké dans la liste de mires visibles dans l'image
     if not os.path.exists(fichier_filtered):
         for i in range(len(image.mires_visibles)):
             mire_courante = image.mires_visibles[i]
-            mires.append(Mire3D(mire_courante.identifiant, (coordonnees_3d[i][0],
-                                                            coordonnees_3d[i][1],
-                                                            coordonnees_3d[i][2])))
+            mires.append(Mire3D(mire_courante.identifier, (coordinates_3d[i][0],
+                                                           coordinates_3d[i][1],
+                                                           coordinates_3d[i][2])))
         return mires
 
     # si nous ne sommes dans aucun des cas suivant, alors seulement certaines coordonnées n'ont pas pu être reconnu,
@@ -46,22 +46,22 @@ def recuperer_mires_3d(image: Image, fichier_coordonnees_2d, fichier_coordonnees
         contenu = file.read()
 
     # on parse les coordonnées du fichier filtered
-    coordonnees_filtered = []
+    coordinates_filtered = []
     if len(contenu) > 0:
-        tableau_coordonnees = contenu.split("\n")
-        for ligne_tableau in tableau_coordonnees:
-            coordonnees_separes = ligne_tableau.split(" ")
-            if len(coordonnees_separes) == 2:
-                coordonnees_filtered.append((float(coordonnees_separes[0]), float(coordonnees_separes[1])))
+        tableau_coordinates = contenu.split("\n")
+        for ligne_tableau in tableau_coordinates:
+            coordinates_separes = ligne_tableau.split(" ")
+            if len(coordinates_separes) == 2:
+                coordinates_filtered.append((float(coordinates_separes[0]), float(coordinates_separes[1])))
 
     # on associe chacune des coordonnées à son identifiant
-    for i in range(len(coordonnees_filtered)):
-        coordonnees_2d = coordonnees_filtered[i]
+    for i in range(len(coordinates_filtered)):
+        coordinates_2d = coordinates_filtered[i]
         for mir_2d in image.mires_visibles:
-            if mir_2d.coordonnees[0] == coordonnees_2d[0] and mir_2d.coordonnees[1] == coordonnees_2d[1]:
-                mires.append(Mire3D(mir_2d.identifiant, (coordonnees_3d[i][0],
-                                                         coordonnees_3d[i][1],
-                                                         coordonnees_3d[i][2])))
+            if mir_2d.coordinates[0] == coordinates_2d[0] and mir_2d.coordinates[1] == coordinates_2d[1]:
+                mires.append(Mire3D(mir_2d.identifier, (coordinates_3d[i][0],
+                                                        coordinates_3d[i][1],
+                                                        coordinates_3d[i][2])))
 
     return mires
 
@@ -116,6 +116,8 @@ class MicMac(SFM):
     def __init__(self, chemin_mm3d: str):
         self.chemin_mm3d = chemin_mm3d
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "micmac_working_directory"))
+        self.distorsion_model = "FraserBasic"  # valeur par défaut
+        self.zoom_final = "QuickMac"  # valeur par défaut
 
     def detection_points_homologues(self, chemin_dossier_avant: str, chemin_dossier_apres: str):
         os.makedirs(self.working_directory, exist_ok=True)  # création du dossier de l'espace de travail micmac
@@ -129,36 +131,39 @@ class MicMac(SFM):
         subprocess.run([self.chemin_mm3d, "Tapioca", "All",
                         f"{self.working_directory}{os.sep}.*JPG", "1000"])
 
-    def calibration(self):
-        subprocess.run([self.chemin_mm3d, "Tapas", "FraserBasic", f"{self.working_directory}/.*JPG"])
+    def calibration(self, distorsion_model: str = "FraserBasic"):
+        self.distorsion_model = distorsion_model
+        subprocess.run([self.chemin_mm3d, "Tapas", distorsion_model, f"{self.working_directory}/.*JPG"])
 
-    def generer_nuages_de_points(self) -> tuple[PointCloud, PointCloud]:
+    def generer_nuages_de_points(self, zoom_final: str = "QuickMac") -> tuple[PointCloud, PointCloud]:
+        self.zoom_final = zoom_final
         # On génère le nuage de points des photos d'avant excavation
         subprocess.run(
-            [self.chemin_mm3d, "C3DC", "QuickMac", f"{self.working_directory}{os.sep}0_.*JPG", "FraserBasic"])
+            [self.chemin_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG", self.distorsion_model])
 
-        # On renomme le fichier C3DC_QuickMac.ply généré automatiquement en C3DC_0.ply
-        renommer_fichier(os.path.join(self.working_directory, "C3DC_QuickMac.ply"),
+        # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_0.ply
+        renommer_fichier(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"),
                          os.path.join(self.working_directory, "C3DC_0.ply"))
 
-        # On déplace le fichier PIMs-QuickMac en Tempo de façon temporaire afin de générer le nuage de point d'après
-        # excavation sans effets de bords
-        renommer_fichier(os.path.join(self.working_directory, "PIMs-QuickMac"),
+        # On déplace le fichier PIMs-{self.zoom_final} en Tempo de façon temporaire afin de générer le nuage de point
+        # d'après excavation sans effets de bords
+        renommer_fichier(os.path.join(self.working_directory, f"PIMs-{self.zoom_final}"),
                          os.path.join(self.working_directory, "Tempo"))
 
         # On génère le nuage de points des photos d'après excavation
         subprocess.run(
-            [self.chemin_mm3d, "C3DC", "QuickMac", f"{self.working_directory}{os.sep}1_.*JPG", "FraserBasic"])
+            [self.chemin_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}1_.*JPG", self.distorsion_model])
 
-        # On renomme le fichier C3DC_QuickMac.ply généré automatiquement en C3DC_1.ply
-        renommer_fichier(os.path.join(self.working_directory, "C3DC_QuickMac.ply"),
+        # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_1.ply
+        renommer_fichier(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"),
                          os.path.join(self.working_directory, "C3DC_1.ply"))
 
-        # On déplace le contenu de Tempo à l'intérieur de PIMs-QuickMac sans les fichiers pouvant générer des conflits
+        # On déplace le contenu de Tempo à l'intérieur de PIMs-{self.zoom_final} sans les fichiers pouvant générer
+        # des conflits
         effacer_fichier_si_existe(os.path.join(self.working_directory, "Tempo", "PimsEtat.xml"))
         effacer_fichier_si_existe(os.path.join(self.working_directory, "Tempo", "PimsFile.xml"))
         copier_contenu_dossier(os.path.join(self.working_directory, "Tempo"),
-                               os.path.join(self.working_directory, "PIMs-QuickMac"))
+                               os.path.join(self.working_directory, f"PIMs-{self.zoom_final}"))
 
         # On supprime le dossier Tempo
         os.rmdir(os.path.join(self.working_directory, "Tempo"))
@@ -166,29 +171,29 @@ class MicMac(SFM):
         return PointCloud(os.path.join(self.working_directory, "C3DC_0.ply")), PointCloud(
             os.path.join(self.working_directory, "C3DC_1.ply"))
 
-    def calculer_coordonnees_3d_mires(self, image: Image) -> list[Mire3D]:
-        log_directory = os.path.join(self.working_directory, "calcul_coordonnees")
+    def calculer_coordinates_3d_mires(self, image: Image) -> list[Mire3D]:
+        log_directory = os.path.join(self.working_directory, "calcul_coordinates")
 
         # créer le dossier de log s'il n'existe pas
         if not os.path.exists(log_directory):
             os.makedirs(log_directory)
-        nom_fichier_coordonnees = os.path.join(log_directory, f"{image.get_nom_image_sans_extension()}_coord.txt")
+        nom_fichier_coordinates = os.path.join(log_directory, f"{image.get_nom_image_sans_extension()}_coord.txt")
 
         # on crée le fichier qui va contenir les coordonnées 2D de notre image.
-        with open(nom_fichier_coordonnees, 'w') as file:
-            file.write(image.get_string_coordonnees_mires())
+        with open(nom_fichier_coordinates, 'w') as file:
+            file.write(image.get_string_coordinates_mires())
 
         # On récupère le nom de l'image dans l'espace de travail MicMac
         image_locale = recuperer_premier_fichier_avec_pattern(self.working_directory,
                                                               image.get_nom_image_sans_extension())
 
         # on génère nos coordonnées 3D dans un fichier
-        nom_fichier_coordonnees_3d = os.path.join(log_directory, f"{image.get_nom_image_sans_extension()}_3D_coord.txt")
+        nom_fichier_coordinates_3d = os.path.join(log_directory, f"{image.get_nom_image_sans_extension()}_3D_coord.txt")
         subprocess.run([self.chemin_mm3d, "Im2XYZ", os.path.join(self.working_directory,
-                                                                 f"PIMs-QuickMac{os.sep}Nuage-Depth-"
+                                                                 f"PIMs-{self.zoom_final}{os.sep}Nuage-Depth-"
                                                                  f"{image_locale.name}.xml"),
-                        nom_fichier_coordonnees, nom_fichier_coordonnees_3d])
+                        nom_fichier_coordinates, nom_fichier_coordinates_3d])
 
         nom_fichier_filtered = os.path.join(log_directory, f"Filtered_{image.get_nom_image_sans_extension()}_coord.txt")
 
-        return recuperer_mires_3d(image, nom_fichier_coordonnees, nom_fichier_coordonnees_3d, nom_fichier_filtered)
+        return recuperer_mires_3d(image, nom_fichier_coordinates, nom_fichier_coordinates_3d, nom_fichier_filtered)
