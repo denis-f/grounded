@@ -1,9 +1,9 @@
 import numpy as np
 
-from Tools.SFM import SFM
-from Tools.DetecteurMire import DetecteurMire
-from Tools.PointCloudProcessor import PointCloudProcessor
-from DataObject import PointCloud, Mire3D, Mire, Raster
+from Grounded.Tools.SFM import SFM
+from Grounded.Tools.DetecteurMire import DetecteurMire
+from Grounded.Tools.PointCloudProcessor import PointCloudProcessor
+from Grounded.DataObject import PointCloud, Mire3D, Mire, Raster
 
 import statistics
 import rasterio
@@ -151,8 +151,25 @@ def delimitateHoles(path_clouds, rasterZone, tol_simplify=0.01, width_buffer=0.0
 
 
 class DensityAnalyser:
+    """
+    Classe permettant l'analyse de la densité apparente du sol en utilisant la photogrammétrie. Une implémentation
+    des techniques démontrés dans ces articles:
+
+    "Joining multi-epoch archival aerial images in a single SfM block allows 3-D change detection with almost
+    exclusively image information." - D. Feurer, F. Vinatier
+
+    "Assessing new sensor-based volume measurement methods for high-throughput bulk density estimation in the field
+    under various soil conditions." - Guillaume Coulouma, Denis Feurer, Fabrice Vinatier, Olivier Huttel
+    """
 
     def __init__(self, sfm: SFM, detecteur_mire: DetecteurMire, point_cloud_processor: PointCloudProcessor):
+        """
+        Initialise une instance de la classe DensityAnalyser
+        Args:
+            sfm: un objet implémentant l'interface SFM
+            detecteur_mire: un objet implémentant l'interface DetecteurMire
+            point_cloud_processor: un objet implémentant l'interface PointCloudProcessor
+        """
         self.sfm = sfm
         self.detecteur_mire = detecteur_mire
         self.point_cloud_processor = point_cloud_processor

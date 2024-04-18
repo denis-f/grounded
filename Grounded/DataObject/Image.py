@@ -20,9 +20,9 @@ class Image(File):
         contenu dans la variable mires_visibles.
 
         Exemple du format :
-            x1 y1
-            x2 y2
-            x3 y3
+            x1 y1\n
+            x2 y2\n
+            x3 y3\n
 
         Returns:
             str: Une chaîne de caractères contenant les coordonnées des mires.

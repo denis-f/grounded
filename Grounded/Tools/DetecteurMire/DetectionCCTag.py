@@ -8,6 +8,16 @@ import subprocess
 
 
 def parsing_result(resultat: str) -> list[Image]:
+    """"
+    Parse les sorties standard et d'erreur de l'executable detection afin de renvoyer ces informations sous la forme
+    d'une liste d'image
+
+    Args:
+        resultat (str): résultat de la sortie standard et d'erreur de l'executable detection
+
+    Returns:
+        list[Image]: une liste d'image correspondant aux informations données en argument
+    """
     tableau_ligne = resultat.split("\n")
     tableau_ligne_trie = [line for line in tableau_ligne if "frame" in line or line.endswith("1") or "Done" in line
                           or "detected" in line]
@@ -34,11 +44,37 @@ def parsing_result(resultat: str) -> list[Image]:
 
 
 class DetectionCCTag(DetecteurMire):
+    """
+    Implémente l'interface DetecteurMire et implémente les méthodes nécessaires pour l'exécution de detection,
+    une composante de CCTag
+
+    Elle est utilisée pour calculer les coordonnées de chacune des mires présentes sur une image
+    """
 
     def __init__(self, detection_cctag_directory):
+        """
+        Initialise une instance de la classe MicMac.
+
+        Args:
+            detection_cctag_directory (str): le chemin vers le dossier contenant l'executable detection
+            et ses librairies.
+
+        Returns:
+            None
+        """
         self.detection_cctag_directory = detection_cctag_directory
 
     def detection_mires(self, chemin_dossier_image) -> list[Image]:
+        """
+        Détecte chacune des mires présentes sur une image, renvoyant une liste d'objet image contenant les mires
+        (Mire2D) qui apparaissent sur cette image.
+
+        Args:
+            chemin_dossier_image: un dossier contenant une ou plusieurs images en paramètre.
+
+        Returns:
+            list[Image]: une liste contenant toutes les images ayant été trouvé par le détecteur de mire
+        """
         current_dir = os.path.abspath(os.curdir)
         chemin_absolue_dossier_image = os.path.abspath(chemin_dossier_image)
         os.chdir(self.detection_cctag_directory)
