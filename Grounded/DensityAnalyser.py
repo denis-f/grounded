@@ -12,7 +12,8 @@ from rasterio.crs import CRS
 from scipy.ndimage import generic_filter
 from rasterio.features import shapes
 from shapely.geometry import shape, Polygon
-from shapely.ops import unary_union
+from scipy.ndimage import label
+from shapely import buffer
 
 
 def calculate_average_mire_3d(mires_3d: list[Mire3D]) -> list[Mire3D]:
@@ -63,7 +64,7 @@ def delete_mire_without_pair(mires: list[Mire]):
         mire_courant = mires[i]
         # s'il n'est pas pair ou si le mir suivant n'est pas sa paire
         if mire_courant.identifier % 2 != 0 or (i != len(mires) - 1
-                                                 and mires[i + 1].identifier != mire_courant.identifier + 1):
+                                                and mires[i + 1].identifier != mire_courant.identifier + 1):
             mire_to_remove.append(mire_courant)
             i += 1
         else:
@@ -97,57 +98,85 @@ def calculate_average_scale_factor(mires: list[Mire3D], reglet_size):
     return statistics.mean(scale_factors)
 
 
+def mean(x):
+    # Exclure les valeurs NA du calcul de la moyenne
+    valid_values = x[~np.isnan(x)]
+    if len(valid_values) > 0:
+        return np.mean(valid_values)
+    else:
+        return np.nan
+
+
 def prospect_zone(raster: Raster):
-    with rasterio.open(raster.path, "r+") as src:
-        src.crs = crs = CRS.from_epsg(32632)  # Définir le système de coordonnées EPSG 32632 (UTM Zone 32N)
-        raster_array = src.read(1)
-
-    return generic_filter(raster_array, lambda x: np.mean(x), size=(25, 25))
+    with rasterio.open(raster.path, "r+") as data_set:
+        raster_array = data_set.read(2)
+    return generic_filter(raster_array, mean, size=(25, 25), mode='constant', cval=np.nan)
 
 
-def roundness(polygon):
-    perimeter = polygon.length
-    area = polygon.area
-    return 4 * pi * area / (perimeter ** 2)
 
+def delimitate_holes(raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hole=0.008, thres_hole=0.00021,
+                     k_cox_threshold=0.35, minimal_hole_area=0.004):
+    """
+    Identifie et délimite les trous (zones non-continues) dans un raster.
 
-def delimitateHoles(path_clouds, rasterZone, tol_simplify=0.01, width_buffer=0.02, area_hole=0.008, thres_hole=0.005,
-                    K_Cox_threshold=0.35, minimal_hole_area=0.004):
-    with rasterio.open(path_clouds, "r+") as src:
-        # Thresholding the smoothed raster to identify the hole
-        mask_zone = (rasterZone > thres_hole).astype('uint8')
+    Args:
+        raster_zone (numpy.ndarray): Raster représentant la zone d'intérêt.
+        tol_simplify (float): Tolérance de simplification des polygones.
+        width_buffer (float): Largeur d'agrandissement des polygones.
+        area_hole (float): Surface minimale requise pour un trou.
+        thres_hole (float): Seuil de binarisation du raster.
+        k_cox_threshold (float): Seuil de rondeur (Cox) pour filtrer les polygones.
+        minimal_hole_area (float): Surface minimale supplémentaire pour filtrer les polygones (optionnel).
 
-        # Vectorization of the hole contour
-        results = list(
-            (geom, value)
-            for geom, value in shapes(mask_zone, mask=mask_zone, transform=src.transform)
-        )
+    Returns:
+        list: Liste de polygones Shapely représentant les trous délimités, triés de gauche à droite.
+    """
 
-        polygons = [shape(geom) for geom, value in results]
-        for geom, value in results:
-            print(geom)
-            print(geom)
-        maxV = [value for geom, value in results if len(np.array(geom['coordinates']).flatten()) * src.res[0] * src.res[1] > area_hole]
+    # Fonction pour calculer la rondeur selon la formule de Cox
+    def roundness(polygone):
+        return 4 * np.pi * polygone.area / (polygone.perimeter**2)
 
-        # Identification of hole contour that reached a minimal area (multiple holes)
-        hole_contours = [polygons[i] for i, value in enumerate(maxV)]
+    # Binarisation du raster avec le seuil
+    mask_zone = raster_zone > thres_hole
 
-        # Reduction of stairs in the polygon
-        simplified_hole_contours = [hole.simplify(tol_simplify) for hole in hole_contours]
+    # Identification des groupes de cellules connectées (trous)
+    labeled_image, num_labels = label(mask_zone.astype(int))
 
-        # Discarding "non-round" polygons
-        round_holes = [hole for hole in simplified_hole_contours if roundness(hole) > K_Cox_threshold]
+    # Estimation de la surface des groupes (trous)
+    hole_areas = []
+    raster_size = mask_zone.shape[0] * mask_zone.shape[1]
+    for lab in range(1, num_labels + 1):
+        hole_cells = labeled_image == lab
+        hole_area = np.sum(hole_cells) / raster_size
+        hole_areas.append((lab, hole_area))
 
-        # Filtering by minimal hole area
-        filtered_holes = [hole for hole in round_holes if hole.area > minimal_hole_area]
+    # Sélection des groupes correspondant aux trous potentiels (surface >= area_hole)
+    potential_holes = [lab for lab, area in hole_areas if area >= area_hole]
 
-        # Enlargement of polygon area
-        buffered_holes = [hole.buffer(width_buffer) for hole in filtered_holes]
+    # Conversion des groupes en polygones Shapely
+    polygons = []
+    for lab in potential_holes:
+        polygon_coords = np.where(labeled_image == lab)[1:]
+        polygon_coords = np.column_stack(polygon_coords) * np.prod(raster_zone.shape[1:])
+        polygon = Polygon(polygon_coords)
+        polygons.append(polygon)
 
-        # Reordering the multiple polygons from left to right
-        ordered_holes = sorted(buffered_holes, key=lambda hole: hole.bounds[0])
+    # Simplification des polygones
+    simplified_polygons = [polygon.simplify(tolerance=tol_simplify, preserve_topology=True) for polygon in polygons]
 
-        return unary_union(ordered_holes)
+    # Filtrage des polygones par rondeur (Cox) et surface minimale
+    filtered_polygons = []
+    for polygon in simplified_polygons:
+        if roundness(polygon) >= k_cox_threshold and (minimal_hole_area is None or polygon.area >= minimal_hole_area):
+            filtered_polygons.append(polygon)
+
+    # Agrandissement des polygones
+    buffered_polygons = [buffer(polygon, width=width_buffer) for polygon in filtered_polygons]
+
+    # Tri des polygones de gauche à droite
+    sorted_polygons = sorted(buffered_polygons, key=lambda poly: poly.bounds[0])
+
+    return sorted_polygons
 
 
 class DensityAnalyser:
@@ -218,9 +247,10 @@ class DensityAnalyser:
         point_cloud_after_excavation = PointCloud(
             "cloudCompare_working_directory/apres_1.ply")
         # on récupère le raster correspondant à la difference entre
-        raster = Raster("cloudCompare_working_directory/raster.tif")
+        raster = self.point_cloud_processor.cloud_to_cloud_difference(point_cloud_before_excavation,
+                                                                      point_cloud_after_excavation)
 
         # on calcule la zone de prospection
         zone_tot = prospect_zone(raster)
-        holes_sel = delimitateHoles(raster.path, zone_tot, 0.01, 0.02, 0.002, 0.005, 0.6)
+        holes_sel = delimitate_holes(zone_tot, 0.01, 0.02, 0.008, 0.005, 0.6, 0.004)
         print(holes_sel)
