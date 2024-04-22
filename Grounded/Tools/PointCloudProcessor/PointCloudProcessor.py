@@ -39,3 +39,7 @@ class PointCloudProcessor(ABC):
             entre les deux nuages de points.
         """
         pass
+
+    @abstractmethod
+    def rasterize_cloud(self, point_cloud: PointCloud) -> Raster:
+        pass

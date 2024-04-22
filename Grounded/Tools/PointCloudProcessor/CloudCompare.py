@@ -1,5 +1,6 @@
 from .PointCloudProcessor import PointCloudProcessor
 from Grounded.DataObject import File, PointCloud, Raster
+from Grounded.utils import find_files_regex
 
 import subprocess
 import os
@@ -104,3 +105,15 @@ class CloudCompare(PointCloudProcessor):
                                                                       ))
 
         return raster_before
+
+    def rasterize_cloud(self, point_cloud: PointCloud) -> Raster:
+        subprocess.run(["cloudcompare.CloudCompare", "-SILENT",
+                        "-O",
+                        "-GLOBAL_SHIFT", "0", "0", "0", point_cloud.path,
+                        "-SOR", "6", "1",
+                        "-RASTERIZE", "-GRID_STEP", "0.001", "-EMPTY_FILL", "INTERP", "-OUTPUT_RASTER_Z"],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        raster = Raster(find_files_regex(self.working_directory,
+                                         f"{point_cloud.get_name_without_extension()}_SOR_RASTER_Z")[0])
+        return raster

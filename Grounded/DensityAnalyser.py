@@ -251,7 +251,14 @@ class DensityAnalyser:
                                                                                  mean_scale_factor)
 
         # -------------------------------------- Troisième Bloc --------------------------------------------------------
-        # TODO avec Denis concernant la partie technique
+        raster = self.point_cloud_processor.cloud_to_cloud_difference(point_cloud_before_excavation,
+                                                                      point_cloud_after_excavation)
+
+        zone_tot = prospect_zone(raster)
+        holes_sel = delimitate_holes(zone_tot, 0.01, 0.02, 0.008, 0.005, 0.55, 0.004)
+
+        raster_before_excavation = self.point_cloud_processor.rasterize_cloud(point_cloud_before_excavation)
+        raster_after_excavation = self.point_cloud_processor.rasterize_cloud(point_cloud_after_excavation)
 
     def test(self):
         point_cloud_before_excavation = PointCloud(
@@ -263,6 +270,7 @@ class DensityAnalyser:
             "cloudCompare_working_directory/avant_0_C2C_DIST_MAX_DIST_0.1_RASTER_Z_2024-04-19_14h03_09_040.tif")
 
         # on calcule la zone de prospection
-        zone_tot = prospect_zone(raster)
-        holes_sel = delimitate_holes(zone_tot, 0.01, 0.02, 0.008, 0.005, 0.55, 0.004)
-        print(holes_sel)
+        #zone_tot = prospect_zone(raster)
+        #holes_sel = delimitate_holes(zone_tot, 0.01, 0.02, 0.008, 0.005, 0.55, 0.004)
+        raster_before_excavation = self.point_cloud_processor.rasterize_cloud(point_cloud_before_excavation)
+        raster_after_excavation = self.point_cloud_processor.rasterize_cloud(point_cloud_after_excavation)
