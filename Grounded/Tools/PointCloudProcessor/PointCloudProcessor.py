@@ -43,3 +43,7 @@ class PointCloudProcessor(ABC):
     @abstractmethod
     def rasterize_cloud(self, point_cloud: PointCloud) -> Raster:
         pass
+
+    @abstractmethod
+    def crop_point_cloud(self, point_cloud: PointCloud, coordonnees_trace: list[tuple[float, float]]):
+        pass

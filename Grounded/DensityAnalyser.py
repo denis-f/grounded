@@ -272,5 +272,11 @@ class DensityAnalyser:
         # on calcule la zone de prospection
         #zone_tot = prospect_zone(raster)
         #holes_sel = delimitate_holes(zone_tot, 0.01, 0.02, 0.008, 0.005, 0.55, 0.004)
-        raster_before_excavation = self.point_cloud_processor.rasterize_cloud(point_cloud_before_excavation)
-        raster_after_excavation = self.point_cloud_processor.rasterize_cloud(point_cloud_after_excavation)
+        #raster_before_excavation = self.point_cloud_processor.rasterize_cloud(point_cloud_before_excavation)
+        #raster_after_excavation = self.point_cloud_processor.rasterize_cloud(point_cloud_after_excavation)
+        self.point_cloud_processor.crop_point_cloud(point_cloud_before_excavation, [
+            (0.7, 0.4),
+            (0.56, 0.67),
+            (0.32, -0.46),
+            (0.7, 0.4)
+        ])

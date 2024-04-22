@@ -115,5 +115,17 @@ class CloudCompare(PointCloudProcessor):
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         raster = Raster(find_files_regex(self.working_directory,
-                                         f"{point_cloud.get_name_without_extension()}_SOR_RASTER_Z")[0])
+                                         f"{point_cloud.get_name_without_extension()}_SOR_*.bin")[0])
         return raster
+
+    def crop_point_cloud(self, point_cloud: PointCloud, coordonnees_trace: list[tuple[float, float]]):
+        formated_coordinates = [str(coord) for point in coordonnees_trace for coord in point]
+        command = (["cloudcompare.CloudCompare", "-SILENT",
+                    "-C_EXPORT_FMT", "ASC",
+                    "-O", "-GLOBAL_SHIFT", "0", "0", "0", point_cloud.path,
+                    "-CROP2D", "Z", str(len(coordonnees_trace))] + formated_coordinates +
+                   ["-DELAUNAY", "-BEST_FIT",
+                    "-SAMPLE_MESH", "DENSITY", "10000000",
+                    "-RASTERIZE", "-GRID_STEP", "0.001", "-EMPTY_FILL", "INTERP", "-OUTPUT_RASTER_Z"])
+
+        subprocess.run(command)
