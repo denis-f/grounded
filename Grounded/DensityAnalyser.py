@@ -10,10 +10,13 @@ import rasterio
 from math import pi
 from rasterio.crs import CRS
 from scipy.ndimage import generic_filter
-from rasterio.features import shapes
 from shapely.geometry import shape, Polygon
+from shapely import polygonize
 from scipy.ndimage import label
 from shapely import buffer
+from skimage import measure
+from rasterio.plot import show
+import matplotlib
 
 
 def calculate_average_mire_3d(mires_3d: list[Mire3D]) -> list[Mire3D]:
@@ -110,8 +113,7 @@ def mean(x):
 def prospect_zone(raster: Raster):
     with rasterio.open(raster.path, "r+") as data_set:
         raster_array = data_set.read(2)
-    return generic_filter(raster_array, mean, size=(25, 25), mode='constant', cval=np.nan)
-
+    return generic_filter(raster_array, mean, size=(25, 25))
 
 
 def delimitate_holes(raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hole=0.008, thres_hole=0.00021,
@@ -133,8 +135,19 @@ def delimitate_holes(raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hol
     """
 
     # Fonction pour calculer la rondeur selon la formule de Cox
-    def roundness(polygone):
-        return 4 * np.pi * polygone.area / (polygone.perimeter**2)
+    def roundness(polygone: Polygon):
+        return 4 * np.pi * polygone.area / (polygone.length ** 2)
+
+    def find_polygons(mask):
+        # Trouver les contours dans le masque
+        contours = measure.find_contours(mask, fully_connected='high')
+
+        all_points = np.concatenate(contours)
+
+        # Créer un polygone à partir de tous les points des contours
+        polygon = Polygon(all_points)
+
+        return polygon
 
     # Binarisation du raster avec le seuil
     mask_zone = raster_zone > thres_hole
@@ -147,19 +160,17 @@ def delimitate_holes(raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hol
     raster_size = mask_zone.shape[0] * mask_zone.shape[1]
     for lab in range(1, num_labels + 1):
         hole_cells = labeled_image == lab
+        # ici la surface d'un trou est égal à son ratio par rapport à la taille de l'image
         hole_area = np.sum(hole_cells) / raster_size
         hole_areas.append((lab, hole_area))
 
     # Sélection des groupes correspondant aux trous potentiels (surface >= area_hole)
     potential_holes = [lab for lab, area in hole_areas if area >= area_hole]
 
-    # Conversion des groupes en polygones Shapely
     polygons = []
+    # Process the features
     for lab in potential_holes:
-        polygon_coords = np.where(labeled_image == lab)[1:]
-        polygon_coords = np.column_stack(polygon_coords) * np.prod(raster_zone.shape[1:])
-        polygon = Polygon(polygon_coords)
-        polygons.append(polygon)
+        polygons.append(find_polygons(np.where(labeled_image == lab, 1, 0)))
 
     # Simplification des polygones
     simplified_polygons = [polygon.simplify(tolerance=tol_simplify, preserve_topology=True) for polygon in polygons]
@@ -167,11 +178,12 @@ def delimitate_holes(raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hol
     # Filtrage des polygones par rondeur (Cox) et surface minimale
     filtered_polygons = []
     for polygon in simplified_polygons:
-        if roundness(polygon) >= k_cox_threshold and (minimal_hole_area is None or polygon.area >= minimal_hole_area):
+        a = roundness(polygon)
+        if roundness(polygon) >= k_cox_threshold:
             filtered_polygons.append(polygon)
 
     # Agrandissement des polygones
-    buffered_polygons = [buffer(polygon, width=width_buffer) for polygon in filtered_polygons]
+    buffered_polygons = [buffer(polygon, distance=width_buffer) for polygon in filtered_polygons]
 
     # Tri des polygones de gauche à droite
     sorted_polygons = sorted(buffered_polygons, key=lambda poly: poly.bounds[0])
@@ -247,10 +259,10 @@ class DensityAnalyser:
         point_cloud_after_excavation = PointCloud(
             "cloudCompare_working_directory/apres_1.ply")
         # on récupère le raster correspondant à la difference entre
-        raster = self.point_cloud_processor.cloud_to_cloud_difference(point_cloud_before_excavation,
-                                                                      point_cloud_after_excavation)
+        raster = Raster(
+            "cloudCompare_working_directory/avant_0_C2C_DIST_MAX_DIST_0.1_RASTER_Z_2024-04-19_14h03_09_040.tif")
 
         # on calcule la zone de prospection
         zone_tot = prospect_zone(raster)
-        holes_sel = delimitate_holes(zone_tot, 0.01, 0.02, 0.008, 0.005, 0.6, 0.004)
+        holes_sel = delimitate_holes(zone_tot, 0.01, 0.02, 0.008, 0.005, 0.55, 0.004)
         print(holes_sel)
