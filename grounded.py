@@ -21,8 +21,11 @@ c = CloudCompare("cloudcompare.CloudCompare")
 d = DetectionCCTag("/opt/CCTag/")
 
 analyser = DensityAnalyser(m, d, c)
-volumes_trous = analyser.analyse("/home/francoin/Documents/Projet_Densite_Sol/Dossier_photo_test/avant", # à compléter avec le dossier de photos avant excavation
-                                 "/home/francoin/Documents/Projet_Densite_Sol/Dossier_photo_test/apres") # à compléter avec le dossier de photos après excavation
+volumes_trous = analyser.analyse(dossier_avant,
+                                 dossier_apres)
 
+print("###########################################################################\n"
+      "############################# Fin d'exécution #############################\n"
+      "###########################################################################\n\n")
 for i in range(len(volumes_trous)):
-    print(f"volume du trou n°{i+1} : {volumes_trous[i]}")
+    print(f"volume du trou n°{i + 1} : {volumes_trous[i]}")

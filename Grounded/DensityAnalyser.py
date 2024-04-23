@@ -1,7 +1,3 @@
-import os
-
-import numpy as np
-
 from Grounded.Tools.SFM import SFM
 from Grounded.Tools.DetecteurMire import DetecteurMire
 from Grounded.Tools.PointCloudProcessor import PointCloudProcessor
@@ -9,16 +5,12 @@ from Grounded.DataObject import PointCloud, Mire3D, Mire, Raster
 
 import statistics
 import rasterio
-from math import pi
-from rasterio.crs import CRS
+import numpy as np
 from scipy.ndimage import generic_filter
-from shapely.geometry import shape, Polygon
-from shapely import polygonize
+from shapely.geometry import Polygon
 from scipy.ndimage import label
 from shapely import buffer
 from skimage import measure
-from rasterio.plot import show
-import matplotlib
 
 
 def calculate_average_mire_3d(mires_3d: list[Mire3D]) -> list[Mire3D]:
