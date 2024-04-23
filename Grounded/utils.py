@@ -24,3 +24,26 @@ def find_files_regex(directory, regex_pattern):
 
     return matching_files
 
+
+def rename_file(filepath, new_name):
+    # Check if the filepath exists
+    if not os.path.exists(filepath):
+        print("Error: The specified file does not exist.")
+        return
+
+    # Extract the filename and extension
+    filename, extension = os.path.splitext(filepath)
+    directory = os.sep.join(filename.split(os.sep)[:-1])
+    # Construct the new file name
+    new_filepath = os.path.join(directory, f"{new_name}{extension}")
+    counter = 1
+
+    # If the new name already exists, add a counter
+    while os.path.exists(new_filepath):
+        new_filepath = os.path.join(directory, f"{new_name}({counter}){extension}")
+        counter += 1
+
+    # Rename the file
+    os.rename(filepath, new_filepath)
+
+    return new_filepath

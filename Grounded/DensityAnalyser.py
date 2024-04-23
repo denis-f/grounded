@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 from Grounded.Tools.SFM import SFM
@@ -191,6 +193,18 @@ def delimitate_holes(raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hol
     return sorted_polygons
 
 
+def polygon_coordinate_conversion(raster: Raster, polygon: Polygon) -> list[tuple[float, float]]:
+    data_set = rasterio.open(raster.path, 'r')
+    a = data_set.transform
+    coordinates = []
+    for point in polygon.exterior.coords:
+        x, y = data_set.xy(point[0], point[1])
+        coordinates.append((x, y))
+
+    data_set.close()
+    return coordinates
+
+
 class DensityAnalyser:
     """
     Classe permettant l'analyse de la densité apparente du sol en utilisant la photogrammétrie. Une implémentation
@@ -251,32 +265,50 @@ class DensityAnalyser:
                                                                                  mean_scale_factor)
 
         # -------------------------------------- Troisième Bloc --------------------------------------------------------
-        raster = self.point_cloud_processor.cloud_to_cloud_difference(point_cloud_before_excavation,
-                                                                      point_cloud_after_excavation)
 
+        # on calcule le raster de la distance entre les deux nuages de points
+        raster = self.point_cloud_processor.cloud_to_cloud_distance(point_cloud_before_excavation,
+                                                                    point_cloud_after_excavation)
+
+        # on isole et on homogénéise la bande que nous allons étudier
+        zone_tot = prospect_zone(raster)
+
+        # on récupère les polygones détourant les trous
+        holes_polygons = delimitate_holes(zone_tot, 0.01, 0.02, 0.008, 0.005, 0.55, 0.004)
+
+        # on récupère les coordonnées des points des polygones dans l'espace du raster
+        list_holes_coordinates = [polygon_coordinate_conversion(raster, hole) for hole in holes_polygons]
+
+        # on récupère les trous détourés
+        holes_cropped: list[tuple[PointCloud, PointCloud]] = []
+        for hole_coordinates in list_holes_coordinates:
+            before = self.point_cloud_processor.crop_point_cloud(point_cloud_before_excavation, hole_coordinates)
+            after = self.point_cloud_processor.crop_point_cloud(point_cloud_after_excavation, hole_coordinates)
+            holes_cropped.append((before, after))
+
+        # on récupère les volumes des différents trous triés de gauche à droite et de haut en bas
+        holes_volumes = [self.point_cloud_processor.volume_between_clouds(hole[0], hole[1]) for hole in holes_cropped]
+
+        return holes_volumes
+
+
+    def test(self):
+        point_cloud_before_excavation = PointCloud("cloudCompare_working_directory/avant_0.ply")
+        point_cloud_after_excavation = PointCloud("cloudCompare_working_directory/apres_1.ply")
+        # on récupère le raster correspondant à la difference entre
+        raster = Raster("cloudCompare_working_directory/avant_0_C2C_DIST_MAX_DIST_0.1_RASTER_Z.tif")
+
+        # on calcule la zone de prospection
         zone_tot = prospect_zone(raster)
         holes_sel = delimitate_holes(zone_tot, 0.01, 0.02, 0.008, 0.005, 0.55, 0.004)
 
-        raster_before_excavation = self.point_cloud_processor.rasterize_cloud(point_cloud_before_excavation)
-        raster_after_excavation = self.point_cloud_processor.rasterize_cloud(point_cloud_after_excavation)
+        list_holes_coordinates = [polygon_coordinate_conversion(raster, hole) for hole in holes_sel]
 
-    def test(self):
-        point_cloud_before_excavation = PointCloud(
-            "cloudCompare_working_directory/avant_0.ply")
-        point_cloud_after_excavation = PointCloud(
-            "cloudCompare_working_directory/apres_1.ply")
-        # on récupère le raster correspondant à la difference entre
-        raster = Raster(
-            "cloudCompare_working_directory/avant_0_C2C_DIST_MAX_DIST_0.1_RASTER_Z_2024-04-19_14h03_09_040.tif")
+        holes_cropped: list[tuple[PointCloud, PointCloud]] = []
+        for hole_coordinates in list_holes_coordinates:
+            before = self.point_cloud_processor.crop_point_cloud(point_cloud_before_excavation, hole_coordinates)
+            after = self.point_cloud_processor.crop_point_cloud(point_cloud_after_excavation, hole_coordinates)
+            holes_cropped.append((before, after))
 
-        # on calcule la zone de prospection
-        #zone_tot = prospect_zone(raster)
-        #holes_sel = delimitate_holes(zone_tot, 0.01, 0.02, 0.008, 0.005, 0.55, 0.004)
-        #raster_before_excavation = self.point_cloud_processor.rasterize_cloud(point_cloud_before_excavation)
-        #raster_after_excavation = self.point_cloud_processor.rasterize_cloud(point_cloud_after_excavation)
-        self.point_cloud_processor.crop_point_cloud(point_cloud_before_excavation, [
-            (0.7, 0.4),
-            (0.56, 0.67),
-            (0.32, -0.46),
-            (0.7, 0.4)
-        ])
+        for hole in holes_cropped:
+            print(self.point_cloud_processor.volume_between_clouds(hole[0], hole[1]))

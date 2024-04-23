@@ -25,8 +25,8 @@ class PointCloudProcessor(ABC):
         pass
 
     @abstractmethod
-    def cloud_to_cloud_difference(self, point_cloud_before_excavation: PointCloud,
-                                  point_cloud_after_excavation: PointCloud) -> Raster:
+    def cloud_to_cloud_distance(self, point_cloud_before_excavation: PointCloud,
+                                point_cloud_after_excavation: PointCloud) -> Raster:
         """
         Méthode abstraite pour calculer la distance entre deux nuages de points.
 
@@ -41,9 +41,9 @@ class PointCloudProcessor(ABC):
         pass
 
     @abstractmethod
-    def rasterize_cloud(self, point_cloud: PointCloud) -> Raster:
+    def crop_point_cloud(self, point_cloud: PointCloud, coordonnees_trace: list[tuple[float, float]]) -> PointCloud:
         pass
 
     @abstractmethod
-    def crop_point_cloud(self, point_cloud: PointCloud, coordonnees_trace: list[tuple[float, float]]):
+    def volume_between_clouds(self, crop_before: PointCloud, crop_after: PointCloud):
         pass
