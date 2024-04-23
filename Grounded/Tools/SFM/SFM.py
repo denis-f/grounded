@@ -25,12 +25,9 @@ class SFM(ABC):
         pass
 
     @abstractmethod
-    def calibration(self, distorsion_model):
+    def calibration(self):
         """
         Calibre la caméra.
-
-        Args:
-            distorsion_model (str): Modèle de distorsion à utiliser pour la calibration.
 
         Returns:
             None
@@ -38,12 +35,9 @@ class SFM(ABC):
         pass
 
     @abstractmethod
-    def generer_nuages_de_points(self, zoom_final: str) -> tuple[PointCloud, PointCloud]:
+    def generer_nuages_de_points(self) -> tuple[PointCloud, PointCloud]:
         """
         Génère des nuages de points avant/après excavation.
-
-        Args:
-            zoom_final (str): Niveau de zoom final pour la génération des nuages de points.
 
         Returns:
             tuple[PointCloud, PointCloud]: Un tuple contenant deux objets PointCloud représentant les nuages de points

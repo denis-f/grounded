@@ -3,6 +3,7 @@ from Grounded.DataObject import Image, File, PointCloud, Mire2D, Mire3D
 
 import subprocess
 import os
+import shutil
 
 
 def recuperer_mires_3d(image: Image, fichier_coordinates_2d, fichier_coordinates_3d, fichier_filtered) -> list[Mire3D]:
@@ -120,20 +121,30 @@ class MicMac(SFM):
     de la caméra, la génération de nuages de points, et le calcul des coordonnées 3D des mires dans une image.
     """
 
-    def __init__(self, chemin_mm3d: str):
+    def __init__(self, chemin_mm3d: str, distorsion_model: str = "FraserBasic", zoom_final: str = "QuickMac"):
         """
         Initialise une instance de la classe MicMac.
 
         Args:
             chemin_mm3d (str): Le chemin vers l'exécutable MicMac.
+            distorsion_model (str): un modèle de distorsion
+            zoom_final (str): un zoom final
+
 
         Returns:
             None
         """
         self.chemin_mm3d = chemin_mm3d
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "micmac_working_directory"))
-        self.distorsion_model = "FraserBasic"  # valeur par défaut
-        self.zoom_final = "QuickMac"  # valeur par défaut
+        self.distorsion_model = distorsion_model
+        self.zoom_final = zoom_final  # valeur par défaut
+
+        self.set_up_working_space()
+
+    def set_up_working_space(self):
+        if os.path.exists(self.working_directory):
+            shutil.rmtree(self.working_directory)
+        os.makedirs(self.working_directory, exist_ok=True)  # création du dossier de l'espace de travail micmac
 
     def detection_points_homologues(self, chemin_dossier_avant: str, chemin_dossier_apres: str):
         """
@@ -146,7 +157,7 @@ class MicMac(SFM):
         Returns:
             None
         """
-        os.makedirs(self.working_directory, exist_ok=True)  # création du dossier de l'espace de travail micmac
+        self.set_up_working_space()
 
         # création des raccourcis pour les fichiers avant
         creer_raccourci_dossier_dans_avec_prefix(os.path.abspath(chemin_dossier_avant), self.working_directory, "0_")
@@ -157,35 +168,28 @@ class MicMac(SFM):
         subprocess.run([self.chemin_mm3d, "Tapioca", "All",
                         f"{self.working_directory}{os.sep}.*JPG", "1000"])
 
-    def calibration(self, distorsion_model: str = "FraserBasic"):
+    def calibration(self):
         """
         Méthode pour calibrer la caméra.
-
-        Args:
-            distorsion_model (str): Le modèle de distorsion à utiliser pour la calibration.
 
         Returns:
             None
         """
-        self.distorsion_model = distorsion_model
-        subprocess.run([self.chemin_mm3d, "Tapas", distorsion_model, f"{self.working_directory}/.*JPG"])
+        subprocess.run([self.chemin_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG"])
 
-    def generer_nuages_de_points(self, zoom_final: str = "QuickMac") -> tuple[PointCloud, PointCloud]:
+    def generer_nuages_de_points(self) -> tuple[PointCloud, PointCloud]:
         """
         Méthode pour générer des nuages de points avant/après excavation.
-
-        Args:
-            zoom_final (str): Le niveau de zoom final pour la génération des nuages de points.
 
         Returns:
             Tuple[NuageDePoints, NuageDePoints]: Un tuple contenant deux objets NuageDePoints représentant les nuages de points
             avant et après excavation.
             tuple[0] ⇛ avant et tuple[1] ⇛ après
         """
-        self.zoom_final = zoom_final
         # On génère le nuage de points des photos d'avant excavation
         subprocess.run(
-            [self.chemin_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG", self.distorsion_model])
+            [self.chemin_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG",
+             self.distorsion_model])
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_0.ply
         renommer_fichier(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"),
@@ -198,7 +202,8 @@ class MicMac(SFM):
 
         # On génère le nuage de points des photos d'après excavation
         subprocess.run(
-            [self.chemin_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}1_.*JPG", self.distorsion_model])
+            [self.chemin_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}1_.*JPG",
+             self.distorsion_model])
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_1.ply
         renommer_fichier(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"),

@@ -233,8 +233,8 @@ class DensityAnalyser:
         # ---------------------------------------- Premier Bloc --------------------------------------------------------
 
         self.sfm.detection_points_homologues(photo_path_before_excavation, photo_path_after_excavation)
-        self.sfm.calibration("FraserBasic")
-        point_cloud_before_excavation, point_cloud_after_excavation = self.sfm.generer_nuages_de_points("MicMac")
+        self.sfm.calibration()
+        point_cloud_before_excavation, point_cloud_after_excavation = self.sfm.generer_nuages_de_points()
 
         # --------------------------------------- Deuxième Bloc --------------------------------------------------------
 
@@ -289,26 +289,10 @@ class DensityAnalyser:
         # on récupère les volumes des différents trous triés de gauche à droite et de haut en bas
         holes_volumes = [self.point_cloud_processor.volume_between_clouds(hole[0], hole[1]) for hole in holes_cropped]
 
+        with open("results.txt", 'w') as file:
+            file.write(f"nombre de trou détectés : {len(holes_volumes)}\n"
+                       "------------Trous triés de gauche à droite------------")
+            for i in range(len(holes_volumes)):
+                file.write(f"volume du trou n°{i + 1} : {holes_volumes[i]}")
+
         return holes_volumes
-
-
-    def test(self):
-        point_cloud_before_excavation = PointCloud("cloudCompare_working_directory/avant_0.ply")
-        point_cloud_after_excavation = PointCloud("cloudCompare_working_directory/apres_1.ply")
-        # on récupère le raster correspondant à la difference entre
-        raster = Raster("cloudCompare_working_directory/avant_0_C2C_DIST_MAX_DIST_0.1_RASTER_Z.tif")
-
-        # on calcule la zone de prospection
-        zone_tot = prospect_zone(raster)
-        holes_sel = delimitate_holes(zone_tot, 0.01, 0.02, 0.008, 0.005, 0.55, 0.004)
-
-        list_holes_coordinates = [polygon_coordinate_conversion(raster, hole) for hole in holes_sel]
-
-        holes_cropped: list[tuple[PointCloud, PointCloud]] = []
-        for hole_coordinates in list_holes_coordinates:
-            before = self.point_cloud_processor.crop_point_cloud(point_cloud_before_excavation, hole_coordinates)
-            after = self.point_cloud_processor.crop_point_cloud(point_cloud_after_excavation, hole_coordinates)
-            holes_cropped.append((before, after))
-
-        for hole in holes_cropped:
-            print(self.point_cloud_processor.volume_between_clouds(hole[0], hole[1]))
