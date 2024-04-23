@@ -16,9 +16,9 @@ print(f"le dossier d'entrée est : {dossier_avant}")
 print(f"le dossier de sortie est : {dossier_apres}")
 
 
-m = MicMac("/opt/micmac/bin/mm3d", "FraserBasic", "MicMac")
-c = CloudCompare("cloudcompare.CloudCompare")
-d = DetectionCCTag("/opt/CCTag/")
+m = MicMac("/opt/micmac/bin/mm3d", "FraserBasic", "MicMac")  # initialisation d'un SFM
+c = CloudCompare("cloudcompare.CloudCompare")  # initialisation de PointCloudProcessor
+d = DetectionCCTag("/opt/CCTag/")  # initialisation d'un DetecteurMire
 
 analyser = DensityAnalyser(m, d, c)
 volumes_trous = analyser.analyse(dossier_avant,
