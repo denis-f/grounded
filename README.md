@@ -1,7 +1,5 @@
 # Grounded
 
-## Name
-Choose a self-explaining name for your project.
 
 ## Description
 Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
@@ -13,7 +11,66 @@ On some READMEs, you may see small images that convey metadata, such as whether 
 Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
 
 ## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+
+### Dépendances python
+Executez la commande : 
+    
+```bash
+pip install -r requirements.txt
+```
+### Dépendances logicielles
+
+### _Linux_
+
+>### MicMac
+> > Installation des dépendances : `sudo apt-get update && sudo apt-get install make imagemagick libimage-exiftool-perl exiv2 proj-bin qt5-default`
+> 
+> > Copier le dépôt github du projet : `git clone https://github.com/micmacIGN/micmac.git`  
+>
+> > Se déplacer à l'intérieur du projet : `cd micmac`  
+>
+> > Créer un dossier build et se déplacer à l'intérieur : `mkdir build && cd build`
+>
+> > Générer les makefiles en utilisant cmake : `cmake ../`
+>
+> > Effectuer la compilation en remplaçant **{cores number}** par le nombre de cœurs du processeur de la machine : `make install -j{cores number}`
+>
+>#### Recommandé : 
+> 
+> > Sortir du projet MicMac : `cd ../..`
+> 
+> > Déplacer MicMac dans le dossier /opt : `sudo mv micmac/ /opt/`
+
+>### CCTag
+>
+> > Installation des dépendances :  
+> > `sudo apt-get update && sudo apt-get install g++ git-all libpng-dev libjpeg-dev libeigen3-dev libboost-all-dev libtbb-dev`
+> >
+> > `sudo apt update && sudo apt install libopencv-dev, libboost-all-dev libopen3-dev`
+> 
+> > Copier le dépôt github du projet : `git clone https://github.com/alicevision/CCTag.git`
+> 
+> > Se déplacer à l'intérieur du projet : `cd CCTag`  
+> 
+> > Créer un dossier build et se déplacer à l'intérieur : `mkdir build && cd build`
+> 
+> > Générer les makefiles en utilisant cmake :
+> > > Si vous possédez une carte graphique Nvidia : `cmake ../`
+> >
+> > > Sinon : `cmake -DCCTAG_WITH_CUDA:BOOL=OFF ../`
+> 
+> > Effectuer la compilation en remplaçant **{cores number}** par le nombre de cœurs du processeur de la machine : `make install -j{cores number}`
+> 
+>#### Recommandé :
+> > Renommer le fichier nouvellement généré : `mv Linux-* CCTag`
+> 
+> > Déplacer le fichier CCTag dans le dossier /opt : `sudo mv CCTag/ /opt/`
+
+
+>### CloudCompare
+>```bash
+>sudo snap install cloudcompare
+>```
 
 ## Usage
 Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
