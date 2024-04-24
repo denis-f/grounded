@@ -223,7 +223,7 @@ class DensityAnalyser:
 
     def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, reglet_size=0.22):
         # ---------------------------------------- Premier Bloc --------------------------------------------------------
-        print("Détéction des points homologues en cours, cela peut prendre un certain temps. Veuillez patienter...")
+        print("Détection des points homologues en cours, cela peut prendre un certain temps. Veuillez patienter...")
         self.sfm.detection_points_homologues(photo_path_before_excavation, photo_path_after_excavation)
         print("Calibration en cours, cela peut prendre un certain temps. Veuillez patienter...")
         self.sfm.calibration()
