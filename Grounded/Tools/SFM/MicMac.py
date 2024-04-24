@@ -166,7 +166,8 @@ class MicMac(SFM):
         creer_raccourci_dossier_dans_avec_prefix(os.path.abspath(chemin_dossier_apres), self.working_directory, "1_")
 
         subprocess.run([self.chemin_mm3d, "Tapioca", "All",
-                        f"{self.working_directory}{os.sep}.*JPG", "1000"])
+                        f"{self.working_directory}{os.sep}.*JPG", "1000"],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def calibration(self):
         """
@@ -175,7 +176,8 @@ class MicMac(SFM):
         Returns:
             None
         """
-        subprocess.run([self.chemin_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG"])
+        subprocess.run([self.chemin_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG"],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def generer_nuages_de_points(self) -> tuple[PointCloud, PointCloud]:
         """
@@ -187,9 +189,9 @@ class MicMac(SFM):
             tuple[0] ⇛ avant et tuple[1] ⇛ après
         """
         # On génère le nuage de points des photos d'avant excavation
-        subprocess.run(
-            [self.chemin_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG",
-             self.distorsion_model])
+        subprocess.run([self.chemin_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG",
+                        self.distorsion_model],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_0.ply
         renommer_fichier(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"),
@@ -252,7 +254,8 @@ class MicMac(SFM):
         subprocess.run([self.chemin_mm3d, "Im2XYZ", os.path.join(self.working_directory,
                                                                  f"PIMs-{self.zoom_final}{os.sep}Nuage-Depth-"
                                                                  f"{image_locale.name}.xml"),
-                        nom_fichier_coordinates, nom_fichier_coordinates_3d])
+                        nom_fichier_coordinates, nom_fichier_coordinates_3d],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         nom_fichier_filtered = os.path.join(log_directory, f"Filtered_{image.get_name_without_extension()}_coord.txt")
 

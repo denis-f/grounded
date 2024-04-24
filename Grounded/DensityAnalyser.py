@@ -223,13 +223,15 @@ class DensityAnalyser:
 
     def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, reglet_size=0.22):
         # ---------------------------------------- Premier Bloc --------------------------------------------------------
-
+        print("Détéction des points homologues en cours, cela peut prendre un certain temps. Veuillez patienter...")
         self.sfm.detection_points_homologues(photo_path_before_excavation, photo_path_after_excavation)
+        print("Calibration en cours, cela peut prendre un certain temps. Veuillez patienter...")
         self.sfm.calibration()
+        print("Génération des nuages de point en cours, cela peut prendre un certain temps. Veuillez patienter...")
         point_cloud_before_excavation, point_cloud_after_excavation = self.sfm.generer_nuages_de_points()
 
         # --------------------------------------- Deuxième Bloc --------------------------------------------------------
-
+        print("Redimensionnement des nuages de points en cours...")
         # on récupère les images ainsi que les coordonnées 2D de leurs mires
         images = self.detecteur_mire.detection_mires(photo_path_before_excavation)
         images += self.detecteur_mire.detection_mires(photo_path_after_excavation)
@@ -257,7 +259,7 @@ class DensityAnalyser:
                                                                                  mean_scale_factor)
 
         # -------------------------------------- Troisième Bloc --------------------------------------------------------
-
+        print("Calcul du volume en cours...")
         # on calcule le raster de la distance entre les deux nuages de points
         raster = self.point_cloud_processor.cloud_to_cloud_distance(point_cloud_before_excavation,
                                                                     point_cloud_after_excavation)
@@ -283,8 +285,8 @@ class DensityAnalyser:
 
         with open("results.txt", 'w') as file:
             file.write(f"nombre de trou détectés : {len(holes_volumes)}\n"
-                       "------------Trous triés de gauche à droite------------")
+                       "------------Trous triés de gauche à droite------------\n")
             for i in range(len(holes_volumes)):
-                file.write(f"volume du trou n°{i + 1} : {holes_volumes[i]}")
+                file.write(f"volume du trou n°{i + 1} : {holes_volumes[i]}\n")
 
         return holes_volumes

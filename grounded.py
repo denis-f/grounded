@@ -12,12 +12,12 @@ except IndexError as error:
     pass
     raise Exception("nombre d'arguments insuffisant")
 
-print(f"le dossier d'entrée est : {dossier_avant}")
-print(f"le dossier de sortie est : {dossier_apres}")
+print(f"le dossier contenant les photos avant excavation est : {dossier_avant}")
+print(f"le dossier contenant les photos apres excavation est : {dossier_apres}")
 
 
 m = MicMac("/opt/micmac/bin/mm3d", "FraserBasic", "MicMac")  # initialisation d'un SFM
-c = CloudCompare("cloudcompare.CloudCompare")  # initialisation de PointCloudProcessor
+c = CloudCompare("cloudcompare.CloudCompare", "2.11.1")  # initialisation de PointCloudProcessor
 d = DetectionCCTag("/opt/CCTag/")  # initialisation d'un DetecteurMire
 
 analyser = DensityAnalyser(m, d, c)
