@@ -3,3 +3,4 @@ scipy
 rasterio
 shapely
 scikit-image
+matplotlib

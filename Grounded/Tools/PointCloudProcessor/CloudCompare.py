@@ -66,8 +66,8 @@ class CloudCompare(PointCloudProcessor):
         """
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "cloudCompare_working_directory"))
         self.path_cloud_compare = path_cloud_compare
-        self.set_up_working_space()
         self.is_v1_12_or_higher = compare_versions(version, '2.12') >= 0
+        self.set_up_working_space()
 
     def set_up_working_space(self):
         if os.path.exists(self.working_directory):

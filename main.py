@@ -3,7 +3,7 @@ from Grounded.Tools.SFM import MicMac
 from Grounded.Tools.PointCloudProcessor import CloudCompare
 from Grounded.DensityAnalyser import DensityAnalyser
 
-m = MicMac("/opt/micmac/bin/mm3d", "FraserBasic", "MicMac")  # initialisation d'un SFM
+m = MicMac("/opt/micmac/bin/mm3d", "FraserBasic", "QuickMac")  # initialisation d'un SFM
 c = CloudCompare("cloudcompare.CloudCompare", "2.11.1")  # initialisation de PointCloudProcessor
 d = DetectionCCTag("/opt/CCTag/")  # initialisation d'un DetecteurMire
 
