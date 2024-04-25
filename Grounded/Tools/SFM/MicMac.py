@@ -203,9 +203,9 @@ class MicMac(SFM):
                          os.path.join(self.working_directory, "Tempo"))
 
         # On génère le nuage de points des photos d'après excavation
-        subprocess.run(
-            [self.chemin_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}1_.*JPG",
-             self.distorsion_model])
+        subprocess.run([self.chemin_mm3d, "C3DC", self.zoom_final,
+                        f"{self.working_directory}{os.sep}1_.*JPG", self.distorsion_model],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_1.ply
         renommer_fichier(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"),
