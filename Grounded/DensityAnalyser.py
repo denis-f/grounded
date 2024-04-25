@@ -172,7 +172,6 @@ def delimitate_holes(raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hol
     # Filtrage des polygones par rondeur (Cox) et surface minimale
     filtered_polygons = []
     for polygon in simplified_polygons:
-        a = roundness(polygon)
         if roundness(polygon) >= k_cox_threshold:
             filtered_polygons.append(polygon)
 
@@ -187,7 +186,6 @@ def delimitate_holes(raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hol
 
 def polygon_coordinate_conversion(raster: Raster, polygon: Polygon) -> list[tuple[float, float]]:
     data_set = rasterio.open(raster.path, 'r')
-    a = data_set.transform
     coordinates = []
     for point in polygon.exterior.coords:
         x, y = data_set.xy(point[0], point[1])
