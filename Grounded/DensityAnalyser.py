@@ -11,6 +11,8 @@ from shapely.geometry import Polygon
 from scipy.ndimage import label
 from shapely import buffer
 from skimage import measure
+from matplotlib import pyplot
+from matplotlib.colors import LinearSegmentedColormap
 
 
 def calculate_average_mire_3d(mires_3d: list[Mire3D]) -> list[Mire3D]:
@@ -110,13 +112,14 @@ def prospect_zone(raster: Raster):
     return generic_filter(raster_array, mean, size=(25, 25))
 
 
-def delimitate_holes(raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hole=0.008, thres_hole=0.00021,
-                     k_cox_threshold=0.35, minimal_hole_area=0.004):
+def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hole=0.008,
+                     thres_hole=0.00021, k_cox_threshold=0.35, minimal_hole_area=0.004):
     """
     Identifie et délimite les trous (zones non-continues) dans un raster.
 
     Args:
-        raster_zone (numpy.ndarray): Raster représentant la zone d'intérêt.
+        raster (Raster): Dataobject Raster stockant les informations sur le fichier
+        raster_zone (numpy.ndarray): matrice représentant la zone d'intérêt.
         tol_simplify (float): Tolérance de simplification des polygones.
         width_buffer (float): Largeur d'agrandissement des polygones.
         area_hole (float): Surface minimale requise pour un trou.
@@ -167,7 +170,7 @@ def delimitate_holes(raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hol
         polygons.append(find_polygons(np.where(labeled_image == lab, 1, 0)))
 
     # Simplification des polygones
-    simplified_polygons = [polygon.simplify(tolerance=tol_simplify, preserve_topology=True) for polygon in polygons]
+    simplified_polygons = [polygon.simplify(tolerance=tol_simplify) for polygon in polygons]
 
     # Filtrage des polygones par rondeur (Cox) et surface minimale
     filtered_polygons = []
@@ -176,8 +179,11 @@ def delimitate_holes(raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hol
         if roundness(polygon) >= k_cox_threshold:
             filtered_polygons.append(polygon)
 
+    with rasterio.open(raster.path, 'r') as data_set:
+        resolution = abs(data_set.transform[0])
+
     # Agrandissement des polygones
-    buffered_polygons = [buffer(polygon, distance=width_buffer) for polygon in filtered_polygons]
+    buffered_polygons = [buffer(polygon, distance=width_buffer/resolution) for polygon in filtered_polygons]
 
     # Tri des polygones de gauche à droite
     sorted_polygons = sorted(buffered_polygons, key=lambda poly: poly.bounds[0])
@@ -195,6 +201,30 @@ def polygon_coordinate_conversion(raster: Raster, polygon: Polygon) -> list[tupl
 
     data_set.close()
     return coordinates
+
+
+def save_plot_result(raster_array, holes_polygons, list_volumes, output_name):
+    mini = np.nanmin(raster_array)
+    maxi = np.nanmax(raster_array)
+    colors = [(0, '#aaffff'), (0.04, '#001f6f'), (0.1, '#00f600'), (0.15, '#035700'), (0.25, '#fcfd00'),
+              (0.4, '#ef0000'), (0.5, '#921a1a'), (1, '#e7e6e6')]
+    high_contrast = LinearSegmentedColormap.from_list('high_contrast', colors)
+    pyplot.imshow(raster_array, cmap=high_contrast, vmin=mini, vmax=maxi)
+    pyplot.colorbar()
+    for i in range(len(holes_polygons)):
+        poly = holes_polygons[i]
+
+        # Affichage des polygons sur l'image
+        x_coords, y_coords = poly.exterior.xy  # Extraire les coordonnées x et y du polygone
+        x_coords = list(x_coords)
+        y_coords = list(y_coords)
+        pyplot.plot(y_coords, x_coords, color='black')
+
+        # Ajout des volumes
+        pyplot.text(poly.centroid.y, poly.centroid.x, format(list_volumes[i], '.6f'),
+                    fontsize=5, ha='center', va='center', color='black')
+
+    pyplot.savefig(output_name, format='pdf')
 
 
 class DensityAnalyser:
@@ -268,7 +298,7 @@ class DensityAnalyser:
         zone_tot = prospect_zone(raster)
 
         # on récupère les polygones détourant les trous
-        holes_polygons = delimitate_holes(zone_tot, 0.01, 0.02, 0.008, 0.005, 0.55, 0.004)
+        holes_polygons = delimitate_holes(raster, zone_tot, 0.01, 0.02, 0.008, 0.005, 0.55, 0.004)
 
         # on récupère les coordonnées des points des polygones dans l'espace du raster
         list_holes_coordinates = [polygon_coordinate_conversion(raster, hole) for hole in holes_polygons]
@@ -283,10 +313,14 @@ class DensityAnalyser:
         # on récupère les volumes des différents trous triés de gauche à droite et de haut en bas
         holes_volumes = [self.point_cloud_processor.volume_between_clouds(hole[0], hole[1]) for hole in holes_cropped]
 
+        # on enregistre au format txt les résultats
         with open("results.txt", 'w') as file:
             file.write(f"nombre de trou détectés : {len(holes_volumes)}\n"
                        "------------Trous triés de gauche à droite------------\n")
             for i in range(len(holes_volumes)):
                 file.write(f"volume du trou n°{i + 1} : {holes_volumes[i]}\n")
+
+        # on enregistre au format pdf les résultats
+        save_plot_result(zone_tot, holes_polygons, holes_volumes, "results.pdf")
 
         return holes_volumes
