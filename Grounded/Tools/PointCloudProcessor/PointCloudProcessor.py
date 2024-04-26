@@ -46,4 +46,14 @@ class PointCloudProcessor(ABC):
 
     @abstractmethod
     def volume_between_clouds(self, crop_before: PointCloud, crop_after: PointCloud) -> float:
+        """
+        Méthode abstraite pour calculer le volume se trouvant entre deux nuages de points
+
+        Args:
+            crop_before (PointCloud): Le nuage de points découpé avant l'excavation.
+            crop_after (PointCloud): Le nuage de points découpé après l'excavation.
+
+        Returns:
+            float: le volume calculé
+        """
         pass

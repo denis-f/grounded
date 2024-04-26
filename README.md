@@ -83,8 +83,9 @@ python3 grounded.py path/to/photo_before_excavation path/to/photo_after_excavati
 ```
 
 ### Avec le fichier main :
+Il est nécessaire d'entrer les chemins menant aux photos dans les zones indiquées par les commentaires présents dans le code.
 ```commandline
-python3 grounded.py path/to/photo_before_excavation path/to/photo_after_excavation
+python3 main.py
 ```
 
 #### <span style="color:red">⚠️ Cette version est un prototype et son utilisation est vouée à changer au fil du temps.</span>

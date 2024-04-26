@@ -142,18 +142,33 @@ class CloudCompare(PointCloudProcessor):
         return PointCloud(path_cloud)
 
     def volume_between_clouds(self, crop_before: PointCloud, crop_after: PointCloud) -> float:
+        """
+        Méthode pour calculer le volume se trouvant entre deux nuages de points
+
+        Args:
+            crop_before (PointCloud): Le nuage de points découpé avant l'excavation.
+            crop_after (PointCloud): Le nuage de points découpé après l'excavation.
+
+        Returns:
+            float: le volume calculé
+        """
+
         subprocess.run([self.path_cloud_compare, "-SILENT",
                         "-O", "-GLOBAL_SHIFT", "0", "0", "0", crop_after.path,
                         "-O", "-GLOBAL_SHIFT", "0", "0", "0", crop_before.path,
                         "-VOLUME", "-GRID_STEP", "0.001"],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+        # Lecture des résultats dans le fichier généré automatiquement
         report_path = find_files_regex(crop_before.get_path_directory(), "VolumeCalculationReport")[0]
         with open(report_path, 'r') as file:
             content = file.read()
 
         volume = float(content.split("\n")[0].split()[1])
+
+        # Suppression du fichier contenant les résultats
         os.remove(report_path)
+
         return volume
 
     def move_file_to_working_directory(self, source_directory: str, regex: str, new_name: str):

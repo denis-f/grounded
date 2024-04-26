@@ -97,16 +97,15 @@ def calculate_average_scale_factor(mires: list[Mire3D], reglet_size):
     return statistics.mean(scale_factors)
 
 
-def mean(x):
-    # Exclure les valeurs NA du calcul de la moyenne
-    valid_values = x[~np.isnan(x)]
-    if len(valid_values) > 0:
-        return np.mean(valid_values)
-    else:
-        return np.nan
-
-
 def prospect_zone(raster: Raster):
+    def mean(x):
+        # Exclure les valeurs NA du calcul de la moyenne
+        valid_values = x[~np.isnan(x)]
+        if len(valid_values) > 0:
+            return np.mean(valid_values)
+        else:
+            return np.nan
+
     with rasterio.open(raster.path, "r+") as data_set:
         raster_array = data_set.read(2)
     return generic_filter(raster_array, mean, size=(25, 25))
@@ -182,7 +181,7 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
         resolution = abs(data_set.transform[0])
 
     # Agrandissement des polygones
-    buffered_polygons = [buffer(polygon, distance=width_buffer/resolution) for polygon in filtered_polygons]
+    buffered_polygons = [buffer(polygon, distance=width_buffer / resolution) for polygon in filtered_polygons]
 
     # Tri des polygones de gauche à droite
     sorted_polygons = sorted(buffered_polygons, key=lambda poly: poly.bounds[0])
@@ -191,24 +190,35 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
 
 
 def polygon_coordinate_conversion(raster: Raster, polygon: Polygon) -> list[tuple[float, float]]:
+    # on ouvre le fichier du raster
     data_set = rasterio.open(raster.path, 'r')
     coordinates = []
     for point in polygon.exterior.coords:
+        # On convertit les coordonnées dans la matrice en coordonnées dans le raster
         x, y = data_set.xy(point[0], point[1])
         coordinates.append((x, y))
 
+    # on ferme le fichier
     data_set.close()
+
     return coordinates
 
 
 def save_plot_result(raster_array, holes_polygons, list_volumes, output_name):
+    # On récupère les valeurs maximales et minimales
     mini = np.nanmin(raster_array)
     maxi = np.nanmax(raster_array)
+
+    # On définit l'échelle de couleur qui sera utilisé pour l'affichage des du plot
     colors = [(0, '#aaffff'), (0.04, '#001f6f'), (0.1, '#00f600'), (0.15, '#035700'), (0.25, '#fcfd00'),
               (0.6, '#ef0000'), (0.8, '#921a1a'), (1, '#e7e6e6')]
     high_contrast = LinearSegmentedColormap.from_list('high_contrast', colors)
+
+    # Ajout du plot du raster ainsi que de la barre de couleur
     pyplot.imshow(raster_array, cmap=high_contrast, vmin=mini, vmax=maxi)
     pyplot.colorbar()
+
+    # Ajout des informations concernant les trous
     for i in range(len(holes_polygons)):
         poly = holes_polygons[i]
 
@@ -222,6 +232,7 @@ def save_plot_result(raster_array, holes_polygons, list_volumes, output_name):
         pyplot.text(poly.centroid.y, poly.centroid.x, format(list_volumes[i], '.6f'),
                     fontsize=5, ha='center', va='center', color='black')
 
+    # Enregistrement au format .pdf du fichier
     pyplot.savefig(output_name, format='pdf')
 
 
