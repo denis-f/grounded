@@ -1,5 +1,6 @@
 from .SFM import SFM
 from Grounded.DataObject import Image, File, PointCloud, Mire2D, Mire3D
+from Grounded.utils import find_files_regex, rename_file
 
 import subprocess
 import os
@@ -78,23 +79,6 @@ def copier_contenu_dossier(dossier_source: str, dossier_destination: str):
         chemin_complet_destination = os.path.join(dossier_destination, element)
         # Déplace l'élément dans le dossier destination
         os.rename(chemin_complet_source, chemin_complet_destination)
-
-
-def recuperer_premier_fichier_avec_pattern(source_directory: str, pattern: str):
-    files = os.listdir(source_directory)
-    for file_name in files:
-        if pattern in file_name:
-            try:
-                return File(os.path.join(source_directory, file_name))
-            except FileNotFoundError:
-                raise Exception("Fichier introuvable")
-
-
-def renommer_fichier(fichier: str, nouveau_nom: str):
-    try:
-        os.rename(fichier, nouveau_nom)
-    except OSError as e:
-        raise Exception("Un problème est survenue lors du renommage du fichier")
 
 
 def effacer_fichier_si_existe(fichier: str):
@@ -194,13 +178,12 @@ class MicMac(SFM):
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_0.ply
-        renommer_fichier(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"),
-                         os.path.join(self.working_directory, "C3DC_0.ply"))
+        rename_file(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"), "C3DC_0")
 
         # On déplace le fichier PIMs-{self.zoom_final} en Tempo de façon temporaire afin de générer le nuage de point
         # d'après excavation sans effets de bords
-        renommer_fichier(os.path.join(self.working_directory, f"PIMs-{self.zoom_final}"),
-                         os.path.join(self.working_directory, "Tempo"))
+        os.rename(os.path.join(self.working_directory, f"PIMs-{self.zoom_final}"),
+                  os.path.join(self.working_directory, "Tempo"))
 
         # On génère le nuage de points des photos d'après excavation
         subprocess.run([self.chemin_mm3d, "C3DC", self.zoom_final,
@@ -208,8 +191,7 @@ class MicMac(SFM):
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_1.ply
-        renommer_fichier(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"),
-                         os.path.join(self.working_directory, "C3DC_1.ply"))
+        rename_file(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"), "C3DC_1")
 
         # On déplace le contenu de Tempo à l'intérieur de PIMs-{self.zoom_final} sans les fichiers pouvant générer
         # des conflits
@@ -246,8 +228,7 @@ class MicMac(SFM):
             file.write(image.get_string_coordinates_mires())
 
         # On récupère le nom de l'image dans l'espace de travail MicMac
-        image_locale = recuperer_premier_fichier_avec_pattern(self.working_directory,
-                                                              image.get_name_without_extension())
+        image_locale = File(find_files_regex(self.working_directory, image.get_name_without_extension())[0])
 
         # on génère nos coordonnées 3D dans un fichier
         nom_fichier_coordinates_3d = os.path.join(log_directory, f"{image.get_name_without_extension()}_3D_coord.txt")

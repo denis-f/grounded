@@ -7,17 +7,6 @@ import os
 import shutil
 
 
-def deplacer_premier_fichier_avec_pattern(source_directory: str, destination_directory: str, pattern: str):
-    files = os.listdir(source_directory)
-    for file_name in files:
-        if pattern in file_name:
-            try:
-                os.rename(os.path.join(source_directory, file_name), os.path.join(destination_directory, file_name))
-                return PointCloud(os.path.join(destination_directory, file_name))
-            except FileNotFoundError:
-                raise Exception("Fichier introuvable")
-
-
 def compare_versions(version1, version2):
     """
     Compare deux versions de logiciel.
@@ -93,7 +82,7 @@ class CloudCompare(PointCloudProcessor):
         # déplacement du nuage de point nouvellement généré se trouvant dans le dossier du nuage de points
         # donné en paramètre
         path_point_cloud = self.move_file_to_working_directory(point_cloud.get_path_directory(),
-                                                               "TRANSFORMED", point_cloud.name)
+                                                               "TRANSFORMED", point_cloud.get_name_without_extension())
 
         # suppression de la matrice
         try:
@@ -130,7 +119,7 @@ class CloudCompare(PointCloudProcessor):
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         postfix = "_C2C_DIST_MAX_DIST_0.1_RASTER_Z"
 
-        raster_path = self.move_file_to_working_directory(point_cloud_before_excavation,
+        raster_path = self.move_file_to_working_directory(point_cloud_before_excavation.get_path_directory(),
                                                           f"{point_cloud_before_excavation.get_name_without_extension()}{postfix}",
                                                           f"{point_cloud_before_excavation.get_name_without_extension()}_CLOUD_TO_CLOUD_DISTANCE")
 

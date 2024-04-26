@@ -60,7 +60,7 @@ def move_file_to_directory(source, destination_directory):
     filename = os.path.basename(source)
     destination = os.path.join(destination_directory, filename)
 
-    if os.path.exists(destination):
+    if os.path.exists(destination) and not os.path.samefile(source, destination):
         raise FileExistsError("A file with the same name already exists in the destination directory.")
 
     os.rename(source, destination)
