@@ -1,6 +1,6 @@
 from .PointCloudProcessor import PointCloudProcessor
-from Grounded.DataObject import File, PointCloud, Raster
-from Grounded.utils import find_files_regex, rename_file
+from Grounded.DataObject import PointCloud, Raster
+from Grounded.utils import find_files_regex, rename_file, move_file_to_directory
 
 import subprocess
 import os
@@ -14,16 +14,6 @@ def deplacer_premier_fichier_avec_pattern(source_directory: str, destination_dir
             try:
                 os.rename(os.path.join(source_directory, file_name), os.path.join(destination_directory, file_name))
                 return PointCloud(os.path.join(destination_directory, file_name))
-            except FileNotFoundError:
-                raise Exception("Fichier introuvable")
-
-
-def recuperer_premier_fichier_avec_pattern(directory: str, pattern: str):
-    files = os.listdir(directory)
-    for file_name in files:
-        if pattern in file_name:
-            try:
-                return os.path.join(directory, file_name)
             except FileNotFoundError:
                 raise Exception("Fichier introuvable")
 
@@ -102,8 +92,8 @@ class CloudCompare(PointCloudProcessor):
 
         # déplacement du nuage de point nouvellement généré se trouvant dans le dossier du nuage de points
         # donné en paramètre
-        transformed_point_cloud = deplacer_premier_fichier_avec_pattern(point_cloud.get_path_directory(),
-                                                                        self.working_directory, "TRANSFORMED")
+        path_point_cloud = self.move_file_to_working_directory(point_cloud.get_path_directory(),
+                                                               "TRANSFORMED", point_cloud.name)
 
         # suppression de la matrice
         try:
@@ -112,7 +102,7 @@ class CloudCompare(PointCloudProcessor):
             raise Exception("Fichier introuvable")
 
         # on retourne le nouveau nuage de point
-        return transformed_point_cloud
+        return PointCloud(path_point_cloud)
 
     def cloud_to_cloud_distance(self, point_cloud_before_excavation: PointCloud,
                                 point_cloud_after_excavation: PointCloud) -> Raster:
@@ -139,9 +129,12 @@ class CloudCompare(PointCloudProcessor):
                         "-RASTERIZE", "-GRID_STEP", "0.001", "-EMPTY_FILL", "INTERP", output_raster_option],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         postfix = "_C2C_DIST_MAX_DIST_0.1_RASTER_Z"
-        raster_before = Raster(find_files_regex(self.working_directory, point_cloud_before_excavation.get_name_without_extension() + postfix)[0])
-        find_files_regex(self.working_directory, point_cloud_before_excavation.get_name_without_extension() + postfix)
-        return raster_before
+
+        raster_path = self.move_file_to_working_directory(point_cloud_before_excavation,
+                                                          f"{point_cloud_before_excavation.get_name_without_extension()}{postfix}",
+                                                          f"{point_cloud_before_excavation.get_name_without_extension()}_CLOUD_TO_CLOUD_DISTANCE")
+
+        return Raster(raster_path)
 
     def crop_point_cloud(self, point_cloud: PointCloud, coordonnees_trace: list[tuple[float, float]]) -> PointCloud:
         formated_coordinates = [str(coord) for point in coordonnees_trace for coord in point]
@@ -153,11 +146,11 @@ class CloudCompare(PointCloudProcessor):
                     "-SAMPLE_MESH", "DENSITY", "10000000"])
 
         subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        path_point_cloud = find_files_regex(self.working_directory, f"{point_cloud.get_name_without_extension()}"
-                                                                    "_CROPPED_SAMPLED_POINTS")[0]
-        path_point_cloud = rename_file(path_point_cloud, f"{point_cloud.get_name_without_extension()}"
-                                                         "_CROPPED")
-        return PointCloud(path_point_cloud)
+
+        path_cloud = self.move_file_to_working_directory(point_cloud.get_path_directory(),
+                                                         f"{point_cloud.get_name_without_extension()}_CROPPED_SAMPLED_POINTS",
+                                                         f"{point_cloud.get_name_without_extension()}_CROPPED")
+        return PointCloud(path_cloud)
 
     def volume_between_clouds(self, crop_before: PointCloud, crop_after: PointCloud):
         subprocess.run([self.path_cloud_compare, "-SILENT",
@@ -166,10 +159,16 @@ class CloudCompare(PointCloudProcessor):
                         "-VOLUME", "-GRID_STEP", "0.001"],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-        report_path = find_files_regex(self.working_directory, "VolumeCalculationReport")[0]
+        report_path = find_files_regex(crop_before.get_path_directory(), "VolumeCalculationReport")[0]
         with open(report_path, 'r') as file:
             content = file.read()
 
         volume = float(content.split("\n")[0].split()[1])
         os.remove(report_path)
         return volume
+
+    def move_file_to_working_directory(self, source_directory: str, regex: str, new_name: str):
+        path_point_cloud = find_files_regex(source_directory, regex)[0]
+        path_point_cloud = move_file_to_directory(path_point_cloud, self.working_directory)
+        path_point_cloud = rename_file(path_point_cloud, new_name)
+        return path_point_cloud

@@ -47,3 +47,21 @@ def rename_file(filepath, new_name):
     os.rename(filepath, new_filepath)
 
     return new_filepath
+
+
+def move_file_to_directory(source, destination_directory):
+
+    if not os.path.exists(source):
+        raise FileNotFoundError("The source file does not exist.")
+
+    if not os.path.isdir(destination_directory):
+        raise NotADirectoryError("The destination path is not a directory.")
+
+    filename = os.path.basename(source)
+    destination = os.path.join(destination_directory, filename)
+
+    if os.path.exists(destination):
+        raise FileExistsError("A file with the same name already exists in the destination directory.")
+
+    os.rename(source, destination)
+    return destination
