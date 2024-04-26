@@ -9,9 +9,9 @@ d = DetectionCCTag("/opt/CCTag/")  # initialisation d'un DetecteurMire
 
 # instantiation d'un objet DensityAnalyser construit à partir des modules défini au-dessus
 analyser = DensityAnalyser(m, d, c)
+
 # analyse du volume des trous présents sur les photos
-volumes_trous = analyser.analyse("/home/francoin/Documents/Projet_Densite_Sol/Dossier_photo_test/avant",
-                                 # à compléter par le dossier contenant les images avant excavation
+volumes_trous = analyser.analyse("/home/francoin/Documents/Projet_Densite_Sol/Dossier_photo_test/avant", # à compléter par le dossier contenant les images avant excavation
                                  "/home/francoin/Documents/Projet_Densite_Sol/Dossier_photo_test/apres")  # à compléter par le dossier contenant les images après excavation
 
 print("###########################################################################\n"

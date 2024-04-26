@@ -205,7 +205,7 @@ def save_plot_result(raster_array, holes_polygons, list_volumes, output_name):
     mini = np.nanmin(raster_array)
     maxi = np.nanmax(raster_array)
     colors = [(0, '#aaffff'), (0.04, '#001f6f'), (0.1, '#00f600'), (0.15, '#035700'), (0.25, '#fcfd00'),
-              (0.4, '#ef0000'), (0.5, '#921a1a'), (1, '#e7e6e6')]
+              (0.6, '#ef0000'), (0.8, '#921a1a'), (1, '#e7e6e6')]
     high_contrast = LinearSegmentedColormap.from_list('high_contrast', colors)
     pyplot.imshow(raster_array, cmap=high_contrast, vmin=mini, vmax=maxi)
     pyplot.colorbar()

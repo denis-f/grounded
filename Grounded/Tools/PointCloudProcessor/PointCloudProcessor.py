@@ -45,5 +45,5 @@ class PointCloudProcessor(ABC):
         pass
 
     @abstractmethod
-    def volume_between_clouds(self, crop_before: PointCloud, crop_after: PointCloud):
+    def volume_between_clouds(self, crop_before: PointCloud, crop_after: PointCloud) -> float:
         pass

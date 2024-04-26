@@ -141,7 +141,7 @@ class CloudCompare(PointCloudProcessor):
                                                          f"{point_cloud.get_name_without_extension()}_CROPPED")
         return PointCloud(path_cloud)
 
-    def volume_between_clouds(self, crop_before: PointCloud, crop_after: PointCloud):
+    def volume_between_clouds(self, crop_before: PointCloud, crop_after: PointCloud) -> float:
         subprocess.run([self.path_cloud_compare, "-SILENT",
                         "-O", "-GLOBAL_SHIFT", "0", "0", "0", crop_after.path,
                         "-O", "-GLOBAL_SHIFT", "0", "0", "0", crop_before.path,
