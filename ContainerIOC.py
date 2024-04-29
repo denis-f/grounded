@@ -36,9 +36,3 @@ def create_instance(class_path, args):
     module = __import__(module_path, fromlist=[class_name])
     clazz = getattr(module, class_name)
     return clazz(**args)
-
-
-container = ContainerIOC('config.yml')
-a = container.get("micmac", zoom_final='MicMac')
-
-print(a)
