@@ -105,12 +105,12 @@ class MicMac(SFM):
     de la caméra, la génération de nuages de points, et le calcul des coordonnées 3D des mires dans une image.
     """
 
-    def __init__(self, chemin_mm3d: str, distorsion_model: str = "FraserBasic", zoom_final: str = "QuickMac"):
+    def __init__(self, path_mm3d: str, distorsion_model: str = "FraserBasic", zoom_final: str = "QuickMac"):
         """
         Initialise une instance de la classe MicMac.
 
         Args:
-            chemin_mm3d (str): Le chemin vers l'exécutable MicMac.
+            path_mm3d (str): Le chemin vers l'exécutable MicMac.
             distorsion_model (str): un modèle de distorsion
             zoom_final (str): un zoom final
 
@@ -118,7 +118,7 @@ class MicMac(SFM):
         Returns:
             None
         """
-        self.chemin_mm3d = chemin_mm3d
+        self.path_mm3d = path_mm3d
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "micmac_working_directory"))
         self.distorsion_model = distorsion_model
         self.zoom_final = zoom_final  # valeur par défaut
@@ -149,7 +149,7 @@ class MicMac(SFM):
         # creation des raccourcis pour les fichiers après
         creer_raccourci_dossier_dans_avec_prefix(os.path.abspath(chemin_dossier_apres), self.working_directory, "1_")
 
-        subprocess.run([self.chemin_mm3d, "Tapioca", "All",
+        subprocess.run([self.path_mm3d, "Tapioca", "All",
                         f"{self.working_directory}{os.sep}.*JPG", "1000"],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -160,7 +160,7 @@ class MicMac(SFM):
         Returns:
             None
         """
-        subprocess.run([self.chemin_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG"],
+        subprocess.run([self.path_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG"],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def generer_nuages_de_points(self) -> tuple[PointCloud, PointCloud]:
@@ -173,7 +173,7 @@ class MicMac(SFM):
             tuple[0] ⇛ avant et tuple[1] ⇛ après
         """
         # On génère le nuage de points des photos d'avant excavation
-        subprocess.run([self.chemin_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG",
+        subprocess.run([self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG",
                         self.distorsion_model],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -186,7 +186,7 @@ class MicMac(SFM):
                   os.path.join(self.working_directory, "Tempo"))
 
         # On génère le nuage de points des photos d'après excavation
-        subprocess.run([self.chemin_mm3d, "C3DC", self.zoom_final,
+        subprocess.run([self.path_mm3d, "C3DC", self.zoom_final,
                         f"{self.working_directory}{os.sep}1_.*JPG", self.distorsion_model],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -232,7 +232,7 @@ class MicMac(SFM):
 
         # on génère nos coordonnées 3D dans un fichier
         nom_fichier_coordinates_3d = os.path.join(log_directory, f"{image.get_name_without_extension()}_3D_coord.txt")
-        subprocess.run([self.chemin_mm3d, "Im2XYZ", os.path.join(self.working_directory,
+        subprocess.run([self.path_mm3d, "Im2XYZ", os.path.join(self.working_directory,
                                                                  f"PIMs-{self.zoom_final}{os.sep}Nuage-Depth-"
                                                                  f"{image_locale.name}.xml"),
                         nom_fichier_coordinates, nom_fichier_coordinates_3d],

@@ -1,0 +1,21 @@
+tools:
+  # SFM
+  micmac:
+    class: Grounded.Tools.SFM.MicMac.MicMac
+    arguments:
+      path_mm3d: '/opt/micmac/bin/mm3d'
+      distorsion_model: 'FraserBasic'
+      zoom_final: 'QuickMac'
+
+  # PointCloudProcessor
+  cloudcompare:
+    class: Grounded.Tools.PointCloudProcessor.CloudCompare.CloudCompare
+    arguments:
+      path_cloud_compare: 'cloudcompare.CloudCompare'
+      version: '2.11.1'
+
+  # DetecteurMire
+  detection_cctag:
+    class: Grounded.Tools.DetecteurMire.DetectionCCTag.DetectionCCTag
+    arguments:
+      path_cctag_directory: '/opt/CCTag/'
