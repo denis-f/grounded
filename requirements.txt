@@ -4,3 +4,5 @@ rasterio
 shapely
 scikit-image
 matplotlib
+PyYAML
+dependency-injector
