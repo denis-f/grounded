@@ -7,8 +7,8 @@ from typing import List, Optional
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Grounded est un logiciel dont le but est de permettre l\'analyse'
-                                                 ' du sol par photogrammétrie')
+    parser = argparse.ArgumentParser(description='Grounded est un logiciel permettant l\'analyse '
+                                                 'de la densité apparente du sol par photogrammétrie')
 
     # Option SFM
     parser.add_argument('-SFM', '-sfm',
@@ -34,10 +34,12 @@ def main():
                         action='append')
 
     # Argument positionnel pour le fichier avant
-    parser.add_argument('directory_before_excavation', type=str, help='Chemin du fichier avant')
+    parser.add_argument('directory_before_excavation', type=str,
+                        help='Chemin du dossier contenant les photos avant excavation')
 
     # Argument positionnel pour le fichier après
-    parser.add_argument('directory_after_excavation', type=str, help='Chemin du fichier après')
+    parser.add_argument('directory_after_excavation', type=str,
+                        help='Chemin du dossier contenant les photos après excavation')
 
     container = ContainerIOC("config.yml")
     arguments = parser.parse_args()

@@ -23,7 +23,10 @@ pip install -r requirements.txt
 ### _Linux_
 
 >### MicMac
-> > Installation des dépendances : `sudo apt-get update && sudo apt-get install make imagemagick libimage-exiftool-perl exiv2 proj-bin qt5-default`
+> > Installation des dépendances :  
+> > `sudo apt-get update && sudo apt-get install make imagemagick libimage-exiftool-perl exiv2 proj-bin`
+> >
+> > `sudo apt update && sudo apt install qtbase5-dev qt5-qmake`
 > 
 > > Copier le dépôt github du projet : `git clone https://github.com/micmacIGN/micmac.git`  
 >
@@ -45,8 +48,8 @@ pip install -r requirements.txt
 >
 > > Installation des dépendances :  
 > > `sudo apt-get update && sudo apt-get install g++ git-all libpng-dev libjpeg-dev libeigen3-dev libboost-all-dev libtbb-dev`
-> >
-> > `sudo apt update && sudo apt install libopencv-dev, libboost-all-dev libopen3-dev`
+> > 
+> > `sudo apt update && sudo apt install libopencv-dev libboost-all-dev libopen3-dev`
 > 
 > > Copier le dépôt github du projet : `git clone https://github.com/alicevision/CCTag.git`
 > 
@@ -78,8 +81,25 @@ pip install -r requirements.txt
 
 
 ### Avec le fichier grounded :
-```commandline
+#### Le logiciel grounded utilise un fichier de configuration qui contient pour chaque module les valeurs pas défaut des arguments
+
+Il est possible d'utiliser le logiciel de façon simple avec les paramètres par défaut comme ceci : 
+```bash
 python3 grounded.py path/to/photo_before_excavation path/to/photo_after_excavation
+```
+
+Il est également possible de choisir les modules ainsi que leurs paramètres qui seront utilisés lors de l'analyse de la façon suivante :
+```bash
+python3 grounded.py -SFM micmac -SFM_arg distorsion_model=FraserBasic -SFM_arg zoom_final=BigMack -Detector detection_cctag path/to/photo_before_excavation path/to/photo_after_excavation
+```
+
+Une aide est présente via la commande :
+```bash
+python3 grounded.py --h
+```
+ou
+```bash
+python3 grounded.py -help
 ```
 
 ### Avec le fichier main :
