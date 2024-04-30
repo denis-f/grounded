@@ -6,9 +6,12 @@ class ContainerIOC:
     def __init__(self, config_file: str):
         self.container = load_services_from_yaml(config_file)
 
-    def get(self, name, **kwargs):
+    def get(self, name: str, kwargs_dict: dict = None, **kwargs):
+        args = kwargs_dict | kwargs
         provider = getattr(self.container, name)
-        provider.kwargs['args'].update(kwargs)
+        if not set(args.keys()) <= set(provider.kwargs['args'].keys()):
+            raise Exception(f"bad arguments was given to create {name} tool")
+        provider.kwargs['args'].update(args)
         return provider()
 
 
