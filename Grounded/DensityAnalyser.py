@@ -1,7 +1,7 @@
 from Grounded.Tools.SFM import SFM
 from Grounded.Tools.DetecteurMire import DetecteurMire
 from Grounded.Tools.PointCloudProcessor import PointCloudProcessor
-from Grounded.DataObject import PointCloud, Mire3D, Mire, Raster
+from Grounded.DataObject import PointCloud, Mire3D, Mire, Raster, ScaleBar
 
 import statistics
 import rasterio
@@ -55,22 +55,16 @@ def calculate_standard_deviation_mire_3d(mires_3d: list[Mire3D]):
     return ecart_type
 
 
-def delete_mire_without_pair(mires: list[Mire]):
+def delete_mire_without_pair(mires: list[Mire], scale_bars: list[ScaleBar]):
     mires.sort(key=lambda x: x.identifier)
-    mire_to_remove = []
-    i = 0
-    while i < len(mires):
-        mire_courant = mires[i]
-        # s'il n'est pas pair ou si le mir suivant n'est pas sa paire
-        if mire_courant.identifier % 2 != 0 or (i != len(mires) - 1
-                                                and mires[i + 1].identifier != mire_courant.identifier + 1):
-            mire_to_remove.append(mire_courant)
-            i += 1
-        else:
-            i += 2
-
-    for mire in mire_to_remove:  # suppression des mires isolées
-        mires.remove(mire)
+    for scale_bar in scale_bars:
+        try:
+            start_mire = [mire for mire in mires if mire.identifier == scale_bar.start.identifier][0]
+            end_mire = [mire for mire in mires if mire.identifier == scale_bar.end.identifier][0]
+        except IndexError:
+            mires = [mire for mire in mires if mire.identifier != scale_bar.start.identifier and
+                     mire.identifier != scale_bar.end.identifier]
+            scale_bars.remove(scale_bar)
 
 
 def distance_euclidienne(point1, point2):
@@ -89,10 +83,12 @@ def distance_euclidienne(point1, point2):
     return np.sqrt(np.sum((point1 - point2) ** 2))
 
 
-def calculate_average_scale_factor(mires: list[Mire3D], reglet_size):
+def calculate_average_scale_factor(mires: list[Mire3D], scale_bars):
     scale_factors: list[float] = []
-    for i in range(0, len(mires), 2):
-        scale_factors.append(reglet_size / distance_euclidienne(mires[i].coordinates, mires[i + 1].coordinates))
+    for scale_bar in scale_bars:
+        start_mire = [mire for mire in mires if mire.identifier == scale_bar.start.identifier][0]
+        end_mire = [mire for mire in mires if mire.identifier == scale_bar.end.identifier][0]
+        scale_factors.append(scale_bar.length / distance_euclidienne(start_mire.coordinates, end_mire.coordinates))
 
     return statistics.mean(scale_factors)
 
@@ -260,7 +256,7 @@ class DensityAnalyser:
         self.detecteur_mire = detecteur_mire
         self.point_cloud_processor = point_cloud_processor
 
-    def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, reglet_size=0.22):
+    def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, scale_bars: list[ScaleBar]):
         # ---------------------------------------- Premier Bloc --------------------------------------------------------
         print("Détection des points homologues en cours, cela peut prendre un certain temps. Veuillez patienter...")
         self.sfm.detection_points_homologues(photo_path_before_excavation, photo_path_after_excavation)
@@ -286,10 +282,10 @@ class DensityAnalyser:
         ecart_type = calculate_standard_deviation_mire_3d(mires_3d)
 
         # on supprime les mires isolés dont la paire n'a pas pu être détecté
-        delete_mire_without_pair(mires_3d_moyens)
+        delete_mire_without_pair(mires_3d_moyens, scale_bars)
 
         # on calcule le facteur d'échelle moyen
-        mean_scale_factor = calculate_average_scale_factor(mires_3d_moyens, reglet_size)
+        mean_scale_factor = calculate_average_scale_factor(mires_3d_moyens, scale_bars)
 
         # on redimensionne les nuages de points à l'aide de ce facteur d'échelle
         point_cloud_before_excavation = self.point_cloud_processor.mise_a_echelle(point_cloud_before_excavation,

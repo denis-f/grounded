@@ -1,12 +1,13 @@
 from Grounded.DensityAnalyser import DensityAnalyser
 from Grounded.Tools import ContainerIOC
+from Grounded.ScaleBarLoader import ScaleBarLoader
 
 import sys
 import argparse
 from typing import List, Optional
 
 
-def main():
+def config_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='Grounded est un logiciel permettant l\'analyse '
                                                  'de la densité apparente du sol par photogrammétrie')
 
@@ -41,7 +42,12 @@ def main():
     parser.add_argument('directory_after_excavation', type=str,
                         help='Chemin du dossier contenant les photos après excavation')
 
-    container = ContainerIOC("config.yml")
+    return parser
+
+
+def main():
+    parser = config_parser()
+    container = ContainerIOC("Grounded/Configuration/config.yml")
     arguments = parser.parse_args()
 
     # vérification de la validité des arguments
@@ -63,8 +69,12 @@ def main():
     detecteur_mire = container.get(detecteur_mire_name, kwargs_dict=detecteur_mire_kwargs)
 
     analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor)
+
+    # chargement des scales bars
+    scale_bars = ScaleBarLoader.load("Grounded/Configuration/scaleBar.csv")
+
     volumes_trous = analyser.analyse(arguments.directory_before_excavation,
-                                     arguments.directory_after_excavation)
+                                     arguments.directory_after_excavation, scale_bars)
 
     # Affichage des résultats
     print("###########################################################################\n"
