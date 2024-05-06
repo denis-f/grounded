@@ -106,7 +106,8 @@ class MicMac(SFM):
     de la caméra, la génération de nuages de points, et le calcul des coordonnées 3D des mires dans une image.
     """
 
-    def __init__(self, path_mm3d: str, distorsion_model: str = "FraserBasic", zoom_final: str = "QuickMac"):
+    def __init__(self, path_mm3d: str, distorsion_model: str = "FraserBasic", zoom_final: str = "QuickMac",
+                 tapioca_mode: str = "All", tapioca_resolution: str = "1000"):
         """
         Initialise une instance de la classe MicMac.
 
@@ -122,6 +123,8 @@ class MicMac(SFM):
         self.path_mm3d = path_mm3d
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "micmac_working_directory"))
         self.distorsion_model = distorsion_model
+        self.tapioca_mode = tapioca_mode
+        self.tapioca_resolution = tapioca_resolution
         self.zoom_final = zoom_final  # valeur par défaut
 
         self.set_up_working_space()
@@ -150,8 +153,8 @@ class MicMac(SFM):
         # creation des raccourcis pour les fichiers après
         creer_raccourci_dossier_dans_avec_prefix(os.path.abspath(chemin_dossier_apres), self.working_directory, "1_")
 
-        subprocess.run([self.path_mm3d, "Tapioca", "All",
-                        f"{self.working_directory}{os.sep}.*JPG", "1000"],
+        subprocess.run([self.path_mm3d, "Tapioca", self.tapioca_mode,
+                        f"{self.working_directory}{os.sep}.*JPG", self.tapioca_resolution],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def calibration(self):
