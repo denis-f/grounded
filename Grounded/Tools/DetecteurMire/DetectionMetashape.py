@@ -31,7 +31,7 @@ def parse_export_file(export_file_path, photos) -> list[Image]:
     return images
 
 
-class DetecteurMetashape(DetecteurMire):
+class DetectionMetashape(DetecteurMire):
 
     def __init__(self):
         self.working_directory = "detecteur_Metashape_working_directory"

@@ -6,3 +6,4 @@ scikit-image
 matplotlib
 PyYAML
 dependency-injector
+Metashape
