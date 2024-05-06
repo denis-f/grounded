@@ -333,4 +333,9 @@ class DensityAnalyser:
         # on enregistre au format pdf les résultats
         save_plot_result(zone_tot, holes_polygons, holes_volumes, "results.pdf")
 
+        with open("config.txt", 'w') as file:
+            file.write(f"{self.sfm.get_config()}\n"
+                       f"{self.point_cloud_processor.get_config()}\n"
+                       f"{self.detecteur_mire.get_config()}")
+
         return holes_volumes

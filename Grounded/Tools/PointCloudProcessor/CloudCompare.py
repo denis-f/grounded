@@ -1,6 +1,6 @@
 from .PointCloudProcessor import PointCloudProcessor
 from Grounded.DataObject import PointCloud, Raster
-from Grounded.utils import find_files_regex, rename_file, move_file_to_directory
+from Grounded.utils import find_files_regex, rename_file, move_file_to_directory, config_builer
 
 import subprocess
 import os
@@ -176,3 +176,6 @@ class CloudCompare(PointCloudProcessor):
         path_point_cloud = move_file_to_directory(path_point_cloud, self.working_directory)
         path_point_cloud = rename_file(path_point_cloud, new_name)
         return path_point_cloud
+
+    def get_config(self) -> str:
+        return config_builer(self, "CloudCompare")

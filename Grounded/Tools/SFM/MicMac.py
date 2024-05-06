@@ -1,6 +1,7 @@
 from .SFM import SFM
 from Grounded.DataObject import Image, File, PointCloud, Mire2D, Mire3D
 from Grounded.utils import find_files_regex, rename_file
+from Grounded.utils import config_builer
 
 import subprocess
 import os
@@ -233,11 +234,14 @@ class MicMac(SFM):
         # on génère nos coordonnées 3D dans un fichier
         nom_fichier_coordinates_3d = os.path.join(log_directory, f"{image.get_name_without_extension()}_3D_coord.txt")
         subprocess.run([self.path_mm3d, "Im2XYZ", os.path.join(self.working_directory,
-                                                                 f"PIMs-{self.zoom_final}{os.sep}Nuage-Depth-"
-                                                                 f"{image_locale.name}.xml"),
+                                                               f"PIMs-{self.zoom_final}{os.sep}Nuage-Depth-"
+                                                               f"{image_locale.name}.xml"),
                         nom_fichier_coordinates, nom_fichier_coordinates_3d],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         nom_fichier_filtered = os.path.join(log_directory, f"Filtered_{image.get_name_without_extension()}_coord.txt")
 
         return recuperer_mires_3d(image, nom_fichier_coordinates, nom_fichier_coordinates_3d, nom_fichier_filtered)
+
+    def get_config(self) -> str:
+        return config_builer(self, "MicMac")

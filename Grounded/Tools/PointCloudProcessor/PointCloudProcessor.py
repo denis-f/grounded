@@ -57,3 +57,7 @@ class PointCloudProcessor(ABC):
             float: le volume calculé
         """
         pass
+
+    @abstractmethod
+    def get_config(self) -> str:
+        pass

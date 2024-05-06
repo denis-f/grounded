@@ -62,6 +62,8 @@ def main():
     point_cloud_processor = container.get(point_cloud_processor_name, kwargs_dict=point_cloud_processor_kwargs)
     detecteur_mire = container.get(detecteur_mire_name, kwargs_dict=detecteur_mire_kwargs)
 
+    display_config(sfm, point_cloud_processor, detecteur_mire)
+
     analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor)
     volumes_trous = analyser.analyse(arguments.directory_before_excavation,
                                      arguments.directory_after_excavation)
@@ -99,6 +101,9 @@ def parse_arguments_parameters(arguments: Optional[List]) -> dict:
 
     return kwargs
 
+def display_config(sfm, point_cloud_processor, detector):
+    print("\033[34mConfiguration d'exécution :\n")
+    print(f"{sfm.get_config()}\n{point_cloud_processor.get_config()}\n{detector.get_config()}\n\033[0m")
 
 if __name__ == '__main__':
     main()
