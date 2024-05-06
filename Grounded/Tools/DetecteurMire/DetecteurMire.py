@@ -23,3 +23,7 @@ class DetecteurMire(ABC):
             list[Image]: une liste contenant toutes les images ayant été trouvé par le détecteur de mire
         """
         pass
+
+    @abstractmethod
+    def get_config(self) -> str:
+        pass

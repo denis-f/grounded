@@ -50,7 +50,6 @@ def rename_file(filepath, new_name):
 
 
 def move_file_to_directory(source, destination_directory):
-
     if not os.path.exists(source):
         raise FileNotFoundError("The source file does not exist.")
 
@@ -65,3 +64,14 @@ def move_file_to_directory(source, destination_directory):
 
     os.rename(source, destination)
     return destination
+
+
+def config_builer(object, module_name: str) -> str:
+    attributes = vars(object)
+    config = f"{module_name}("
+    for i, (cle, valeur) in enumerate(attributes.items()):
+        config += f"{cle}={valeur}"
+        if i < len(attributes) - 1:
+            config += ", "
+    config += ")"
+    return config

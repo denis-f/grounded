@@ -58,3 +58,7 @@ class SFM(ABC):
             list[Mire3D]: Une liste d'objets Mire3D contenant les coordonnées 3D des mires.
         """
         pass
+
+    @abstractmethod
+    def get_config(self) -> str:
+        pass

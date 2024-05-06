@@ -6,6 +6,8 @@ from .DetecteurMire import DetecteurMire
 
 import subprocess
 
+from Grounded.utils import config_builer
+
 
 def parsing_result(resultat: str) -> list[Image]:
     """"
@@ -83,3 +85,6 @@ class DetectionCCTag(DetecteurMire):
         liste_image = parsing_result(process.communicate()[0])
         os.chdir(current_dir)
         return liste_image
+
+    def get_config(self) -> str:
+        return config_builer(self, "DetectionCCTag")
