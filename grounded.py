@@ -101,9 +101,11 @@ def parse_arguments_parameters(arguments: Optional[List]) -> dict:
 
     return kwargs
 
+
 def display_config(sfm, point_cloud_processor, detector):
     print("\033[34mConfiguration d'exécution :\n")
     print(f"{sfm.get_config()}\n{point_cloud_processor.get_config()}\n{detector.get_config()}\n\033[0m")
+
 
 if __name__ == '__main__':
     main()
