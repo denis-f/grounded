@@ -97,6 +97,14 @@ def creer_raccourci_dossier_dans_avec_prefix(dossier: str, dossier_raccourci: st
         os.symlink(chemin_complet_source, chemin_complet_lien)
 
 
+distorsion_model_values = ["RadialExtended", "RadialBasic", "Fraser", "FraserBasic", "FishEyeEqui",
+                           "HemiEqui", "AutoCal", "Figee"]
+
+zoom_final_values = ["QuickMac", "MicMac", "BigMac"]
+
+tapioca_mode_values = ["All", "Line", "MulScale", "File"]
+
+
 class MicMac(SFM):
     """
     Implémente l'interface SFM et implémente les méthodes nécessaires pour l'exécution de MicMac,
@@ -120,12 +128,24 @@ class MicMac(SFM):
         Returns:
             None
         """
+        if distorsion_model not in distorsion_model_values:
+            raise ValueError(
+                f"Invalid distortion model: {distorsion_model} provided. Allowed values are {distorsion_model_values}.")
+
+        if zoom_final not in zoom_final_values:
+            raise ValueError(
+                f"Invalid zoom final: {zoom_final} provided. Allowed values are {zoom_final_values}.")
+
+        if tapioca_mode not in tapioca_mode_values:
+            raise ValueError(
+                f"Invalid zoom final: {tapioca_mode} provided. Allowed values are {tapioca_mode_values}.")
+
         self.path_mm3d = path_mm3d
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "micmac_working_directory"))
         self.distorsion_model = distorsion_model
         self.tapioca_mode = tapioca_mode
         self.tapioca_resolution = tapioca_resolution
-        self.zoom_final = zoom_final  # valeur par défaut
+        self.zoom_final = zoom_final
 
         self.set_up_working_space()
 
