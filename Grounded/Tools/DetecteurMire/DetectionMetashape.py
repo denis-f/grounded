@@ -5,6 +5,7 @@ import shutil
 import xml.etree.ElementTree as et
 
 from Grounded.DataObject import Image, Mire2D
+from Grounded.utils import config_builer
 
 
 def parse_export_file(export_file_path, photos) -> list[Image]:
@@ -58,3 +59,6 @@ class DetectionMetashape(DetecteurMire):
         chunk.exportMarkers(exported_file_path)
 
         return parse_export_file(exported_file_path, photos)
+
+    def get_config(self) -> str:
+        return config_builer(self, "DetectionMetashape")
