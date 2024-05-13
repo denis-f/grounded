@@ -6,6 +6,8 @@ tools:
       path_mm3d: '/opt/micmac/bin/mm3d'
       distorsion_model: 'FraserBasic'
       zoom_final: 'QuickMac'
+      tapioca_mode: 'All'
+      tapioca_resolution: '1000'
 
   # PointCloudProcessor
   cloudcompare:

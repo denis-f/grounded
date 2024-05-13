@@ -1,6 +1,7 @@
 from .SFM import SFM
 from Grounded.DataObject import Image, File, PointCloud, Mire2D, Mire3D
 from Grounded.utils import find_files_regex, rename_file
+from Grounded.utils import config_builer
 
 import subprocess
 import os
@@ -105,7 +106,8 @@ class MicMac(SFM):
     de la caméra, la génération de nuages de points, et le calcul des coordonnées 3D des mires dans une image.
     """
 
-    def __init__(self, path_mm3d: str, distorsion_model: str = "FraserBasic", zoom_final: str = "QuickMac"):
+    def __init__(self, path_mm3d: str, distorsion_model: str = "FraserBasic", zoom_final: str = "QuickMac",
+                 tapioca_mode: str = "All", tapioca_resolution: str = "1000"):
         """
         Initialise une instance de la classe MicMac.
 
@@ -121,6 +123,8 @@ class MicMac(SFM):
         self.path_mm3d = path_mm3d
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "micmac_working_directory"))
         self.distorsion_model = distorsion_model
+        self.tapioca_mode = tapioca_mode
+        self.tapioca_resolution = tapioca_resolution
         self.zoom_final = zoom_final  # valeur par défaut
 
         self.set_up_working_space()
@@ -149,8 +153,8 @@ class MicMac(SFM):
         # creation des raccourcis pour les fichiers après
         creer_raccourci_dossier_dans_avec_prefix(os.path.abspath(chemin_dossier_apres), self.working_directory, "1_")
 
-        subprocess.run([self.path_mm3d, "Tapioca", "All",
-                        f"{self.working_directory}{os.sep}.*JPG", "1000"],
+        subprocess.run([self.path_mm3d, "Tapioca", self.tapioca_mode,
+                        f"{self.working_directory}{os.sep}.*JPG", self.tapioca_resolution],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def calibration(self):
@@ -233,11 +237,14 @@ class MicMac(SFM):
         # on génère nos coordonnées 3D dans un fichier
         nom_fichier_coordinates_3d = os.path.join(log_directory, f"{image.get_name_without_extension()}_3D_coord.txt")
         subprocess.run([self.path_mm3d, "Im2XYZ", os.path.join(self.working_directory,
-                                                                 f"PIMs-{self.zoom_final}{os.sep}Nuage-Depth-"
-                                                                 f"{image_locale.name}.xml"),
+                                                               f"PIMs-{self.zoom_final}{os.sep}Nuage-Depth-"
+                                                               f"{image_locale.name}.xml"),
                         nom_fichier_coordinates, nom_fichier_coordinates_3d],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         nom_fichier_filtered = os.path.join(log_directory, f"Filtered_{image.get_name_without_extension()}_coord.txt")
 
         return recuperer_mires_3d(image, nom_fichier_coordinates, nom_fichier_coordinates_3d, nom_fichier_filtered)
+
+    def get_config(self) -> str:
+        return config_builer(self, "MicMac")

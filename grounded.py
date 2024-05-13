@@ -75,6 +75,8 @@ def main():
     point_cloud_processor = container.get(point_cloud_processor_name, kwargs_dict=point_cloud_processor_kwargs)
     detecteur_mire = container.get(detecteur_mire_name, kwargs_dict=detecteur_mire_kwargs)
 
+    display_config(sfm, point_cloud_processor, detecteur_mire)
+
     analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor)
 
     # chargement des scales bars
@@ -116,6 +118,11 @@ def parse_arguments_parameters(arguments: Optional[List]) -> dict:
         kwargs[decomposed_arg[0]] = decomposed_arg[1]
 
     return kwargs
+
+
+def display_config(sfm, point_cloud_processor, detector):
+    print("\033[34mConfiguration d'exécution :\n")
+    print(f"{sfm.get_config()}\n{point_cloud_processor.get_config()}\n{detector.get_config()}\n\033[0m")
 
 
 if __name__ == '__main__':
