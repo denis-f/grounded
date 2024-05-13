@@ -11,8 +11,8 @@ class File:
         Args:
             path (str): Le chemin menant au fichier.
         """
-        self.path = path
-        self.name = path.split(os.sep)[-1]
+        self.path = os.path.abspath(path)
+        self.name = self.path.split(os.sep)[-1]
         self.extension = self.name.split('.')[-1] if '.' in self.name else ''
 
     def get_name_without_extension(self):

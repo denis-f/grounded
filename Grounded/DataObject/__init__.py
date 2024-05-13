@@ -5,3 +5,4 @@ from .PointCloud import PointCloud
 from .Mire import Mire
 from .Mire3D import Mire3D
 from .Raster import Raster
+from .ScaleBar import ScaleBar
