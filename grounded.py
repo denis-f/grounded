@@ -54,7 +54,7 @@ def config_parser() -> argparse.ArgumentParser:
 def main():
     file_dir = File(os.path.abspath(__file__)).get_path_directory()
     parser = config_parser()
-    container = ContainerIOC(os.path.join(file_dir, "Grounded", "Configuration", "config.yaml"))
+    container = ContainerIOC(os.path.join(file_dir, "Configuration", "config.yml"))
     arguments = parser.parse_args()
 
     # vérification de la validité des arguments
@@ -78,8 +78,8 @@ def main():
     analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor)
 
     # chargement des scales bars
-    scale_bars = ScaleBarLoader.load(if_is_not_none(arguments.scalebar, os.path.join(file_dir, "Grounded",
-                                                                                     "Configuration", "scaleBar.csv")))
+    scale_bars = ScaleBarLoader.load(if_is_not_none(arguments.scalebar, os.path.join(file_dir, "Configuration",
+                                                                                     "scaleBar.csv")))
 
     volumes_trous = analyser.analyse(arguments.directory_before_excavation,
                                      arguments.directory_after_excavation, scale_bars)
@@ -119,5 +119,4 @@ def parse_arguments_parameters(arguments: Optional[List]) -> dict:
 
 
 if __name__ == '__main__':
-    print(__file__)
     main()

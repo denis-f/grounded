@@ -4,7 +4,7 @@ from Grounded.Tools.PointCloudProcessor import CloudCompare
 from Grounded.DensityAnalyser import DensityAnalyser
 from Grounded.ScaleBarLoader import ScaleBarLoader
 
-scale_bars = ScaleBarLoader.load("Grounded/Configuration/scaleBar.csv")
+scale_bars = ScaleBarLoader.load("Configuration/scaleBar.csv")
 
 
 m = MicMac("/opt/micmac/bin/mm3d", "FraserBasic", "QuickMac")  # initialisation d'un SFM
