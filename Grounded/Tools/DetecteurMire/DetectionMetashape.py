@@ -42,7 +42,6 @@ class DetectionMetashape(DetecteurMire):
             shutil.rmtree(self.working_directory)
         os.makedirs(self.working_directory, exist_ok=True)  # création du dossier de l'espace de travail
 
-
     def detection_mires(self, chemin_dossier_image: str) -> list[Image]:
         doc = Metashape.Document()  # création d'un projet
         chunk = doc.addChunk()  # ajout d'un chunk dans lequel nous allons travailler

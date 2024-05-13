@@ -1,8 +1,10 @@
+import os.path
+
 from Grounded.DensityAnalyser import DensityAnalyser
 from Grounded.Tools import ContainerIOC
 from Grounded.ScaleBarLoader import ScaleBarLoader
+from Grounded.DataObject import File
 
-import sys
 import argparse
 from typing import List, Optional
 
@@ -34,6 +36,10 @@ def config_parser() -> argparse.ArgumentParser:
                         metavar='Detector arguments', type=str, help='arguments du DetecteurMire',
                         action='append')
 
+    # Option scalebar
+    parser.add_argument('-scalebar',
+                        metavar='scalebar_file', type=str, help='fichier contenant les informations des scales bar')
+
     # Argument positionnel pour le fichier avant
     parser.add_argument('directory_before_excavation', type=str,
                         help='Chemin du dossier contenant les photos avant excavation')
@@ -46,8 +52,9 @@ def config_parser() -> argparse.ArgumentParser:
 
 
 def main():
+    file_dir = File(os.path.abspath(__file__)).get_path_directory()
     parser = config_parser()
-    container = ContainerIOC("Grounded/Configuration/config.yml")
+    container = ContainerIOC(os.path.join(file_dir, "Grounded", "Configuration", "config.yaml"))
     arguments = parser.parse_args()
 
     # vérification de la validité des arguments
@@ -61,7 +68,7 @@ def main():
     # Récupération des noms des tools utilisés
     sfm_name = if_is_not_none(arguments.SFM, "micmac")
     point_cloud_processor_name = if_is_not_none(arguments.CloudProcessor, "cloudcompare")
-    detecteur_mire_name = if_is_not_none(arguments.CloudProcessor, "detection_cctag")
+    detecteur_mire_name = if_is_not_none(arguments.Detector, "detection_cctag")
 
     # Instanciation des tools via le conteneur ioc
     sfm = container.get(sfm_name, kwargs_dict=sfm_kwargs)
@@ -71,7 +78,8 @@ def main():
     analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor)
 
     # chargement des scales bars
-    scale_bars = ScaleBarLoader.load("Grounded/Configuration/scaleBar.csv")
+    scale_bars = ScaleBarLoader.load(if_is_not_none(arguments.scalebar, os.path.join(file_dir, "Grounded",
+                                                                                     "Configuration", "scaleBar.csv")))
 
     volumes_trous = analyser.analyse(arguments.directory_before_excavation,
                                      arguments.directory_after_excavation, scale_bars)
@@ -111,4 +119,5 @@ def parse_arguments_parameters(arguments: Optional[List]) -> dict:
 
 
 if __name__ == '__main__':
+    print(__file__)
     main()
