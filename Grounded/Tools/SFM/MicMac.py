@@ -138,7 +138,7 @@ class MicMac(SFM):
 
         if tapioca_mode not in tapioca_mode_values:
             raise ValueError(
-                f"Invalid zoom final: {tapioca_mode} provided. Allowed values are {tapioca_mode_values}.")
+                f"Invalid tapioca mode: {tapioca_mode} provided. Allowed values are {tapioca_mode_values}.")
 
         self.path_mm3d = path_mm3d
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "micmac_working_directory"))
@@ -174,7 +174,7 @@ class MicMac(SFM):
         creer_raccourci_dossier_dans_avec_prefix(os.path.abspath(chemin_dossier_apres), self.working_directory, "1_")
 
         subprocess.run([self.path_mm3d, "Tapioca", self.tapioca_mode,
-                        f"{self.working_directory}{os.sep}.*JPG", self.tapioca_resolution],
+                        f"{self.working_directory}{os.sep}.*JPG|.*tif", self.tapioca_resolution],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def calibration(self):
@@ -184,7 +184,7 @@ class MicMac(SFM):
         Returns:
             None
         """
-        subprocess.run([self.path_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG"],
+        subprocess.run([self.path_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG|.*tif"],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def generer_nuages_de_points(self) -> tuple[PointCloud, PointCloud]:
@@ -197,7 +197,7 @@ class MicMac(SFM):
             tuple[0] ⇛ avant et tuple[1] ⇛ après
         """
         # On génère le nuage de points des photos d'avant excavation
-        subprocess.run([self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG",
+        subprocess.run([self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG|.*tif",
                         self.distorsion_model],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -211,7 +211,7 @@ class MicMac(SFM):
 
         # On génère le nuage de points des photos d'après excavation
         subprocess.run([self.path_mm3d, "C3DC", self.zoom_final,
-                        f"{self.working_directory}{os.sep}1_.*JPG", self.distorsion_model],
+                        f"{self.working_directory}{os.sep}1_.*JPG|.*tif", self.distorsion_model],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_1.ply
