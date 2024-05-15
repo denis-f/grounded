@@ -141,6 +141,9 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
 
         return polygon
 
+    with rasterio.open(raster.path, 'r') as data_set:
+        resolution = data_set.res[0]
+
     # Binarisation du raster avec le seuil
     mask_zone = raster_zone > thres_hole
 
@@ -149,11 +152,10 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
 
     # Estimation de la surface des groupes (trous)
     hole_areas = []
-    raster_size = mask_zone.shape[0] * mask_zone.shape[1]
     for lab in range(1, num_labels + 1):
         hole_cells = labeled_image == lab
         # ici la surface d'un trou est égal à son ratio par rapport à la taille de l'image
-        hole_area = np.sum(hole_cells) / raster_size
+        hole_area = np.sum(hole_cells)*(resolution**2)
         hole_areas.append((lab, hole_area))
 
     # Sélection des groupes correspondant aux trous potentiels (surface >= area_hole)
@@ -172,9 +174,6 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
     for polygon in simplified_polygons:
         if roundness(polygon) >= k_cox_threshold:
             filtered_polygons.append(polygon)
-
-    with rasterio.open(raster.path, 'r') as data_set:
-        resolution = abs(data_set.transform[0])
 
     # Agrandissement des polygones
     buffered_polygons = [buffer(polygon, distance=width_buffer / resolution) for polygon in filtered_polygons]
