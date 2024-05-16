@@ -20,7 +20,6 @@ class Metashape(SFM):
     def calibration(self):
         self.chunk.alignCameras()
 
-
     def generer_nuages_de_points(self) -> tuple[PointCloud, PointCloud]:
         pass
 
