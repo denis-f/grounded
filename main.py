@@ -27,7 +27,6 @@ from Grounded.Tools.SFM.Metashape import Metashape
 
 a = Metashape()
 
-a.detection_points_homologues("/home/lisahcalc/Grounded/Dossier_photo_test/AF1H2/avant",
+a.generer_nuages_de_points("/home/lisahcalc/Grounded/Dossier_photo_test/AF1H2/avant",
                               "/home/lisahcalc/Grounded/Dossier_photo_test/AF1H2/apres")
 
-a.calibration()
