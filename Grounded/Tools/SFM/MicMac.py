@@ -145,6 +145,7 @@ class MicMac(SFM):
         Returns:
             None
         """
+        print("Détection des points homologues en cours, cela peut prendre un certain temps. Veuillez patienter...")
         self.set_up_working_space()
 
         # création des raccourcis pour les fichiers avant
@@ -164,18 +165,28 @@ class MicMac(SFM):
         Returns:
             None
         """
+        print("Calibration en cours, cela peut prendre un certain temps. Veuillez patienter...")
         subprocess.run([self.path_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG"],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    def generer_nuages_de_points(self) -> tuple[PointCloud, PointCloud]:
+    def generer_nuages_de_points(self, chemin_dossier_avant: str, chemin_dossier_apres: str) -> tuple[PointCloud, PointCloud]:
         """
         Méthode pour générer des nuages de points avant/après excavation.
+
+        Args:
+            chemin_dossier_avant (str): Le chemin vers le dossier contenant les images avant excavation.
+            chemin_dossier_apres (str): Le chemin vers le dossier contenant les images après excavation.
 
         Returns:
             Tuple[NuageDePoints, NuageDePoints]: Un tuple contenant deux objets NuageDePoints représentant les nuages de points
             avant et après excavation.
             tuple[0] ⇛ avant et tuple[1] ⇛ après
         """
+        self.detection_points_homologues(chemin_dossier_avant, chemin_dossier_apres)
+        self.calibration()
+
+        print("Génération des nuages de point en cours, cela peut prendre un certain temps. Veuillez patienter...")
+
         # On génère le nuage de points des photos d'avant excavation
         subprocess.run([self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG",
                         self.distorsion_model],
