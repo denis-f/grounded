@@ -9,6 +9,11 @@ tools:
       tapioca_mode: 'All'
       tapioca_resolution: '1000'
 
+  metashape:
+    class: Grounded.Tools.SFM.Metashape.Metashape
+    arguments:
+      downscale: '8'
+
   # PointCloudProcessor
   cloudcompare:
     class: Grounded.Tools.PointCloudProcessor.CloudCompare.CloudCompare
