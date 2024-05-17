@@ -11,7 +11,7 @@ from shapely.geometry import Polygon
 from scipy.ndimage import label
 from shapely import buffer
 from skimage import measure
-from matplotlib import pyplot
+from matplotlib import pyplot, patches
 from matplotlib.colors import LinearSegmentedColormap
 
 
@@ -108,7 +108,7 @@ def prospect_zone(raster: Raster):
 
 
 def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hole=0.008,
-                     thres_hole=0.00021, k_cox_threshold=0.35, minimal_hole_area=0.004):
+                     thres_hole=0.00021, k_cox_threshold=0.35, width_padding=0.20, height_padding=0.20):
     """
     Identifie et délimite les trous (zones non-continues) dans un raster.
 
@@ -120,7 +120,8 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
         area_hole (float): Surface minimale requise pour un trou.
         thres_hole (float): Seuil de binarisation du raster.
         k_cox_threshold (float): Seuil de rondeur (Cox) pour filtrer les polygones.
-        minimal_hole_area (float): Surface minimale supplémentaire pour filtrer les polygones (optionnel).
+        width_padding (float): Pourcentage de padding en largeur appliqué à la détection des trous
+        height_padding (float): Pourcentage de padding en hauteur appliqué à la détection des trous
 
     Returns:
         list: Liste de polygones Shapely représentant les trous délimités, triés de gauche à droite.
@@ -159,15 +160,25 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
         hole_areas.append((lab, hole_area))
 
     # Sélection des groupes correspondant aux trous potentiels (surface >= area_hole)
-    potential_holes = [lab for lab, area in hole_areas if area >= area_hole]
+    biggers_holes = [lab for lab, area in hole_areas if area >= area_hole]
 
     polygons = []
     # Process the features
-    for lab in potential_holes:
+    for lab in biggers_holes:
         polygons.append(find_polygons(np.where(labeled_image == lab, 1, 0)))
 
+    # Ici on vérifie si les polygones sont centrés
+    centred_polygons = []
+    min_width = mask_zone.shape[0] * width_padding
+    max_width = mask_zone.shape[0] - min_width
+    min_height = mask_zone.shape[1] * height_padding
+    max_height = mask_zone.shape[1] - min_height
+    for poly in polygons:
+        if min_width <= poly.centroid.x <= max_width and min_height <= poly.centroid.y <= max_height:
+            centred_polygons.append(poly)
+
     # Simplification des polygones
-    simplified_polygons = [polygon.simplify(tolerance=tol_simplify) for polygon in polygons]
+    simplified_polygons = [polygon.simplify(tolerance=tol_simplify) for polygon in centred_polygons]
 
     # Filtrage des polygones par rondeur (Cox) et surface minimale
     filtered_polygons = []
@@ -199,7 +210,7 @@ def polygon_coordinate_conversion(raster: Raster, polygon: Polygon) -> list[tupl
     return coordinates
 
 
-def save_plot_result(raster_array, holes_polygons, list_volumes, output_name):
+def save_plot_result(raster_array, holes_polygons, list_volumes, output_name, height_padding, width_padding):
     # On récupère les valeurs maximales et minimales
     mini = np.nanmin(raster_array)
     maxi = np.nanmax(raster_array)
@@ -212,6 +223,21 @@ def save_plot_result(raster_array, holes_polygons, list_volumes, output_name):
     # Ajout du plot du raster ainsi que de la barre de couleur
     pyplot.imshow(raster_array, cmap=high_contrast, vmin=mini, vmax=maxi)
     pyplot.colorbar()
+
+    # Ajout du rectangle correspondant à la zone de détection des trous
+    min_width = raster_array.shape[1] * width_padding
+    max_width = raster_array.shape[1] - min_width
+    print(f"width :{raster_array.shape[1]} min_width: {min_width} max_width: {max_width}")
+    min_height = raster_array.shape[0] * height_padding
+    max_height = raster_array.shape[0] - min_height
+    print(f"height :{raster_array.shape[0]} min_height: {min_height} max_height: {max_height}")
+
+    x = min_height
+    y = min_width
+    width = max_width - min_width
+    height = max_height - min_height
+    rect = patches.Rectangle((y, x), height=height, width=width, linewidth=1, edgecolor='r', facecolor='none')
+    pyplot.gca().add_patch(rect)
 
     # Ajout des informations concernant les trous
     for i in range(len(holes_polygons)):
@@ -299,7 +325,9 @@ class DensityAnalyser:
         zone_tot = prospect_zone(raster)
 
         # on récupère les polygones détourant les trous
-        holes_polygons = delimitate_holes(raster, zone_tot, 0.01, 0.02, 0.008, 0.005, 0.55, 0.004)
+        width_padding = 0.2
+        height_padding = 0.2
+        holes_polygons = delimitate_holes(raster, zone_tot, 0.01, 0.02, 0.007, 0.005, 0.4, width_padding, height_padding)
 
         # on récupère les coordonnées des points des polygones dans l'espace du raster
         list_holes_coordinates = [polygon_coordinate_conversion(raster, hole) for hole in holes_polygons]
@@ -322,7 +350,7 @@ class DensityAnalyser:
                 file.write(f"volume du trou n°{i + 1} : {holes_volumes[i]}\n")
 
         # on enregistre au format pdf les résultats
-        save_plot_result(zone_tot, holes_polygons, holes_volumes, "results.pdf")
+        save_plot_result(zone_tot, holes_polygons, holes_volumes, "results.pdf", height_padding, width_padding)
 
         with open("config.txt", 'w') as file:
             file.write(f"{self.sfm.get_config()}\n"
