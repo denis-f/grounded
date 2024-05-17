@@ -3,11 +3,13 @@ from Grounded.Tools.SFM import MicMac
 from Grounded.Tools.PointCloudProcessor import CloudCompare
 from Grounded.DensityAnalyser import DensityAnalyser
 from Grounded.ScaleBarLoader import ScaleBarLoader
+from Grounded.Tools.SFM.Metashape import Metashape
 
 scale_bars = ScaleBarLoader.load("Configuration/scaleBar.csv")
 
 
-m = MicMac("/opt/micmac/bin/mm3d", "FraserBasic", "QuickMac")  # initialisation d'un SFM
+#m = MicMac("/opt/micmac/bin/mm3d", "FraserBasic", "QuickMac")  # initialisation d'un SFM
+m = Metashape(8)
 c = CloudCompare("cloudcompare.CloudCompare", "2.11.1")  # initialisation de PointCloudProcessor
 d = DetectionCCTag("/opt/CCTag/")  # initialisation d'un DetecteurMire
 
@@ -23,3 +25,6 @@ print("#########################################################################
       "###########################################################################\n\n")
 for i in range(len(volumes_trous)):
     print(f"volume du trou n°{i + 1} : {volumes_trous[i]}")
+
+
+

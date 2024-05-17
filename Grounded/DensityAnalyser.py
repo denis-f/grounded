@@ -257,12 +257,8 @@ class DensityAnalyser:
 
     def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, scale_bars: list[ScaleBar]):
         # ---------------------------------------- Premier Bloc --------------------------------------------------------
-        print("Détection des points homologues en cours, cela peut prendre un certain temps. Veuillez patienter...")
-        self.sfm.detection_points_homologues(photo_path_before_excavation, photo_path_after_excavation)
-        print("Calibration en cours, cela peut prendre un certain temps. Veuillez patienter...")
-        self.sfm.calibration()
-        print("Génération des nuages de point en cours, cela peut prendre un certain temps. Veuillez patienter...")
-        point_cloud_before_excavation, point_cloud_after_excavation = self.sfm.generer_nuages_de_points()
+        point_cloud_before_excavation, point_cloud_after_excavation = self.sfm.generer_nuages_de_points(photo_path_before_excavation,
+                                                                                                        photo_path_after_excavation)
 
         # --------------------------------------- Deuxième Bloc --------------------------------------------------------
         print("Détection des mires présentes sur les images...")

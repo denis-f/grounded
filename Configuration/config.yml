@@ -9,6 +9,11 @@ tools:
       tapioca_mode: 'All'
       tapioca_resolution: '1000'
 
+  metashape:
+    class: Grounded.Tools.SFM.Metashape.Metashape
+    arguments:
+      downscale: '8'
+
   # PointCloudProcessor
   cloudcompare:
     class: Grounded.Tools.PointCloudProcessor.CloudCompare.CloudCompare
@@ -23,4 +28,4 @@ tools:
       path_cctag_directory: '/opt/CCTag/'
 
   detection_metashape:
-    class: Grounded.Tools.DetecteurMire.DetectionCCTag.DetectionMetashape
+    class: Grounded.Tools.DetecteurMire.DetectionMetashape.DetectionMetashape

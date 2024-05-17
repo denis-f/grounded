@@ -11,33 +11,13 @@ class SFM(ABC):
     """
 
     @abstractmethod
-    def detection_points_homologues(self, chemin_dossier_avant: str, chemin_dossier_apres: str):
+    def generer_nuages_de_points(self, chemin_dossier_avant: str, chemin_dossier_apres: str) -> tuple[PointCloud, PointCloud]:
         """
-        Détecte les points homologues entre des images avant et après un événement.
+        Génère des nuages de points avant/après excavation.
 
         Args :
             chemin_dossier_avant (str): Chemin vers le dossier contenant les images avant l'excavation.
             chemin_dossier_apres (str): Chemin vers le dossier contenant les images après l'excavation.
-
-        Returns :
-            None
-        """
-        pass
-
-    @abstractmethod
-    def calibration(self):
-        """
-        Calibre la caméra.
-
-        Returns:
-            None
-        """
-        pass
-
-    @abstractmethod
-    def generer_nuages_de_points(self) -> tuple[PointCloud, PointCloud]:
-        """
-        Génère des nuages de points avant/après excavation.
 
         Returns:
             tuple[PointCloud, PointCloud]: Un tuple contenant deux objets PointCloud représentant les nuages de points
