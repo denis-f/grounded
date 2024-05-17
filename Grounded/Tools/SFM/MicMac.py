@@ -97,6 +97,14 @@ def creer_raccourci_dossier_dans_avec_prefix(dossier: str, dossier_raccourci: st
         os.symlink(chemin_complet_source, chemin_complet_lien)
 
 
+distorsion_model_values = ["RadialExtended", "RadialBasic", "Fraser", "FraserBasic", "FishEyeEqui",
+                           "HemiEqui", "AutoCal", "Figee"]
+
+zoom_final_values = ["QuickMac", "MicMac", "BigMac"]
+
+tapioca_mode_values = ["All", "Line", "MulScale", "File"]
+
+
 class MicMac(SFM):
     """
     Implémente l'interface SFM et implémente les méthodes nécessaires pour l'exécution de MicMac,
@@ -120,12 +128,24 @@ class MicMac(SFM):
         Returns:
             None
         """
+        if distorsion_model not in distorsion_model_values:
+            raise ValueError(
+                f"Invalid distortion model: {distorsion_model} provided. Allowed values are {distorsion_model_values}.")
+
+        if zoom_final not in zoom_final_values:
+            raise ValueError(
+                f"Invalid zoom final: {zoom_final} provided. Allowed values are {zoom_final_values}.")
+
+        if tapioca_mode not in tapioca_mode_values:
+            raise ValueError(
+                f"Invalid tapioca mode: {tapioca_mode} provided. Allowed values are {tapioca_mode_values}.")
+
         self.path_mm3d = path_mm3d
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "micmac_working_directory"))
         self.distorsion_model = distorsion_model
         self.tapioca_mode = tapioca_mode
         self.tapioca_resolution = tapioca_resolution
-        self.zoom_final = zoom_final  # valeur par défaut
+        self.zoom_final = zoom_final
 
         self.set_up_working_space()
 
@@ -155,7 +175,7 @@ class MicMac(SFM):
         creer_raccourci_dossier_dans_avec_prefix(os.path.abspath(chemin_dossier_apres), self.working_directory, "1_")
 
         subprocess.run([self.path_mm3d, "Tapioca", self.tapioca_mode,
-                        f"{self.working_directory}{os.sep}.*JPG", self.tapioca_resolution],
+                        f"{self.working_directory}{os.sep}.*JPG|.*tif", self.tapioca_resolution],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def calibration(self):
@@ -166,7 +186,7 @@ class MicMac(SFM):
             None
         """
         print("Calibration en cours, cela peut prendre un certain temps. Veuillez patienter...")
-        subprocess.run([self.path_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG"],
+        subprocess.run([self.path_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG|.*tif"],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def generer_nuages_de_points(self, chemin_dossier_avant: str, chemin_dossier_apres: str) -> tuple[PointCloud, PointCloud]:
@@ -188,7 +208,7 @@ class MicMac(SFM):
         print("Génération des nuages de point en cours, cela peut prendre un certain temps. Veuillez patienter...")
 
         # On génère le nuage de points des photos d'avant excavation
-        subprocess.run([self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG",
+        subprocess.run([self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG|.*tif",
                         self.distorsion_model],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -202,7 +222,7 @@ class MicMac(SFM):
 
         # On génère le nuage de points des photos d'après excavation
         subprocess.run([self.path_mm3d, "C3DC", self.zoom_final,
-                        f"{self.working_directory}{os.sep}1_.*JPG", self.distorsion_model],
+                        f"{self.working_directory}{os.sep}1_.*JPG|.*tif", self.distorsion_model],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_1.ply
