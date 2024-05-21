@@ -77,7 +77,7 @@ pip install -r requirements.txt
 
 ## Usage
 
-### Avant toute utilisation, veuillez remplacer les informations se trouvant dans le fichier python que vous choisirez d'exécuter
+### Avant toute première utilisation, veuillez remplacer les informations se trouvant dans le fichier `Configuration/config.yml` afin de s'adapter à la configuration de votre machine
 
 
 ### Avec le fichier grounded :
@@ -91,6 +91,11 @@ python3 grounded.py path/to/photo_before_excavation path/to/photo_after_excavati
 Il est également possible de choisir les modules ainsi que leurs paramètres qui seront utilisés lors de l'analyse de la façon suivante :
 ```bash
 python3 grounded.py -SFM micmac -SFM_arg distorsion_model=FraserBasic -SFM_arg zoom_final=BigMack -Detector detection_cctag path/to/photo_before_excavation path/to/photo_after_excavation
+```
+
+À des fins de débuggage, il est possible d'afficher la zone dans laquelle la détection des trous est effectuée en rajoutant la balise `-display_padding` de la façon suivante 
+```bash
+python3 grounded.py -SFM metashape -SFM_arg downscale=8 -Detector detection_metashape -display_padding path/to/photo_before_excavation path/to/photo_after_excavation
 ```
 
 Une aide est présente via la commande :
