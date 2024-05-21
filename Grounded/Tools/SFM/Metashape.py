@@ -28,7 +28,7 @@ def build_point_cloud(chunk: ms.Chunk, path: str, downscale: int) -> PointCloud:
     return PointCloud(path)
 
 
-def photos_coord_to_3d_coords(chunk: ms.Chunk, x:float, y:float, camera_name: str) -> tuple[float, float, float]:
+def photos_coord_to_3d_coords(chunk: ms.Chunk, x: float, y: float, camera_name: str) -> tuple[float, float, float]:
     cameras = [camera for camera in chunk.cameras if
                camera.transform and camera.type == ms.Camera.Type.Regular]  # list of aligned cameras
 
@@ -38,14 +38,9 @@ def photos_coord_to_3d_coords(chunk: ms.Chunk, x:float, y:float, camera_name: st
 
     for camera in cameras:
         if camera.label == camera_name:
-            marker = chunk.addMarker()
             ray_origin = camera.unproject(ms.Vector([x, y, 0]))
             ray_target = camera.unproject(ms.Vector([x, y, 1]))
             coord = crs.project(transform_matrix.mulp(surface.pickPoint(ray_origin, ray_target)))
-            marker.label = camera_name
-            marker.projections[camera] = ms.Marker.Projection(ms.Vector([x, y]), True)
-            marker.reference.location = coord
-            marker.reference.enabled = True
             return coord.x, coord.y, coord.z
 
     raise ValueError("Aucune camera alignée ne porte ce nom")
@@ -84,7 +79,8 @@ class Metashape(SFM):
         self.chunk.optimizeCameras()
         self.chunk.updateTransform()
 
-    def generer_nuages_de_points(self, chemin_dossier_avant: str, chemin_dossier_apres: str) -> tuple[PointCloud, PointCloud]:
+    def generer_nuages_de_points(self, chemin_dossier_avant: str, chemin_dossier_apres: str) -> tuple[
+        PointCloud, PointCloud]:
         self._add_photos_to_chunk(chemin_dossier_avant, chemin_dossier_apres)
         self._align_images()
 
