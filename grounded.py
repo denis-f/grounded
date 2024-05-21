@@ -40,6 +40,10 @@ def config_parser() -> argparse.ArgumentParser:
     parser.add_argument('-scalebar',
                         metavar='scalebar_file', type=str, help='fichier contenant les informations des scales bar')
 
+    # Ajouter la balise -display_padding
+    parser.add_argument('-display_padding', action='store_true', help="Affiche le padding utilisé pour la "
+                                                                      "détection des trous dans la sortie graphique")
+
     # Argument positionnel pour le fichier avant
     parser.add_argument('directory_before_excavation', type=str,
                         help='Chemin du dossier contenant les photos avant excavation')
@@ -47,6 +51,7 @@ def config_parser() -> argparse.ArgumentParser:
     # Argument positionnel pour le fichier après
     parser.add_argument('directory_after_excavation', type=str,
                         help='Chemin du dossier contenant les photos après excavation')
+
 
     return parser
 
@@ -84,7 +89,8 @@ def main():
                                                                                      "scaleBar.csv")))
 
     volumes_trous = analyser.analyse(arguments.directory_before_excavation,
-                                     arguments.directory_after_excavation, scale_bars)
+                                     arguments.directory_after_excavation, scale_bars,
+                                     arguments.display_padding)
 
     # Affichage des résultats
     print("###########################################################################\n"

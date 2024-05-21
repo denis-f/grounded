@@ -11,7 +11,7 @@ from shapely.geometry import Polygon
 from scipy.ndimage import label
 from shapely import buffer
 from skimage import measure
-from matplotlib import pyplot
+from matplotlib import pyplot, patches
 from matplotlib.colors import LinearSegmentedColormap
 
 
@@ -46,9 +46,18 @@ def calculate_standard_deviation_mire_3d(mires_3d: list[Mire3D]):
 
     ecart_type = {}
     for identifier in dictionnaire_coordinates_mires.keys():
-        ecart_type_x = statistics.stdev(dictionnaire_coordinates_mires[identifier]['x'])
-        ecart_type_y = statistics.stdev(dictionnaire_coordinates_mires[identifier]['y'])
-        ecart_type_z = statistics.stdev(dictionnaire_coordinates_mires[identifier]['z'])
+
+        ecart_type_x = statistics.stdev(dictionnaire_coordinates_mires[identifier]['x']) \
+            if len(dictionnaire_coordinates_mires[identifier]['x']) > 1 \
+            else 0
+
+        ecart_type_y = statistics.stdev(dictionnaire_coordinates_mires[identifier]['y']) \
+            if len(dictionnaire_coordinates_mires[identifier]['y']) > 1 \
+            else 0
+
+        ecart_type_z = statistics.stdev(dictionnaire_coordinates_mires[identifier]['z']) \
+            if len(dictionnaire_coordinates_mires[identifier]['z']) > 1 \
+            else 0
 
         ecart_type[identifier] = {'x': ecart_type_x, 'y': ecart_type_y, 'z': ecart_type_z}
 
@@ -108,7 +117,7 @@ def prospect_zone(raster: Raster):
 
 
 def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hole=0.008,
-                     thres_hole=0.00021, k_cox_threshold=0.35, minimal_hole_area=0.004):
+                     thres_hole=0.00021, k_cox_threshold=0.35, width_padding=0.20, height_padding=0.20):
     """
     Identifie et délimite les trous (zones non-continues) dans un raster.
 
@@ -120,7 +129,8 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
         area_hole (float): Surface minimale requise pour un trou.
         thres_hole (float): Seuil de binarisation du raster.
         k_cox_threshold (float): Seuil de rondeur (Cox) pour filtrer les polygones.
-        minimal_hole_area (float): Surface minimale supplémentaire pour filtrer les polygones (optionnel).
+        width_padding (float): Pourcentage de padding en largeur appliqué à la détection des trous
+        height_padding (float): Pourcentage de padding en hauteur appliqué à la détection des trous
 
     Returns:
         list: Liste de polygones Shapely représentant les trous délimités, triés de gauche à droite.
@@ -155,19 +165,29 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
     for lab in range(1, num_labels + 1):
         hole_cells = labeled_image == lab
         # ici la surface d'un trou est égal à son ratio par rapport à la taille de l'image
-        hole_area = np.sum(hole_cells)*(resolution**2)
+        hole_area = np.sum(hole_cells) * (resolution ** 2)
         hole_areas.append((lab, hole_area))
 
     # Sélection des groupes correspondant aux trous potentiels (surface >= area_hole)
-    potential_holes = [lab for lab, area in hole_areas if area >= area_hole]
+    biggers_holes = [lab for lab, area in hole_areas if area >= area_hole]
 
     polygons = []
     # Process the features
-    for lab in potential_holes:
+    for lab in biggers_holes:
         polygons.append(find_polygons(np.where(labeled_image == lab, 1, 0)))
 
+    # Ici on vérifie si les polygones sont centrés
+    centred_polygons = []
+    min_height = mask_zone.shape[0] * height_padding
+    max_height = mask_zone.shape[0] - min_height
+    min_width = mask_zone.shape[1] * width_padding
+    max_width = mask_zone.shape[1] - min_width
+    for poly in polygons:
+        if min_height <= poly.centroid.x <= max_height and min_width <= poly.centroid.y <= max_width:
+            centred_polygons.append(poly)
+
     # Simplification des polygones
-    simplified_polygons = [polygon.simplify(tolerance=tol_simplify) for polygon in polygons]
+    simplified_polygons = [polygon.simplify(tolerance=tol_simplify) for polygon in centred_polygons]
 
     # Filtrage des polygones par rondeur (Cox) et surface minimale
     filtered_polygons = []
@@ -199,7 +219,8 @@ def polygon_coordinate_conversion(raster: Raster, polygon: Polygon) -> list[tupl
     return coordinates
 
 
-def save_plot_result(raster_array, holes_polygons, list_volumes, output_name):
+def save_plot_result(raster_array, holes_polygons, list_volumes, output_name, height_padding, width_padding,
+                     display_padding):
     # On récupère les valeurs maximales et minimales
     mini = np.nanmin(raster_array)
     maxi = np.nanmax(raster_array)
@@ -212,6 +233,19 @@ def save_plot_result(raster_array, holes_polygons, list_volumes, output_name):
     # Ajout du plot du raster ainsi que de la barre de couleur
     pyplot.imshow(raster_array, cmap=high_contrast, vmin=mini, vmax=maxi)
     pyplot.colorbar()
+
+    # Ajout du rectangle correspondant à la zone de détection des trous
+    if display_padding:
+        min_width = raster_array.shape[1] * width_padding
+        max_width = raster_array.shape[1] - min_width
+        min_height = raster_array.shape[0] * height_padding
+        max_height = raster_array.shape[0] - min_height
+        x = min_height
+        y = min_width
+        width = max_width - min_width
+        height = max_height - min_height
+        rect = patches.Rectangle((y, x), height=height, width=width, linewidth=1, edgecolor='r', facecolor='none')
+        pyplot.gca().add_patch(rect)
 
     # Ajout des informations concernant les trous
     for i in range(len(holes_polygons)):
@@ -255,10 +289,12 @@ class DensityAnalyser:
         self.detecteur_mire = detecteur_mire
         self.point_cloud_processor = point_cloud_processor
 
-    def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, scale_bars: list[ScaleBar]):
+    def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, scale_bars: list[ScaleBar],
+                display_padding: bool = False):
         # ---------------------------------------- Premier Bloc --------------------------------------------------------
-        point_cloud_before_excavation, point_cloud_after_excavation = self.sfm.generer_nuages_de_points(photo_path_before_excavation,
-                                                                                                        photo_path_after_excavation)
+        point_cloud_before_excavation, point_cloud_after_excavation = self.sfm.generer_nuages_de_points(
+            photo_path_before_excavation,
+            photo_path_after_excavation)
 
         # --------------------------------------- Deuxième Bloc --------------------------------------------------------
         print("Détection des mires présentes sur les images...")
@@ -299,7 +335,10 @@ class DensityAnalyser:
         zone_tot = prospect_zone(raster)
 
         # on récupère les polygones détourant les trous
-        holes_polygons = delimitate_holes(raster, zone_tot, 0.01, 0.02, 0.008, 0.005, 0.55, 0.004)
+        width_padding = 0.2
+        height_padding = 0.3
+        holes_polygons = delimitate_holes(raster, zone_tot, 0.01, 0.02, 0.007, 0.005, 0.4, width_padding,
+                                          height_padding)
 
         # on récupère les coordonnées des points des polygones dans l'espace du raster
         list_holes_coordinates = [polygon_coordinate_conversion(raster, hole) for hole in holes_polygons]
@@ -322,7 +361,8 @@ class DensityAnalyser:
                 file.write(f"volume du trou n°{i + 1} : {holes_volumes[i]}\n")
 
         # on enregistre au format pdf les résultats
-        save_plot_result(zone_tot, holes_polygons, holes_volumes, "results.pdf")
+        save_plot_result(zone_tot, holes_polygons, holes_volumes, "results.pdf", height_padding, width_padding,
+                         display_padding)
 
         with open("config.txt", 'w') as file:
             file.write(f"{self.sfm.get_config()}\n"
@@ -330,3 +370,4 @@ class DensityAnalyser:
                        f"{self.detecteur_mire.get_config()}")
 
         return holes_volumes
+
