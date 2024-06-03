@@ -64,8 +64,9 @@ def calculate_standard_deviation_mire_3d(mires_3d: list[Mire3D]):
     return ecart_type
 
 
-def delete_mire_without_pair(mires: list[Mire], scale_bars: list[ScaleBar]):
+def scale_bars_filter_without_pair(mires: list[Mire], scale_bars: list[ScaleBar]) -> list[ScaleBar]:
     mires.sort(key=lambda x: x.identifier)
+    scale_bars_copy = scale_bars.copy()
     for scale_bar in scale_bars:
         try:
             start_mire = [mire for mire in mires if mire.identifier == scale_bar.start.identifier][0]
@@ -73,7 +74,9 @@ def delete_mire_without_pair(mires: list[Mire], scale_bars: list[ScaleBar]):
         except IndexError:
             mires = [mire for mire in mires if mire.identifier != scale_bar.start.identifier and
                      mire.identifier != scale_bar.end.identifier]
-            scale_bars.remove(scale_bar)
+            scale_bars_copy.remove(scale_bar)
+
+    return scale_bars_copy
 
 
 def distance_euclidienne(point1, point2):
@@ -313,7 +316,7 @@ class DensityAnalyser:
         ecart_type = calculate_standard_deviation_mire_3d(mires_3d)
 
         # on supprime les mires isolés dont la paire n'a pas pu être détecté
-        delete_mire_without_pair(mires_3d_moyens, scale_bars)
+        scale_bars = scale_bars_filter_without_pair(mires_3d_moyens, scale_bars)
 
         # on calcule le facteur d'échelle moyen
         mean_scale_factor = calculate_average_scale_factor(mires_3d_moyens, scale_bars)
