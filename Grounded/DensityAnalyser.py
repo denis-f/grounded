@@ -199,7 +199,7 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
     buffered_polygons = [buffer(polygon, distance=width_buffer / resolution) for polygon in filtered_polygons]
 
     # Tri des polygones de gauche à droite
-    sorted_polygons = sorted(buffered_polygons, key=lambda poly: poly.bounds[0])
+    sorted_polygons = sorted(buffered_polygons, key=lambda poly: poly.centroid.y)
 
     return sorted_polygons
 
