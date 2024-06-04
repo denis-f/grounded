@@ -1,7 +1,7 @@
 from Grounded.Tools.SFM import SFM
 from Grounded.Tools.DetecteurMire import DetecteurMire
 from Grounded.Tools.PointCloudProcessor import PointCloudProcessor
-from Grounded.DataObject import PointCloud, Mire3D, Mire, Raster, ScaleBar
+from Grounded.DataObject import PointCloud, Mire3D, Mire, Raster, ScaleBar, Mire2D
 
 import statistics
 import rasterio
@@ -119,12 +119,29 @@ def prospect_zone(raster: Raster):
     return generic_filter(raster_array, mean, size=(25, 25))
 
 
-def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hole=0.008,
-                     thres_hole=0.00021, k_cox_threshold=0.35, width_padding=0.20, height_padding=0.20):
+def get_coordinates_mires3d_in_raster(mires3d: list[Mire3D], raster: Raster, scale_factor: float):
+    coords = []
+    with rasterio.open(raster.path) as dataset:
+        transform = dataset.transform
+        # Extraction des coordonnées x et y (on ignore z ici)
+        for mire in mires3d:
+            x, y, z = mire.coordinates
+
+            # Convertir les coordonnées spatiales (x, y) en indices de pixel (row, col)
+            x, y = ~transform * (x * scale_factor, y* scale_factor)
+            coords.append((x, y))
+
+    return coords
+
+
+def delimitate_holes(raster_resolution: float, raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hole=0.008,
+                     thres_hole=0.00021, k_cox_threshold=0.35, coords_mires_in_raster=[],
+                     min_height:float=0, max_height:float=0, min_width:float=0, max_width:float=0):
     """
     Identifie et délimite les trous (zones non-continues) dans un raster.
 
     Args:
+        coords_mires_in_raster:
         raster (Raster): Dataobject Raster stockant les informations sur le fichier
         raster_zone (numpy.ndarray): matrice représentant la zone d'intérêt.
         tol_simplify (float): Tolérance de simplification des polygones.
@@ -154,9 +171,6 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
 
         return polygon
 
-    with rasterio.open(raster.path, 'r') as data_set:
-        resolution = data_set.res[0]
-
     # Binarisation du raster avec le seuil
     mask_zone = raster_zone > thres_hole
 
@@ -168,7 +182,7 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
     for lab in range(1, num_labels + 1):
         hole_cells = labeled_image == lab
         # ici la surface d'un trou est égal à son ratio par rapport à la taille de l'image
-        hole_area = np.sum(hole_cells) * (resolution ** 2)
+        hole_area = np.sum(hole_cells) * (raster_resolution ** 2)
         hole_areas.append((lab, hole_area))
 
     # Sélection des groupes correspondant aux trous potentiels (surface >= area_hole)
@@ -181,10 +195,7 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
 
     # Ici on vérifie si les polygones sont centrés
     centred_polygons = []
-    min_height = mask_zone.shape[0] * height_padding
-    max_height = mask_zone.shape[0] - min_height
-    min_width = mask_zone.shape[1] * width_padding
-    max_width = mask_zone.shape[1] - min_width
+
     for poly in polygons:
         if min_height <= poly.centroid.x <= max_height and min_width <= poly.centroid.y <= max_width:
             centred_polygons.append(poly)
@@ -199,7 +210,7 @@ def delimitate_holes(raster: Raster, raster_zone, tol_simplify=0.01, width_buffe
             filtered_polygons.append(polygon)
 
     # Agrandissement des polygones
-    buffered_polygons = [buffer(polygon, distance=width_buffer / resolution) for polygon in filtered_polygons]
+    buffered_polygons = [buffer(polygon, distance=width_buffer / raster_resolution) for polygon in filtered_polygons]
 
     # Tri des polygones de gauche à droite
     sorted_polygons = sorted(buffered_polygons, key=lambda poly: poly.centroid.y)
@@ -222,8 +233,8 @@ def polygon_coordinate_conversion(raster: Raster, polygon: Polygon) -> list[tupl
     return coordinates
 
 
-def save_plot_result(raster_array, holes_polygons, list_volumes, output_name, height_padding, width_padding,
-                     display_padding):
+def save_plot_result(raster_array, holes_polygons, list_volumes, output_name, display_padding, mires_coords,
+                     min_height, max_height, min_width, max_width):
     # On récupère les valeurs maximales et minimales
     mini = np.nanmin(raster_array)
     maxi = np.nanmax(raster_array)
@@ -239,16 +250,21 @@ def save_plot_result(raster_array, holes_polygons, list_volumes, output_name, he
 
     # Ajout du rectangle correspondant à la zone de détection des trous
     if display_padding:
-        min_width = raster_array.shape[1] * width_padding
-        max_width = raster_array.shape[1] - min_width
-        min_height = raster_array.shape[0] * height_padding
-        max_height = raster_array.shape[0] - min_height
+        #min_width = raster_array.shape[1] * width_padding
+        #max_width = raster_array.shape[1] - min_width
+        #min_height = raster_array.shape[0] * height_padding
+        #max_height = raster_array.shape[0] - min_height
         x = min_height
         y = min_width
         width = max_width - min_width
         height = max_height - min_height
         rect = patches.Rectangle((y, x), height=height, width=width, linewidth=1, edgecolor='r', facecolor='none')
         pyplot.gca().add_patch(rect)
+
+        x = [coord[0] for coord in mires_coords]
+        y = [coord[1] for coord in mires_coords]
+        pyplot.scatter(x, y, color='blue', s=10, marker='o')
+
 
     # Ajout des informations concernant les trous
     for i in range(len(holes_polygons)):
@@ -338,10 +354,21 @@ class DensityAnalyser:
         zone_tot = prospect_zone(raster)
 
         # on récupère les polygones détourant les trous
-        width_padding = 0.2
-        height_padding = 0.3
-        holes_polygons = delimitate_holes(raster, zone_tot, 0.01, 0.02, 0.007, 0.005, 0.4, width_padding,
-                                          height_padding)
+
+        with rasterio.open(raster.path) as data_set:
+            resolution = data_set.res[0]
+
+        coords_mires_in_raster = get_coordinates_mires3d_in_raster(mires_3d_moyens, raster, mean_scale_factor)
+        min_width = min(x for x, y in coords_mires_in_raster)
+        max_width = max(x for x, y in coords_mires_in_raster)
+        min_height = min(y for x, y in coords_mires_in_raster)
+        max_height = max(y for x, y in coords_mires_in_raster) + (0.1 / resolution)
+        # min_height = mask_zone.shape[0] * height_padding
+        # max_height = mask_zone.shape[0] - min_height
+        # min_width = mask_zone.shape[1] * width_padding
+        # max_width = mask_zone.shape[1] - min_width
+        holes_polygons = delimitate_holes(resolution, zone_tot, 0.01, 0.02, 0.007, 0.005, 0.4, coords_mires_in_raster,
+                                          min_height, max_height, min_width, max_width)
 
         # on récupère les coordonnées des points des polygones dans l'espace du raster
         list_holes_coordinates = [polygon_coordinate_conversion(raster, hole) for hole in holes_polygons]
@@ -364,8 +391,8 @@ class DensityAnalyser:
                 file.write(f"volume du trou n°{i + 1} : {holes_volumes[i]}\n")
 
         # on enregistre au format pdf les résultats
-        save_plot_result(zone_tot, holes_polygons, holes_volumes, "results.pdf", height_padding, width_padding,
-                         display_padding)
+        save_plot_result(zone_tot, holes_polygons, holes_volumes, "results.pdf",
+                         display_padding, coords_mires_in_raster, min_height, max_height, min_width, max_width)
 
         with open("config.txt", 'w') as file:
             file.write(f"{self.sfm.get_config()}\n"
@@ -373,4 +400,3 @@ class DensityAnalyser:
                        f"{self.detecteur_mire.get_config()}")
 
         return holes_volumes
-
