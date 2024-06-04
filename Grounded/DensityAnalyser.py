@@ -359,10 +359,6 @@ class DensityAnalyser:
         max_width = max(x for x, y in coords_mires_in_raster)
         min_height = min(y for x, y in coords_mires_in_raster)
         max_height = max(y for x, y in coords_mires_in_raster) + (0.1 / resolution)
-        # min_height = mask_zone.shape[0] * height_padding
-        # max_height = mask_zone.shape[0] - min_height
-        # min_width = mask_zone.shape[1] * width_padding
-        # max_width = mask_zone.shape[1] - min_width
         holes_polygons = delimitate_holes(resolution, zone_tot, 0.01, 0.02, 0.007, 0.005, 0.4, coords_mires_in_raster,
                                           min_height, max_height, min_width, max_width)
 
