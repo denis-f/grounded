@@ -250,10 +250,6 @@ def save_plot_result(raster_array, holes_polygons, list_volumes, output_name, di
 
     # Ajout du rectangle correspondant à la zone de détection des trous
     if display_padding:
-        #min_width = raster_array.shape[1] * width_padding
-        #max_width = raster_array.shape[1] - min_width
-        #min_height = raster_array.shape[0] * height_padding
-        #max_height = raster_array.shape[0] - min_height
         x = min_height
         y = min_width
         width = max_width - min_width
