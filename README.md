@@ -122,4 +122,4 @@ python3 main.py
 Licenced under CC-BY-SA 4.0.
 
 ## Project status
-Project in development. Repository is private at the moment.
+Project in development. Repository is private at the moment. To be changed
