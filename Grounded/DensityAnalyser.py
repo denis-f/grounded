@@ -377,7 +377,7 @@ class DensityAnalyser:
 
         # on enregistre au format txt les résultats
         with open("results.txt", 'w') as file:
-            file.write(f"nombre de trou détectés : {len(holes_volumes)}\n"
+            file.write(f"nombre de trous détectés : {len(holes_volumes)}\n"
                        "------------Trous triés de gauche à droite------------\n")
             for i in range(len(holes_volumes)):
                 file.write(f"volume du trou n°{i + 1} : {holes_volumes[i]}\n")
