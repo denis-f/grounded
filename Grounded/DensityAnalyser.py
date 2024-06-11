@@ -312,9 +312,21 @@ class DensityAnalyser:
         # on récupère les images ainsi que les coordonnées 2D de leurs mires
         images = self.detecteur_mire.detection_mires(photo_path_before_excavation)
         images += self.detecteur_mire.detection_mires(photo_path_after_excavation)
+        # vérification du paramétrage des scalebar
+        id_scalebars = []
+        for scalebar in scale_bars:
+            id_scalebars.append(scalebar.end.identifier)
+            id_scalebars.append(scalebar.start.identifier)
+        detected_target_are_in_loaded_scalebar = True
+        # on boucle sur les mires détectées, chaque mire détectée doit etre dans les scalebar
+        for im in images:
+            for mir in im.mires_visibles:
+                if mir.identifier not in id_scalebars:
+                    print("WARNING /!\ La mire " + str(
+                        mir.identifier) + " détectée dans l'image " + im.name + " n'est pas dans les scalebars. Vérifier le fichier chargé.")
 
-        print("Calcul des nuages de points...")
         # ---------------------------------------- Deuxième Bloc --------------------------------------------------------
+        print("Calcul des nuages de points...")
         point_cloud_before_excavation, point_cloud_after_excavation = self.sfm.generer_nuages_de_points(
             photo_path_before_excavation,
             photo_path_after_excavation)
