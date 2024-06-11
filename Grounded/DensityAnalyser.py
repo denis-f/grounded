@@ -306,16 +306,18 @@ class DensityAnalyser:
 
     def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, scale_bars: list[ScaleBar],
                 display_padding: bool = False):
-        # ---------------------------------------- Premier Bloc --------------------------------------------------------
-        point_cloud_before_excavation, point_cloud_after_excavation = self.sfm.generer_nuages_de_points(
-            photo_path_before_excavation,
-            photo_path_after_excavation)
 
-        # --------------------------------------- Deuxième Bloc --------------------------------------------------------
+        # --------------------------------------- Premier Bloc --------------------------------------------------------
         print("Détection des mires présentes sur les images...")
         # on récupère les images ainsi que les coordonnées 2D de leurs mires
         images = self.detecteur_mire.detection_mires(photo_path_before_excavation)
         images += self.detecteur_mire.detection_mires(photo_path_after_excavation)
+
+        print("Calcul des nuages de points...")
+        # ---------------------------------------- Deuxième Bloc --------------------------------------------------------
+        point_cloud_before_excavation, point_cloud_after_excavation = self.sfm.generer_nuages_de_points(
+            photo_path_before_excavation,
+            photo_path_after_excavation)
 
         print("Redimensionnement des nuages de points en cours...")
         # on récupère les coordonnées 3d de chacune des mires stockées dans les images
