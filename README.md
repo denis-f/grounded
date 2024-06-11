@@ -46,7 +46,7 @@ pip install -r requirements.txt
 > > Installation des dépendances :  
 > > `sudo apt-get update && sudo apt-get install g++ git-all libpng-dev libjpeg-dev libeigen3-dev libboost-all-dev libtbb-dev`
 > > 
-> > `sudo apt update && sudo apt install libopencv-dev libboost-all-dev libopen3-dev`
+> > `sudo apt update && sudo apt install libopencv-dev libboost-all-dev`
 > 
 > > Copier le dépôt github du projet : `git clone https://github.com/alicevision/CCTag.git`
 > 
