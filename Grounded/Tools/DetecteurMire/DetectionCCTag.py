@@ -6,7 +6,7 @@ from .DetecteurMire import DetecteurMire
 
 import subprocess
 
-from Grounded.utils import config_builer
+from Grounded.utils import config_builer, check_module_executable_path
 
 
 def parsing_result(resultat: str) -> list[Image]:
@@ -64,6 +64,8 @@ class DetectionCCTag(DetecteurMire):
         Returns:
             None
         """
+        check_module_executable_path(path_cctag_directory, "CCTag")
+
         self.path_cctag_directory = path_cctag_directory
 
     def detection_mires(self, chemin_dossier_image) -> list[Image]:

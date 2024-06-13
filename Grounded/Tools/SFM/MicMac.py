@@ -1,7 +1,6 @@
 from .SFM import SFM
 from Grounded.DataObject import Image, File, PointCloud, Mire2D, Mire3D
-from Grounded.utils import find_files_regex, rename_file
-from Grounded.utils import config_builer
+from Grounded.utils import find_files_regex, rename_file, config_builer, check_module_executable_path
 
 import subprocess
 import os
@@ -139,6 +138,8 @@ class MicMac(SFM):
         if tapioca_mode not in tapioca_mode_values:
             raise ValueError(
                 f"Invalid tapioca mode: {tapioca_mode} provided. Allowed values are {tapioca_mode_values}.")
+
+        check_module_executable_path(path_mm3d, "MicMac")
 
         self.path_mm3d = path_mm3d
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "micmac_working_directory"))

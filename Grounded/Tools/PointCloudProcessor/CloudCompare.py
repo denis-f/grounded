@@ -1,6 +1,7 @@
 from .PointCloudProcessor import PointCloudProcessor
 from Grounded.DataObject import PointCloud, Raster
-from Grounded.utils import find_files_regex, rename_file, move_file_to_directory, config_builer
+from Grounded.utils import (find_files_regex, rename_file, move_file_to_directory, config_builer,
+                            check_module_executable_path)
 
 import subprocess
 import os
@@ -43,6 +44,8 @@ class CloudCompare(PointCloudProcessor):
         """
         Constructeur de la classe CloudCompare.
         """
+        check_module_executable_path(path_cloud_compare, "CloudCompare")
+
         self.working_directory = os.path.abspath(os.path.join(os.curdir, "cloudCompare_working_directory"))
         self.path_cloud_compare = path_cloud_compare
         self.is_v1_12_or_higher = compare_versions(version, '2.12') >= 0

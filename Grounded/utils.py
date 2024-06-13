@@ -75,3 +75,11 @@ def config_builer(object, module_name: str) -> str:
             config += ", "
     config += ")"
     return config
+
+def check_module_executable_path(path: str, module_name):
+    if not path_exist(path):
+        raise FileNotFoundError(f"Le fichier {path} n'a pas été trouvé. "
+                                f"Impossible d'instancier le module {module_name}")
+
+def path_exist(path: str) -> bool:
+    return os.path.exists(path)
