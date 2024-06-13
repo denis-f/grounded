@@ -326,7 +326,7 @@ class DensityAnalyser:
                         mir.identifier) + " détectée dans l'image " + im.name + " n'est pas dans les scalebars. Vérifier le fichier chargé.")
 
         # ---------------------------------------- Deuxième Bloc --------------------------------------------------------
-        print("Calcul des nuages de points...")
+        print("Début du calcul des nuages de points.")
         point_cloud_before_excavation, point_cloud_after_excavation = self.sfm.generer_nuages_de_points(
             photo_path_before_excavation,
             photo_path_after_excavation)

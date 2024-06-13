@@ -8,6 +8,7 @@ tools:
       zoom_final: 'QuickMac'
       tapioca_mode: 'All'
       tapioca_resolution: '1000'
+      tapioca_second_resolution: '1000'
 
   metashape:
     class: Grounded.Tools.SFM.Metashape.Metashape

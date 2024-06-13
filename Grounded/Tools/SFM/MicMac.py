@@ -102,7 +102,7 @@ distorsion_model_values = ["RadialExtended", "RadialBasic", "Fraser", "FraserBas
 
 zoom_final_values = ["QuickMac", "MicMac", "BigMac"]
 
-tapioca_mode_values = ["All", "Line", "MulScale", "File"]
+tapioca_mode_values = ["All", "MulScale"]
 
 
 class MicMac(SFM):
@@ -115,7 +115,7 @@ class MicMac(SFM):
     """
 
     def __init__(self, path_mm3d: str, distorsion_model: str = "FraserBasic", zoom_final: str = "QuickMac",
-                 tapioca_mode: str = "All", tapioca_resolution: str = "1000"):
+                 tapioca_mode: str = "All", tapioca_resolution: str = "1000", tapioca_second_resolution="1000"):
         """
         Initialise une instance de la classe MicMac.
 
@@ -145,6 +145,7 @@ class MicMac(SFM):
         self.distorsion_model = distorsion_model
         self.tapioca_mode = tapioca_mode
         self.tapioca_resolution = tapioca_resolution
+        self.tapioca_second_resolution = tapioca_second_resolution
         self.zoom_final = zoom_final
 
         self.set_up_working_space()
@@ -174,9 +175,13 @@ class MicMac(SFM):
         # creation des raccourcis pour les fichiers après
         creer_raccourci_dossier_dans_avec_prefix(os.path.abspath(chemin_dossier_apres), self.working_directory, "1_")
 
-        subprocess.run([self.path_mm3d, "Tapioca", self.tapioca_mode,
-                        f"{self.working_directory}{os.sep}.*JPG|.*tif", self.tapioca_resolution],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        arguments = [self.path_mm3d, "Tapioca", self.tapioca_mode,
+                        f"{self.working_directory}{os.sep}.*JPG|.*tif", self.tapioca_resolution]
+
+        if self.tapioca_mode == 'MulScale':
+            arguments.append(self.tapioca_second_resolution)
+
+        subprocess.run(arguments, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def calibration(self):
         """
