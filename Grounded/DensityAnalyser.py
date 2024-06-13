@@ -1,7 +1,7 @@
 from Grounded.Tools.SFM import SFM
 from Grounded.Tools.DetecteurMire import DetecteurMire
 from Grounded.Tools.PointCloudProcessor import PointCloudProcessor
-from Grounded.DataObject import PointCloud, Mire3D, Mire, Raster, ScaleBar, Mire2D
+from Grounded.DataObject import PointCloud, Mire3D, Mire, Raster, ScaleBar, Mire2D, Image
 
 import statistics
 import rasterio
@@ -46,7 +46,6 @@ def calculate_standard_deviation_mire_3d(mires_3d: list[Mire3D]):
 
     ecart_type = {}
     for identifier in dictionnaire_coordinates_mires.keys():
-
         ecart_type_x = statistics.stdev(dictionnaire_coordinates_mires[identifier]['x']) \
             if len(dictionnaire_coordinates_mires[identifier]['x']) > 1 \
             else 0
@@ -128,7 +127,7 @@ def get_coordinates_mires3d_in_raster(mires3d: list[Mire3D], raster: Raster, sca
             x, y, z = mire.coordinates
 
             # Convertir les coordonnées spatiales (x, y) en indices de pixel (row, col)
-            x, y = ~transform * (x * scale_factor, y* scale_factor)
+            x, y = ~transform * (x * scale_factor, y * scale_factor)
             coords.append((x, y))
 
     return coords
@@ -136,7 +135,7 @@ def get_coordinates_mires3d_in_raster(mires3d: list[Mire3D], raster: Raster, sca
 
 def delimitate_holes(raster_resolution: float, raster_zone, tol_simplify=0.01, width_buffer=0.02, area_hole=0.008,
                      thres_hole=0.00021, k_cox_threshold=0.35, coords_mires_in_raster=[],
-                     min_height:float=0, max_height:float=0, min_width:float=0, max_width:float=0):
+                     min_height: float = 0, max_height: float = 0, min_width: float = 0, max_width: float = 0):
     """
     Identifie et délimite les trous (zones non-continues) dans un raster.
 
@@ -261,7 +260,6 @@ def save_plot_result(raster_array, holes_polygons, list_volumes, output_name, di
         y = [coord[1] for coord in mires_coords]
         pyplot.scatter(x, y, color='blue', s=10, marker='o')
 
-
     # Ajout des informations concernant les trous
     for i in range(len(holes_polygons)):
         poly = holes_polygons[i]
@@ -307,72 +305,45 @@ class DensityAnalyser:
     def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, scale_bars: list[ScaleBar],
                 display_padding: bool = False):
 
-        # --------------------------------------- Premier Bloc --------------------------------------------------------
-        print("Détection des mires présentes sur les images...")
-        # on récupère les images ainsi que les coordonnées 2D de leurs mires
-        images = self.detecteur_mire.detection_mires(photo_path_before_excavation)
-        images += self.detecteur_mire.detection_mires(photo_path_after_excavation)
-        # vérification du paramétrage des scalebar
-        id_scalebars = []
-        for scalebar in scale_bars:
-            id_scalebars.append(scalebar.end.identifier)
-            id_scalebars.append(scalebar.start.identifier)
-        detected_target_are_in_loaded_scalebar = True
-        # on boucle sur les mires détectées, chaque mire détectée doit etre dans les scalebar
-        for im in images:
-            for mir in im.mires_visibles:
-                if mir.identifier not in id_scalebars:
-                    print("WARNING /!\ La mire " + str(
-                        mir.identifier) + " détectée dans l'image " + im.name + " n'est pas dans les scalebars. Vérifier le fichier chargé.")
+        # Détection des mires présentes sur les images
+        images = self._mire_detection(photo_path_before_excavation, photo_path_after_excavation)
 
-        # ---------------------------------------- Deuxième Bloc --------------------------------------------------------
-        print("Début du calcul des nuages de points.")
-        point_cloud_before_excavation, point_cloud_after_excavation = self.sfm.generer_nuages_de_points(
+        # Vérification de la configuration des scalebars afin de détecter une potentielle erreur de l'utilisateur
+        detected_target_are_in_loaded_scalebar = self._check_scalebars_settings(images, scale_bars)
+
+        # Génération des nuages de points à l'aide du module sfm
+        point_cloud_before_excavation, point_cloud_after_excavation = self._generate_point_cloud(
             photo_path_before_excavation,
             photo_path_after_excavation)
 
+        # Calcul de la position des mires dans l'espace 3D
+        mires_3d, ecart_type = self._calculate_mire3d(images)
+
+        # Suppression des ScaleBars dont au moins l'une des extrémités est manquante
+        scale_bars = scale_bars_filter_without_pair(mires_3d, scale_bars)
+
+        # on calcule le facteur de redimmensionnement por mettre à l'echelle les nuages de points
+        scale_factor = calculate_average_scale_factor(mires_3d, scale_bars)
+
         print("Redimensionnement des nuages de points en cours...")
-        # on récupère les coordonnées 3d de chacune des mires stockées dans les images
-        mires_3d: list[Mire3D] = []
-        for image in images:
-            mires_3d += self.sfm.calculer_coordinates_3d_mires(image)
+        point_cloud_before_excavation = self._resize_point_clouds(point_cloud_before_excavation, scale_factor)
+        point_cloud_after_excavation = self._resize_point_clouds(point_cloud_after_excavation, scale_factor)
 
-        # on calcule les coordonnées moyennes de chaque mire 3d ainsi que l'écart type
-        mires_3d_moyens = calculate_average_mire_3d(mires_3d)
-        ecart_type = calculate_standard_deviation_mire_3d(mires_3d)
-
-        # on supprime les mires isolés dont la paire n'a pas pu être détecté
-        scale_bars = scale_bars_filter_without_pair(mires_3d_moyens, scale_bars)
-
-        # on calcule le facteur d'échelle moyen
-        mean_scale_factor = calculate_average_scale_factor(mires_3d_moyens, scale_bars)
-
-        # on redimensionne les nuages de points à l'aide de ce facteur d'échelle
-        point_cloud_before_excavation = self.point_cloud_processor.mise_a_echelle(point_cloud_before_excavation,
-                                                                                  mean_scale_factor)
-
-        point_cloud_after_excavation = self.point_cloud_processor.mise_a_echelle(point_cloud_after_excavation,
-                                                                                 mean_scale_factor)
-
-        # -------------------------------------- Troisième Bloc --------------------------------------------------------
+        # -------------------------------------- Calcul du volume des trous  -------------------------------------------
         print("Calcul du volume en cours...")
         # on calcule le raster de la distance entre les deux nuages de points
-        raster = self.point_cloud_processor.cloud_to_cloud_distance(point_cloud_before_excavation,
-                                                                    point_cloud_after_excavation)
+        raster = self._cloud_to_cloud_distance(point_cloud_before_excavation, point_cloud_after_excavation)
 
         # on isole et on homogénéise la bande que nous allons étudier
         zone_tot = prospect_zone(raster)
 
-        # on récupère les polygones détourant les trous
-
         with rasterio.open(raster.path) as data_set:
             resolution = data_set.res[0]
 
-        coords_mires_in_raster = get_coordinates_mires3d_in_raster(mires_3d_moyens, raster, mean_scale_factor)
-        min_width = min(x for x, y in coords_mires_in_raster)
-        max_width = max(x for x, y in coords_mires_in_raster)
-        min_height = min(y for x, y in coords_mires_in_raster)
-        max_height = max(y for x, y in coords_mires_in_raster) + (0.1 / resolution)
+        coords_mires_in_raster = get_coordinates_mires3d_in_raster(mires_3d, raster, scale_factor)
+        min_width, max_width, min_height, max_height = self._calculate_detection_zone(resolution, coords_mires_in_raster)
+
+        # on récupère les polygones détourant les trous
         holes_polygons = delimitate_holes(resolution, zone_tot, 0.01, 0.02, 0.007, 0.005, 0.4, coords_mires_in_raster,
                                           min_height, max_height, min_width, max_width)
 
@@ -386,7 +357,7 @@ class DensityAnalyser:
             after = self.point_cloud_processor.crop_point_cloud(point_cloud_after_excavation, hole_coordinates)
             holes_cropped.append((before, after))
 
-        # on récupère les volumes des différents trous triés de gauche à droite et de haut en bas
+        # on récupère les volumes des différents trous triés
         holes_volumes = [self.point_cloud_processor.volume_between_clouds(hole[0], hole[1]) for hole in holes_cropped]
 
         # on enregistre au format txt les résultats
@@ -406,3 +377,59 @@ class DensityAnalyser:
                        f"{self.detecteur_mire.get_config()}")
 
         return holes_volumes
+
+    def _mire_detection(self, photo_path_before_excavation: str, photo_path_after_excavation: str) -> list[Image]:
+        print("Détection des mires présentes sur les images...")
+        # on récupère les images ainsi que les coordonnées 2D de leurs mires
+        images = self.detecteur_mire.detection_mires(photo_path_before_excavation)
+        images += self.detecteur_mire.detection_mires(photo_path_after_excavation)
+        return images
+
+    @staticmethod
+    def _check_scalebars_settings(images: list[Image], scale_bars: list[ScaleBar]):
+        # vérification du paramétrage des scalebar
+        id_scalebars = []
+        for scalebar in scale_bars:
+            id_scalebars.append(scalebar.end.identifier)
+            id_scalebars.append(scalebar.start.identifier)
+        detected_target_are_in_loaded_scalebar = True
+        # on boucle sur les mires détectées, chaque mire détectée doit etre dans les scalebar
+        for im in images:
+            for mir in im.mires_visibles:
+                if mir.identifier not in id_scalebars:
+                    print("WARNING /!\ La mire " + str(
+                        mir.identifier) + " détectée dans l'image " + im.name + " n'est pas dans les scalebars. Vérifier le fichier chargé.")
+
+        return detected_target_are_in_loaded_scalebar
+
+    def _generate_point_cloud(self, photo_path_before_excavation, photo_path_after_excavation):
+        print("Début du calcul des nuages de points.")
+        return self.sfm.generer_nuages_de_points(photo_path_before_excavation, photo_path_after_excavation)
+
+    def _calculate_mire3d(self, images: list[Image]) -> (list[Mire3D], dict[int, float]):
+        mires_3d: list[Mire3D] = []
+        for image in images:
+            mires_3d += self.sfm.calculer_coordinates_3d_mires(image)
+
+        # on calcule les coordonnées moyennes de chaque mire 3d ainsi que l'écart type
+        mires_3d_moyens = calculate_average_mire_3d(mires_3d)
+        ecart_type = calculate_standard_deviation_mire_3d(mires_3d)
+
+        return mires_3d_moyens, ecart_type
+
+    def _resize_point_clouds(self, point_cloud: PointCloud, scale_factor: float):
+        # on redimensionne les nuages de points à l'aide de ce facteur d'échelle
+        resize_point_cloud = self.point_cloud_processor.mise_a_echelle(point_cloud, scale_factor)
+
+        return resize_point_cloud
+
+    def _cloud_to_cloud_distance(self, point_cloud_ref: PointCloud, point_cloud_compared: PointCloud) -> Raster:
+        return self.point_cloud_processor.cloud_to_cloud_distance(point_cloud_ref, point_cloud_compared)
+
+    @staticmethod
+    def _calculate_detection_zone(resolution, coords_mires_in_raster):
+        min_width = min(x for x, y in coords_mires_in_raster)
+        max_width = max(x for x, y in coords_mires_in_raster)
+        min_height = min(y for x, y in coords_mires_in_raster)
+        max_height = max(y for x, y in coords_mires_in_raster) + (0.1 / resolution)
+        return min_width, max_width, min_height, max_height
