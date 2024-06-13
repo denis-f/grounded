@@ -1,6 +1,6 @@
 import os
 import re
-
+import shutil
 
 def find_files_regex(directory, regex_pattern):
     """
@@ -77,7 +77,7 @@ def config_builer(object, module_name: str) -> str:
     return config
 
 def check_module_executable_path(path: str, module_name):
-    if not path_exist(path):
+    if not shutil.which(path) and not path_exist(path):
         raise FileNotFoundError(f"Le fichier {path} n'a pas été trouvé. "
                                 f"Impossible d'instancier le module {module_name}")
 
