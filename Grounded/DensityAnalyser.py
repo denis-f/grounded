@@ -120,15 +120,12 @@ def prospect_zone(raster: Raster):
 
 def get_coordinates_mires3d_in_raster(mires3d: list[Mire3D], raster: Raster, scale_factor: float):
     coords = []
-    with rasterio.open(raster.path) as dataset:
-        transform = dataset.transform
-        # Extraction des coordonnées x et y (on ignore z ici)
-        for mire in mires3d:
-            x, y, z = mire.coordinates
+    for mire in mires3d:
+        x, y, z = mire.coordinates
 
-            # Convertir les coordonnées spatiales (x, y) en indices de pixel (row, col)
-            x, y = ~transform * (x * scale_factor, y * scale_factor)
-            coords.append((x, y))
+        # Convertir les coordonnées spatiales (x, y) en indices de pixel (row, col)
+        x, y = raster.xy_3d_space_to_xy_raster(x, y)
+        coords.append((x, y))
 
     return coords
 
@@ -218,16 +215,11 @@ def delimitate_holes(raster_resolution: float, raster_zone, tol_simplify=0.01, w
 
 
 def polygon_coordinate_conversion(raster: Raster, polygon: Polygon) -> list[tuple[float, float]]:
-    # on ouvre le fichier du raster
-    data_set = rasterio.open(raster.path, 'r')
     coordinates = []
     for point in polygon.exterior.coords:
         # On convertit les coordonnées dans la matrice en coordonnées dans le raster
-        x, y = data_set.xy(point[0], point[1])
+        x, y = raster.xy(point[0], point[1])
         coordinates.append((x, y))
-
-    # on ferme le fichier
-    data_set.close()
 
     return coordinates
 
@@ -337,8 +329,7 @@ class DensityAnalyser:
         # on isole et on homogénéise la bande que nous allons étudier
         zone_tot = prospect_zone(raster)
 
-        with rasterio.open(raster.path) as data_set:
-            resolution = data_set.res[0]
+        resolution = raster.resolution
 
         coords_mires_in_raster = get_coordinates_mires3d_in_raster(mires_3d, raster, scale_factor)
         min_width, max_width, min_height, max_height = self._calculate_detection_zone(resolution, coords_mires_in_raster)
