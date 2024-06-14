@@ -1,6 +1,7 @@
 from Grounded.Tools.SFM import SFM
 from Grounded.Tools.DetecteurMire import DetecteurMire
 from Grounded.Tools.PointCloudProcessor import PointCloudProcessor
+from Grounded.Tools.SFM.SFM import SFM
 from Grounded.DataObject import PointCloud, Mire3D, Mire, Raster, ScaleBar, Mire2D, Image
 
 import statistics
@@ -124,7 +125,7 @@ def get_coordinates_mires3d_in_raster(mires3d: list[Mire3D], raster: Raster, sca
         x, y, z = mire.coordinates
 
         # Convertir les coordonnées spatiales (x, y) en indices de pixel (row, col)
-        x, y = raster.xy_3d_space_to_xy_raster(x, y)
+        x, y = raster.xy_3d_space_to_xy_raster(x * scale_factor, y * scale_factor)
         coords.append((x, y))
 
     return coords
@@ -350,6 +351,10 @@ class DensityAnalyser:
 
         # on récupère les volumes des différents trous triés
         holes_volumes = [self.point_cloud_processor.volume_between_clouds(hole[0], hole[1]) for hole in holes_cropped]
+
+        # ##############################################################################################################
+        # ###################################### Enregistrement des résultats ##########################################
+        # ##############################################################################################################
 
         # on enregistre au format txt les résultats
         with open("results.txt", 'w') as file:
