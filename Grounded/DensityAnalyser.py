@@ -271,6 +271,13 @@ def save_plot_result(raster_array, holes_polygons, list_volumes, output_name, di
     pyplot.savefig(output_name, format='pdf')
 
 
+class BadModuleError(Exception):
+    def __init__(self, module_name):
+        self.module_name = module_name
+        self.message = f"Le module de type '{self.module_name}' est incorrect"
+        super().__init__(self.message)
+
+
 class DensityAnalyser:
     """
     Classe permettant l'analyse de la densité apparente du sol en utilisant la photogrammétrie. Une implémentation
@@ -291,6 +298,10 @@ class DensityAnalyser:
             detecteur_mire: un objet implémentant l'interface DetecteurMire
             point_cloud_processor: un objet implémentant l'interface PointCloudProcessor
         """
+        if not isinstance(sfm, SFM): raise BadModuleError("sfm")
+        if not isinstance(detecteur_mire, DetecteurMire): raise BadModuleError("detecteur de mire")
+        if not isinstance(point_cloud_processor, PointCloudProcessor): raise BadModuleError("point cloud processor")
+
         self.sfm = sfm
         self.detecteur_mire = detecteur_mire
         self.point_cloud_processor = point_cloud_processor
@@ -333,7 +344,8 @@ class DensityAnalyser:
         resolution = raster.resolution
 
         coords_mires_in_raster = get_coordinates_mires3d_in_raster(mires_3d, raster, scale_factor)
-        min_width, max_width, min_height, max_height = self._calculate_detection_zone(resolution, coords_mires_in_raster)
+        min_width, max_width, min_height, max_height = self._calculate_detection_zone(resolution,
+                                                                                      coords_mires_in_raster)
 
         # on récupère les polygones détourant les trous
         holes_polygons = delimitate_holes(resolution, zone_tot, 0.01, 0.02, 0.007, 0.005, 0.4, coords_mires_in_raster,
