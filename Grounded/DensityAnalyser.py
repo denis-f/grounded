@@ -427,5 +427,14 @@ class DensityAnalyser:
         min_width = min(x for x, y in coords_mires_in_raster)
         max_width = max(x for x, y in coords_mires_in_raster)
         min_height = min(y for x, y in coords_mires_in_raster)
-        max_height = max(y for x, y in coords_mires_in_raster) + (0.1 / resolution)
+        max_height = max(y for x, y in coords_mires_in_raster)
+
+        y_mean = statistics.mean([y for x, y in coords_mires_in_raster])
+
+        # Ajout de la marge en bas pour détecter les trous qui dépassent
+        if abs(min_height - y_mean) < abs(max_height - y_mean):
+            max_height += (0.1 / resolution)
+        else:
+            min_height += (0.1 / resolution)
+
         return min_width, max_width, min_height, max_height
