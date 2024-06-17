@@ -405,8 +405,9 @@ class DensityAnalyser:
         for im in images:
             for mir in im.mires_visibles:
                 if mir.identifier not in id_scalebars:
-                    print("WARNING /!\ La mire " + str(
-                        mir.identifier) + " détectée dans l'image " + im.name + " n'est pas dans les scalebars. Vérifier le fichier chargé.")
+                    detected_target_are_in_loaded_scalebar = False
+                    print("\033[31mWARNING /!\ La mire " + str(
+                        mir.identifier) + " détectée dans l'image " + im.name + " n'est pas dans les scalebars. Vérifier le fichier chargé.\033[0m")
 
         return detected_target_are_in_loaded_scalebar
 
