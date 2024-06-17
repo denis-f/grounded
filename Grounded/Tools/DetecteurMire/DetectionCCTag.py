@@ -6,7 +6,7 @@ from .DetecteurMire import DetecteurMire
 
 import subprocess
 
-from Grounded.utils import config_builer, check_module_executable_path
+from Grounded.utils import config_builer, check_module_executable_path, path_exist
 
 
 def parsing_result(resultat: str) -> list[Image]:
@@ -86,6 +86,11 @@ class DetectionCCTag(DetecteurMire):
                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         liste_image = parsing_result(process.communicate()[0])
         os.chdir(current_dir)
+
+        out_file = os.path.join(chemin_absolue_dossier_image, "cctag3CC.out")
+        if path_exist(out_file):
+            os.remove(out_file)
+
         return liste_image
 
     def get_config(self) -> str:
