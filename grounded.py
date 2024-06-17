@@ -60,6 +60,7 @@ def main():
     file_dir = File(os.path.abspath(__file__)).get_path_directory()
     parser = config_parser()
     container = ContainerIOC(os.path.join(file_dir, "Configuration", "config.yml"))
+    container.set("root", file_dir)
     arguments = parser.parse_args()
 
     # vérification de la validité des arguments
@@ -71,9 +72,9 @@ def main():
     detecteur_mire_kwargs = parse_arguments_parameters(arguments.Detector_arg)
 
     # Récupération des noms des tools utilisés
-    sfm_name = if_is_not_none(arguments.SFM, "micmac")
-    point_cloud_processor_name = if_is_not_none(arguments.CloudProcessor, "cloudcompare")
-    detecteur_mire_name = if_is_not_none(arguments.Detector, "detection_cctag")
+    sfm_name = if_is_not_none(arguments.SFM, container.get("default_sfm"))
+    point_cloud_processor_name = if_is_not_none(arguments.CloudProcessor, container.get("default_cloud_processor"))
+    detecteur_mire_name = if_is_not_none(arguments.Detector, container.get("default_detector"))
 
     # Instanciation des tools via le conteneur ioc
     sfm = container.get(sfm_name, kwargs_dict=sfm_kwargs)
@@ -85,8 +86,7 @@ def main():
     analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor)
 
     # chargement des scales bars
-    scale_bars = ScaleBarLoader.load(if_is_not_none(arguments.scalebar, os.path.join(file_dir, "Configuration",
-                                                                                     "scaleBar.csv")))
+    scale_bars = ScaleBarLoader.load(if_is_not_none(arguments.scalebar, container.get('default_scalebars_conf')))
 
     volumes_trous = analyser.analyse(arguments.directory_before_excavation,
                                      arguments.directory_after_excavation, scale_bars,

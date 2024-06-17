@@ -1,3 +1,9 @@
+values:
+  default_sfm: 'micmac'
+  default_cloud_processor: 'cloudcompare'
+  default_detector: 'detection_cctag'
+  default_scalebars_conf: '%root%/Configuration/scaleBar.csv'
+
 tools:
   # SFM
   micmac:
