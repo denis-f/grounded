@@ -1,3 +1,5 @@
+import shutil
+
 from .SFM import SFM
 from Grounded.DataObject import Image, Mire3D, PointCloud
 
@@ -55,6 +57,11 @@ class Metashape(SFM):
         self.downscale = int(downscale)
         self.chunk_before = None
         self.chunk_after = None
+
+        self.set_up_working_space()
+
+    def get_working_directory(self):
+        return self.working_directory
 
     def _add_photos_to_chunk(self, chemin_dossier_avant: str, chemin_dossier_apres: str):
         # Ajout des photos avant excavation avec le préfixe "0_"

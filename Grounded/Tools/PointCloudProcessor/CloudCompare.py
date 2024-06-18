@@ -1,7 +1,7 @@
 from .PointCloudProcessor import PointCloudProcessor
 from Grounded.DataObject import PointCloud, Raster
 from Grounded.utils import (find_files_regex, rename_file, move_file_to_directory, config_builer,
-                            check_module_executable_path)
+                            check_module_executable_path, find_next_name_file)
 
 import subprocess
 import os
@@ -51,10 +51,8 @@ class CloudCompare(PointCloudProcessor):
         self.is_v1_12_or_higher = compare_versions(version, '2.12') >= 0
         self.set_up_working_space()
 
-    def set_up_working_space(self):
-        if os.path.exists(self.working_directory):
-            shutil.rmtree(self.working_directory)
-        os.makedirs(self.working_directory, exist_ok=True)  # création du dossier de l'espace de travail cloud compare
+    def get_working_directory(self):
+        return self.working_directory
 
     def mise_a_echelle(self, point_cloud: PointCloud, facteur: float) -> PointCloud:
         """
@@ -77,10 +75,10 @@ class CloudCompare(PointCloudProcessor):
                        f"0 0 0 1")
 
         # transformation du nuage de point
-        subprocess.run([self.path_cloud_compare, "-SILENT", "-NO_TIMESTAMP",
-                        "-C_EXPORT_FMT", f"{point_cloud.extension.upper()}",
-                        "-O", f"{point_cloud.path}", "-APPLY_TRANS", nom_matrice],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.subprocess([self.path_cloud_compare, "-SILENT", "-NO_TIMESTAMP",
+                         "-C_EXPORT_FMT", f"{point_cloud.extension.upper()}",
+                         "-O", f"{point_cloud.path}", "-APPLY_TRANS", nom_matrice],
+                        os.path.join(self.working_directory, "Rescale.log"))
 
         # déplacement du nuage de point nouvellement généré se trouvant dans le dossier du nuage de points
         # donné en paramètre
@@ -113,13 +111,14 @@ class CloudCompare(PointCloudProcessor):
         if self.is_v1_12_or_higher:
             output_raster_option += "_and_SF"
 
-        subprocess.run([self.path_cloud_compare, "-SILENT", "-NO_TIMESTAMP",
-                        "-O", "-GLOBAL_SHIFT", "0", "0", "0", point_cloud_before_excavation.path,
-                        "-O", "-GLOBAL_SHIFT", "0", "0", "0", point_cloud_after_excavation.path,
-                        "-c2c_dist", "-MAX_DIST", "0.1",
-                        "-AUTO_SAVE", "OFF",
-                        "-RASTERIZE", "-GRID_STEP", "0.001", "-EMPTY_FILL", "INTERP", output_raster_option],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.subprocess([self.path_cloud_compare, "-SILENT", "-NO_TIMESTAMP",
+                         "-O", "-GLOBAL_SHIFT", "0", "0", "0", point_cloud_before_excavation.path,
+                         "-O", "-GLOBAL_SHIFT", "0", "0", "0", point_cloud_after_excavation.path,
+                         "-c2c_dist", "-MAX_DIST", "0.1",
+                         "-AUTO_SAVE", "OFF",
+                         "-RASTERIZE", "-GRID_STEP", "0.001", "-EMPTY_FILL", "INTERP", output_raster_option],
+                        os.path.join(self.working_directory, "Distance.log"))
+
         postfix = "_C2C_DIST_MAX_DIST_0.1_RASTER_Z"
 
         raster_path = self.move_file_to_working_directory(point_cloud_before_excavation.get_path_directory(),
@@ -137,7 +136,7 @@ class CloudCompare(PointCloudProcessor):
                    ["-DELAUNAY", "-BEST_FIT",
                     "-SAMPLE_MESH", "DENSITY", "10000000"])
 
-        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.subprocess(command, os.path.join(self.working_directory, "Crop.log"))
 
         path_cloud = self.move_file_to_working_directory(point_cloud.get_path_directory(),
                                                          f"{point_cloud.get_name_without_extension()}_CROPPED_SAMPLED_POINTS",
@@ -155,12 +154,11 @@ class CloudCompare(PointCloudProcessor):
         Returns:
             float: le volume calculé
         """
-
-        subprocess.run([self.path_cloud_compare, "-SILENT",
-                        "-O", "-GLOBAL_SHIFT", "0", "0", "0", crop_after.path,
-                        "-O", "-GLOBAL_SHIFT", "0", "0", "0", crop_before.path,
-                        "-VOLUME", "-GRID_STEP", "0.001"],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        arguments = [self.path_cloud_compare, "-SILENT",
+                     "-O", "-GLOBAL_SHIFT", "0", "0", "0", crop_after.path,
+                     "-O", "-GLOBAL_SHIFT", "0", "0", "0", crop_before.path,
+                     "-VOLUME", "-GRID_STEP", "0.001"]
+        self.subprocess(arguments, os.path.join(self.working_directory, "Volume.log"))
 
         # Lecture des résultats dans le fichier généré automatiquement
         report_path = find_files_regex(crop_before.get_path_directory(), "VolumeCalculationReport")[0]

@@ -1,8 +1,12 @@
+import logging
+import os.path
+
 from Grounded.Tools.SFM import SFM
 from Grounded.Tools.DetecteurMire import DetecteurMire
 from Grounded.Tools.PointCloudProcessor import PointCloudProcessor
 from Grounded.Tools.SFM.SFM import SFM
-from Grounded.DataObject import PointCloud, Mire3D, Mire, Raster, ScaleBar, Mire2D, Image
+from Grounded.DataObject import PointCloud, Mire3D, Mire, Raster, ScaleBar, Mire2D, Image, File
+import Grounded.logger as logger
 
 import statistics
 import rasterio
@@ -290,7 +294,8 @@ class DensityAnalyser:
     under various soil conditions." - Guillaume Coulouma, Denis Feurer, Fabrice Vinatier, Olivier Huttel
     """
 
-    def __init__(self, sfm: SFM, detecteur_mire: DetecteurMire, point_cloud_processor: PointCloudProcessor):
+    def __init__(self, sfm: SFM, detecteur_mire: DetecteurMire, point_cloud_processor: PointCloudProcessor,
+                 verbosity=1):
         """
         Initialise une instance de la classe DensityAnalyser
         Args:
@@ -305,6 +310,9 @@ class DensityAnalyser:
         self.sfm = sfm
         self.detecteur_mire = detecteur_mire
         self.point_cloud_processor = point_cloud_processor
+
+        # Configuration des logs
+        logger.config_logger(verbosity)
 
     def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, scale_bars: list[ScaleBar],
                 display_padding: bool = False):
@@ -322,6 +330,9 @@ class DensityAnalyser:
 
         # Calcul de la position des mires dans l'espace 3D
         mires_3d, ecart_type = self._calculate_mire3d(images)
+
+        # Vérification de la valeur de l'écart des écarts types
+        self._check_ecart_type(ecart_type, 0.1)
 
         # Suppression des ScaleBars dont au moins l'une des extrémités est manquante
         scale_bars = scale_bars_filter_without_pair(mires_3d, scale_bars)
@@ -384,6 +395,9 @@ class DensityAnalyser:
                        f"{self.point_cloud_processor.get_config()}\n"
                        f"{self.detecteur_mire.get_config()}")
 
+        if logger.get_verbosity() >= logging.WARN:
+            self._clean()
+
         return holes_volumes
 
     def _mire_detection(self, photo_path_before_excavation: str, photo_path_after_excavation: str) -> list[Image]:
@@ -406,8 +420,8 @@ class DensityAnalyser:
             for mir in im.mires_visibles:
                 if mir.identifier not in id_scalebars:
                     detected_target_are_in_loaded_scalebar = False
-                    print("\033[31mWARNING /!\ La mire " + str(
-                        mir.identifier) + " détectée dans l'image " + im.name + " n'est pas dans les scalebars. Vérifier le fichier chargé.\033[0m")
+                    logger.get_logger().warn(f"/!\ La mire {mir.identifier} détectée dans l'image "
+                                             f"{im.name} n'est pas dans les scalebars. Vérifier le fichier chargé.")
 
         return detected_target_are_in_loaded_scalebar
 
@@ -451,3 +465,14 @@ class DensityAnalyser:
             min_height += (0.1 / resolution)
 
         return min_width, max_width, min_height, max_height
+
+    @staticmethod
+    def _check_ecart_type(ecart_type: dict, threshold=0.1):
+        for key, values in ecart_type.items():
+            if values.get('x') >= threshold or values.get('y') >= threshold or values.get('z') >= threshold:
+                logger.get_logger().warn(f"L'écart type des coordonnées de la mire {key} est anormalement élevé {values}")
+
+    def _clean(self):
+        self.sfm.clean()
+        self.detecteur_mire.clean()
+        self.point_cloud_processor.clean()

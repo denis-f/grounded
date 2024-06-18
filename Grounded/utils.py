@@ -2,6 +2,9 @@ import os
 import re
 import shutil
 
+from Grounded.DataObject import File
+
+
 def find_files_regex(directory, regex_pattern):
     """
     Searches for files matching a regular expression pattern using os.walk() and re.
@@ -25,6 +28,20 @@ def find_files_regex(directory, regex_pattern):
     return matching_files
 
 
+def find_next_name_file(path):
+    # Extract the filename and extension
+    file = File(path)
+    directory = file.get_path_directory()
+    counter = 1
+    new_filepath = path
+    # If the new name already exists, add a counter
+    while os.path.exists(new_filepath):
+        new_filepath = os.path.join(directory, f"{file.get_name_without_extension()}({counter}).{file.extension}")
+        counter += 1
+
+    return new_filepath
+
+
 def rename_file(filepath, new_name):
     # Check if the filepath exists
     if not os.path.exists(filepath):
@@ -34,14 +51,9 @@ def rename_file(filepath, new_name):
     # Extract the filename and extension
     filename, extension = os.path.splitext(filepath)
     directory = os.sep.join(filename.split(os.sep)[:-1])
-    # Construct the new file name
-    new_filepath = os.path.join(directory, f"{new_name}{extension}")
-    counter = 1
 
-    # If the new name already exists, add a counter
-    while os.path.exists(new_filepath):
-        new_filepath = os.path.join(directory, f"{new_name}({counter}){extension}")
-        counter += 1
+    new_filepath = os.path.join(directory, f"{new_name}{extension}")
+    new_filepath = find_next_name_file(new_filepath)
 
     # Rename the file
     os.rename(filepath, new_filepath)

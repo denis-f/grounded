@@ -7,7 +7,7 @@ import os
 import shutil
 
 
-def recuperer_mires_3d(image: Image, fichier_coordinates_2d, fichier_coordinates_3d, fichier_filtered) -> list[Mire3D]:
+def recuperer_mires_3d(image: Image, fichier_coordinates_3d, fichier_filtered) -> list[Mire3D]:
     if not os.path.exists(fichier_coordinates_3d):  # si le fichier contenant les coordonnées 3d n'est pas trouvé
         raise FileNotFoundError(f"le fichier \"{fichier_coordinates_3d}\" est introuvable")
 
@@ -151,10 +151,8 @@ class MicMac(SFM):
 
         self.set_up_working_space()
 
-    def set_up_working_space(self):
-        if os.path.exists(self.working_directory):
-            shutil.rmtree(self.working_directory)
-        os.makedirs(self.working_directory, exist_ok=True)  # création du dossier de l'espace de travail micmac
+    def get_working_directory(self):
+        return self.working_directory
 
     def detection_points_homologues(self, chemin_dossier_avant: str, chemin_dossier_apres: str):
         """
@@ -182,7 +180,7 @@ class MicMac(SFM):
         if self.tapioca_mode == 'MulScale':
             arguments.append(self.tapioca_second_resolution)
 
-        subprocess.run(arguments, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.subprocess(arguments, os.path.join(self.working_directory, "Tapioca.log"))
 
     def calibration(self):
         """
@@ -192,8 +190,8 @@ class MicMac(SFM):
             None
         """
         print("Calibration en cours, cela peut prendre un certain temps. Veuillez patienter...")
-        subprocess.run([self.path_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG|.*tif"],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        arguments = [self.path_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG|.*tif"]
+        self.subprocess(arguments, os.path.join(self.working_directory, "Tapas.log"))
 
     def generer_nuages_de_points(self, chemin_dossier_avant: str, chemin_dossier_apres: str) -> tuple[PointCloud, PointCloud]:
         """
@@ -214,9 +212,9 @@ class MicMac(SFM):
         print("Génération des nuages de point en cours, cela peut prendre un certain temps. Veuillez patienter...")
 
         # On génère le nuage de points des photos d'avant excavation
-        subprocess.run([self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG|.*tif",
-                        self.distorsion_model],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG|.*tif",
+                     self.distorsion_model]
+        self.subprocess(arguments, os.path.join(self.working_directory, "C3DC_0.log"))
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_0.ply
         rename_file(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"), "C3DC_0")
@@ -227,9 +225,9 @@ class MicMac(SFM):
                   os.path.join(self.working_directory, "Tempo"))
 
         # On génère le nuage de points des photos d'après excavation
-        subprocess.run([self.path_mm3d, "C3DC", self.zoom_final,
-                        f"{self.working_directory}{os.sep}1_.*JPG|.*tif", self.distorsion_model],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}1_.*JPG|.*tif",
+                     self.distorsion_model]
+        self.subprocess(arguments, os.path.join(self.working_directory, "C3DC_1.log"))
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_1.ply
         rename_file(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"), "C3DC_1")
@@ -281,7 +279,7 @@ class MicMac(SFM):
 
         nom_fichier_filtered = os.path.join(log_directory, f"Filtered_{image.get_name_without_extension()}_coord.txt")
 
-        return recuperer_mires_3d(image, nom_fichier_coordinates, nom_fichier_coordinates_3d, nom_fichier_filtered)
+        return recuperer_mires_3d(image, nom_fichier_coordinates_3d, nom_fichier_filtered)
 
     def get_config(self) -> str:
         return config_builer(self, "MicMac")

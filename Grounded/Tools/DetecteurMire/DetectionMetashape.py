@@ -38,10 +38,8 @@ class DetectionMetashape(DetecteurMire):
         self.working_directory = "detecteur_Metashape_working_directory"
         self.set_up_working_space()
 
-    def set_up_working_space(self):
-        if os.path.exists(self.working_directory):
-            shutil.rmtree(self.working_directory)
-        os.makedirs(self.working_directory, exist_ok=True)  # création du dossier de l'espace de travail
+    def get_working_directory(self):
+        return self.working_directory
 
     def detection_mires(self, chemin_dossier_image: str) -> list[Image]:
         doc = Metashape.Document()  # création d'un projet

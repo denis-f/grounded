@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from Grounded.DataObject import Image, PointCloud, Mire3D
+from Grounded.Tools.Tools import Tools
 
 
-class SFM(ABC):
+class SFM(Tools, ABC):
     """
     Interface pour les différents outils de Structure from Motion (SFM).
 

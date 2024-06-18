@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from Grounded.DataObject import Image
 from Grounded.DataObject import Mire2D
@@ -65,8 +66,12 @@ class DetectionCCTag(DetecteurMire):
             None
         """
         check_module_executable_path(path_cctag_directory, "CCTag")
-
+        self.working_directory = os.path.abspath(os.path.join(os.curdir, "cctag_working_directory"))
         self.path_cctag_directory = path_cctag_directory
+        self.set_up_working_space()
+
+    def get_working_directory(self):
+        return self.working_directory
 
     def detection_mires(self, chemin_dossier_image) -> list[Image]:
         """
@@ -82,12 +87,14 @@ class DetectionCCTag(DetecteurMire):
         current_dir = os.path.abspath(os.curdir)
         chemin_absolue_dossier_image = os.path.abspath(chemin_dossier_image)
         os.chdir(self.path_cctag_directory)
-        process = subprocess.Popen(["./detection", "-n", "3", "-i", chemin_absolue_dossier_image],
-                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        liste_image = parsing_result(process.communicate()[0])
+
+        arguments = ["./detection", "-n", "3", "-i", chemin_absolue_dossier_image]
+        process, output = self.subprocess(arguments, os.path.join(self.working_directory, "Detection.log"))
+        liste_image = parsing_result(output)
+
         os.chdir(current_dir)
 
-        out_file = os.path.join(chemin_absolue_dossier_image, "cctag3CC.out")
+        out_file = os.path.join(chemin_absolue_dossier_image, "cctag3CC.log")
         if path_exist(out_file):
             os.remove(out_file)
 
