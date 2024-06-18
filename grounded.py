@@ -1,17 +1,20 @@
-import os.path
-
 from Grounded.DensityAnalyser import DensityAnalyser
 from Grounded.Tools import ContainerIOC
 from Grounded.ScaleBarLoader import ScaleBarLoader
 from Grounded.DataObject import File
 
 import argparse
+import logging
+import os.path
 from typing import List, Optional
 
 
 def config_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='Grounded est un logiciel permettant l\'analyse '
                                                  'de la densité apparente du sol par photogrammétrie')
+
+    parser.add_argument('-v', '--verbosity', type=int, choices=[0, 1, 2],
+                        default=1, help="Paramètre de verbosité  de l'application")
 
     # Option SFM
     parser.add_argument('-SFM', '-sfm',
@@ -52,7 +55,6 @@ def config_parser() -> argparse.ArgumentParser:
     parser.add_argument('directory_after_excavation', type=str,
                         help='Chemin du dossier contenant les photos après excavation')
 
-
     return parser
 
 
@@ -83,7 +85,7 @@ def main():
 
     display_config(sfm, point_cloud_processor, detecteur_mire)
 
-    analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor)
+    analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor, arguments.verbosity)
 
     # chargement des scales bars
     scale_bars = ScaleBarLoader.load(if_is_not_none(arguments.scalebar, container.get('default_scalebars_conf')))

@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from Grounded.DataObject import Image
+from Grounded.Tools.Tools import Tools
 
 
-class DetecteurMire(ABC):
+class DetecteurMire(Tools, ABC):
     """
         Interface pour les différents outils permettant la detection de mires.
 

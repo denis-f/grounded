@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from Grounded.DataObject import PointCloud, Raster
+from Grounded.Tools.Tools import Tools
 
 
-class PointCloudProcessor(ABC):
+class PointCloudProcessor(Tools, ABC):
     """
     Cette classe est une interface définissant les méthodes nécessaires pour traiter les nuages de points.
 
@@ -61,3 +62,4 @@ class PointCloudProcessor(ABC):
     @abstractmethod
     def get_config(self) -> str:
         pass
+
