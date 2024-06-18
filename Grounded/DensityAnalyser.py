@@ -332,7 +332,7 @@ class DensityAnalyser:
         mires_3d, ecart_type = self._calculate_mire3d(images)
 
         # Vérification de la valeur de l'écart des écarts types
-        self._check_ecart_type(ecart_type)
+        self._check_ecart_type(ecart_type, 0.1)
 
         # Suppression des ScaleBars dont au moins l'une des extrémités est manquante
         scale_bars = scale_bars_filter_without_pair(mires_3d, scale_bars)
@@ -467,8 +467,7 @@ class DensityAnalyser:
         return min_width, max_width, min_height, max_height
 
     @staticmethod
-    def _check_ecart_type(ecart_type: dict):
-        threshold = 0.01
+    def _check_ecart_type(ecart_type: dict, threshold=0.1):
         for key, values in ecart_type.items():
             if values.get('x') >= threshold or values.get('y') >= threshold or values.get('z') >= threshold:
                 logger.get_logger().warn(f"L'écart type des coordonnées de la mire {key} est anormalement élevé {values}")
