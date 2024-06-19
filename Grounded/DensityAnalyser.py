@@ -1,5 +1,7 @@
 import logging
 import os.path
+import shutil
+import subprocess
 
 from Grounded.Tools.SFM import SFM
 from Grounded.Tools.DetecteurMire import DetecteurMire
@@ -309,6 +311,12 @@ class DensityAnalyser:
         self.sfm = sfm
         self.detecteur_mire = detecteur_mire
         self.point_cloud_processor = point_cloud_processor
+        if shutil.which("git"):
+            self.git_revision = subprocess.run(['git', '-C', File(__file__).get_path_directory(),
+                                                'rev-parse', 'HEAD'], stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE, text=True).stdout.strip()
+        else:
+            self.git_revision = None
 
     def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, scale_bars: list[ScaleBar],
                 display_padding: bool = False, output_dir: str = os.curdir, verbosity: int = 1):
@@ -401,8 +409,9 @@ class DensityAnalyser:
         return holes_volumes
 
     def get_config(self):
-        result = f"SFM : {self.sfm.get_config()}\n"\
-                 f"PointCloudProcessor : {self.point_cloud_processor.get_config()}\n"\
+        result = f"git-revision : {self.git_revision}\n" \
+                 f"SFM : {self.sfm.get_config()}\n" \
+                 f"PointCloudProcessor : {self.point_cloud_processor.get_config()}\n" \
                  f"DetecteurMire : {self.detecteur_mire.get_config()}\n"
 
         return result
@@ -477,7 +486,8 @@ class DensityAnalyser:
     def _check_ecart_type(ecart_type: dict, threshold=0.1):
         for key, values in ecart_type.items():
             if values.get('x') >= threshold or values.get('y') >= threshold or values.get('z') >= threshold:
-                logger.get_logger().warn(f"L'écart type des coordonnées de la mire {key} est anormalement élevé {values}")
+                logger.get_logger().warn(
+                    f"L'écart type des coordonnées de la mire {key} est anormalement élevé {values}")
 
     def _clean(self):
         self.sfm.clean()
