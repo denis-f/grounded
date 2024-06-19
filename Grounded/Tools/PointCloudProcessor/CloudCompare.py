@@ -40,19 +40,16 @@ class CloudCompare(PointCloudProcessor):
     en utilisant l'outil CloudCompare.
     """
 
-    def __init__(self, path_cloud_compare: str, version: str):
+    def __init__(self, path_cloud_compare: str, working_directory: str, output_dir: str, version: str,):
         """
         Constructeur de la classe CloudCompare.
         """
+        super().__init__(working_directory, output_dir)
         check_module_executable_path(path_cloud_compare, "CloudCompare")
 
-        self.working_directory = os.path.abspath(os.path.join(os.curdir, "cloudCompare_working_directory"))
         self.path_cloud_compare = path_cloud_compare
         self.is_v1_12_or_higher = compare_versions(version, '2.12') >= 0
         self.set_up_working_space()
-
-    def get_working_directory(self):
-        return self.working_directory
 
     def mise_a_echelle(self, point_cloud: PointCloud, facteur: float) -> PointCloud:
         """

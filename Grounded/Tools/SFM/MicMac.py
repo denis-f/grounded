@@ -113,8 +113,9 @@ class MicMac(SFM):
     de la caméra, la génération de nuages de points, et le calcul des coordonnées 3D des mires dans une image.
     """
 
-    def __init__(self, path_mm3d: str, distorsion_model: str = "FraserBasic", zoom_final: str = "QuickMac",
-                 tapioca_mode: str = "All", tapioca_resolution: str = "1000", tapioca_second_resolution="1000"):
+    def __init__(self, path_mm3d: str, working_directory: str, output_dir: str, distorsion_model: str = "FraserBasic",
+                 zoom_final: str = "QuickMac", tapioca_mode: str = "All", tapioca_resolution: str = "1000",
+                 tapioca_second_resolution="1000"):
         """
         Initialise une instance de la classe MicMac.
 
@@ -141,8 +142,8 @@ class MicMac(SFM):
 
         check_module_executable_path(path_mm3d, "MicMac")
 
+        super().__init__(working_directory, output_dir)
         self.path_mm3d = path_mm3d
-        self.working_directory = os.path.abspath(os.path.join(os.curdir, "micmac_working_directory"))
         self.distorsion_model = distorsion_model
         self.tapioca_mode = tapioca_mode
         self.tapioca_resolution = tapioca_resolution
@@ -150,9 +151,6 @@ class MicMac(SFM):
         self.zoom_final = zoom_final
 
         self.set_up_working_space()
-
-    def get_working_directory(self):
-        return self.working_directory
 
     def detection_points_homologues(self, chemin_dossier_avant: str, chemin_dossier_apres: str):
         """

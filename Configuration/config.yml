@@ -3,6 +3,7 @@ values:
   default_cloud_processor: 'cloudcompare'
   default_detector: 'detection_cctag'
   default_scalebars_conf: '%root%/Configuration/scaleBar.csv'
+  default_outdir_name: 'out'
 
 tools:
   # SFM
@@ -10,6 +11,8 @@ tools:
     class: Grounded.Tools.SFM.MicMac.MicMac
     arguments:
       path_mm3d: '/opt/micmac/bin/mm3d'
+      working_directory: 'micmac_working_directory'
+      output_dir: '%default_outdir_name%'
       distorsion_model: 'FraserBasic'
       zoom_final: 'QuickMac'
       tapioca_mode: 'All'
@@ -19,6 +22,8 @@ tools:
   metashape:
     class: Grounded.Tools.SFM.Metashape.Metashape
     arguments:
+      working_directory: 'metashape_working_directory'
+      output_dir: '%default_outdir_name%'
       downscale: '8'
 
   # PointCloudProcessor
@@ -26,6 +31,8 @@ tools:
     class: Grounded.Tools.PointCloudProcessor.CloudCompare.CloudCompare
     arguments:
       path_cloud_compare: 'cloudcompare.CloudCompare'
+      working_directory: 'cloudCompare_working_directory'
+      output_dir: '%default_outdir_name%'
       version: '2.11.1'
 
   # DetecteurMire
@@ -33,6 +40,11 @@ tools:
     class: Grounded.Tools.DetecteurMire.DetectionCCTag.DetectionCCTag
     arguments:
       path_cctag_directory: '/opt/CCTag/'
+      working_directory: 'cctag_working_directory'
+      output_dir: '%default_outdir_name%'
 
   detection_metashape:
     class: Grounded.Tools.DetecteurMire.DetectionMetashape.DetectionMetashape
+    arguments:
+      working_directory: 'detectionMetashape_working_directory'
+      output_dir: '%default_outdir_name%'

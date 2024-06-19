@@ -21,6 +21,9 @@ def read_subprocess_output(process):
 
 class Tools(ABC):
 
+    def __init__(self, working_directory: str, output_dir: str):
+        self.working_directory = os.path.abspath(os.path.join(output_dir, working_directory))
+
     @staticmethod
     def subprocess(arguments: list, out_file: str):
         process = sb.Popen(arguments, stdout=sb.PIPE, stderr=sb.STDOUT)
@@ -35,13 +38,9 @@ class Tools(ABC):
         return process, output
 
     def clean(self):
-        shutil.rmtree(self.get_working_directory())
+        shutil.rmtree(self.working_directory)
 
     def set_up_working_space(self):
-        if os.path.exists(self.get_working_directory()):
+        if os.path.exists(self.working_directory):
             self.clean()
-        os.makedirs(self.get_working_directory(), exist_ok=True)  # création du dossier de l'espace de travail
-
-    @abstractmethod
-    def get_working_directory(self):
-        pass
+        os.makedirs(self.working_directory, exist_ok=True)  # création du dossier de l'espace de travail

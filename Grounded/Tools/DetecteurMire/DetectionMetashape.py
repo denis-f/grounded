@@ -34,12 +34,9 @@ def parse_export_file(export_file_path, photos) -> list[Image]:
 
 class DetectionMetashape(DetecteurMire):
 
-    def __init__(self):
-        self.working_directory = "detecteur_Metashape_working_directory"
+    def __init__(self, working_directory: str, output_dir: str):
+        super().__init__(working_directory, output_dir)
         self.set_up_working_space()
-
-    def get_working_directory(self):
-        return self.working_directory
 
     def detection_mires(self, chemin_dossier_image: str) -> list[Image]:
         doc = Metashape.Document()  # création d'un projet

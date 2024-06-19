@@ -1,3 +1,5 @@
+import shutil
+
 from Grounded.DensityAnalyser import DensityAnalyser
 from Grounded.Tools import ContainerIOC
 from Grounded.ScaleBarLoader import ScaleBarLoader
@@ -17,32 +19,36 @@ def config_parser() -> argparse.ArgumentParser:
     parser.add_argument('-v', '--verbosity', type=int, choices=[0, 1, 2],
                         default=1, help="Paramètre de verbosité  de l'application")
 
+    # Option de sortie
+    parser.add_argument('-o', '--output',
+                        type=str, help='Nom du répertoire de sortie.')
+
     # Option SFM
     parser.add_argument('-SFM', '-sfm',
-                        metavar='SFM', type=str, help='SFM choisi pour l\'éxecution')
+                        type=str, help='SFM choisi pour l\'éxecution')
 
     parser.add_argument('-SFM_arg', '-sfm_arg',
-                        metavar='SFM arguments', type=str, help='arguments du SFM', action='append')
+                        type=str, help='arguments du SFM', action='append')
 
     # Option PointCloudProcessor
     parser.add_argument('-CloudProcessor', '-cloudprocessor',
-                        metavar='CloudProcessor', type=str, help='PointCloudProcessor choisi pour l\'éxecution')
+                        type=str, help='PointCloudProcessor choisi pour l\'éxecution')
 
     parser.add_argument('-CloudProcessor_arg', '-cloudprocessor_arg',
-                        metavar='CloudProcessor arguments', type=str, help='arguments du PointCloudProcessor',
+                        type=str, help='arguments du PointCloudProcessor',
                         action='append')
 
     # Option DetecteurMire
     parser.add_argument('-Detector', '-detector',
-                        metavar='DetecteurMire', type=str, help='DetecteurMire choisi pour l\'éxecution')
+                        type=str, help='DetecteurMire choisi pour l\'éxecution')
 
     parser.add_argument('-Detector_arg', '-detector_arg',
-                        metavar='Detector arguments', type=str, help='arguments du DetecteurMire',
+                        type=str, help='arguments du DetecteurMire',
                         action='append')
 
     # Option scalebar
     parser.add_argument('-scalebar',
-                        metavar='scalebar_file', type=str, help='fichier contenant les informations des scales bar')
+                        type=str, help='fichier contenant les informations des scales bar')
 
     # Ajouter la balise -display_padding
     parser.add_argument('-display_padding', action='store_true', help="Affiche le padding utilisé pour la "
@@ -69,6 +75,13 @@ def main():
     # vérification de la validité des arguments
     arguments_cheker(arguments)
 
+    # Changement du dossier de sortie par défaut dans le conteneur si celui si est renseigné
+    if arguments.output is not None:
+        container.set("default_outdir_name", arguments.output)
+
+    # On récupère le dossier de sortie
+    output_dir = container.get("default_outdir_name")
+
     # Récupération des paramètres des tools
     sfm_kwargs = parse_arguments_parameters(arguments.SFM_arg)
     point_cloud_processor_kwargs = parse_arguments_parameters(arguments.CloudProcessor_arg)
@@ -86,14 +99,14 @@ def main():
 
     display_config(sfm, point_cloud_processor, detecteur_mire)
 
-    analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor, arguments.verbosity)
+    analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor)
 
     # chargement des scales bars
     scale_bars = ScaleBarLoader.load(if_is_not_none(arguments.scalebar, container.get('default_scalebars_conf')))
 
     volumes_trous = analyser.analyse(arguments.directory_before_excavation,
                                      arguments.directory_after_excavation, scale_bars,
-                                     arguments.display_padding)
+                                     arguments.display_padding, output_dir, arguments.verbosity)
 
     # Affichage des résultats
     print("###########################################################################\n"

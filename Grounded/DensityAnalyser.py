@@ -294,8 +294,7 @@ class DensityAnalyser:
     under various soil conditions." - Guillaume Coulouma, Denis Feurer, Fabrice Vinatier, Olivier Huttel
     """
 
-    def __init__(self, sfm: SFM, detecteur_mire: DetecteurMire, point_cloud_processor: PointCloudProcessor,
-                 verbosity=1):
+    def __init__(self, sfm: SFM, detecteur_mire: DetecteurMire, point_cloud_processor: PointCloudProcessor):
         """
         Initialise une instance de la classe DensityAnalyser
         Args:
@@ -311,11 +310,11 @@ class DensityAnalyser:
         self.detecteur_mire = detecteur_mire
         self.point_cloud_processor = point_cloud_processor
 
-        # Configuration des logs
-        logger.config_logger(verbosity)
-
     def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, scale_bars: list[ScaleBar],
-                display_padding: bool = False):
+                display_padding: bool = False, output_dir: str = os.curdir, verbosity: int = 1):
+
+        # Configuration des logs
+        logger.config_logger(verbosity, os.path.join(output_dir, "grounded.log"))
 
         photo_path_before_excavation = os.path.abspath(photo_path_before_excavation)
         photo_path_after_excavation = os.path.abspath(photo_path_after_excavation)
@@ -383,17 +382,17 @@ class DensityAnalyser:
         # ##############################################################################################################
 
         # on enregistre au format txt les résultats
-        with open("results.txt", 'w') as file:
+        with open(os.path.join(output_dir, "results.txt"), 'w') as file:
             file.write(f"nombre de trous détectés : {len(holes_volumes)}\n"
                        "------------Trous triés de gauche à droite------------\n")
             for i in range(len(holes_volumes)):
                 file.write(f"volume du trou n°{i + 1} : {holes_volumes[i]}\n")
 
         # on enregistre au format pdf les résultats
-        save_plot_result(zone_tot, holes_polygons, holes_volumes, "results.pdf",
+        save_plot_result(zone_tot, holes_polygons, holes_volumes, os.path.join(output_dir, "results.pdf"),
                          display_padding, coords_mires_in_raster, min_height, max_height, min_width, max_width)
 
-        with open("config.txt", 'w') as file:
+        with open(os.path.join(output_dir, "config.txt"), 'w') as file:
             file.write(f"{self.sfm.get_config()}\n"
                        f"{self.point_cloud_processor.get_config()}\n"
                        f"{self.detecteur_mire.get_config()}")

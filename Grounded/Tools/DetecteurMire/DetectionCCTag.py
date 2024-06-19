@@ -54,7 +54,7 @@ class DetectionCCTag(DetecteurMire):
     Elle est utilisée pour calculer les coordonnées de chacune des mires présentes sur une image
     """
 
-    def __init__(self, path_cctag_directory: str):
+    def __init__(self, path_cctag_directory: str, working_directory: str, output_dir: str):
         """
         Initialise une instance de la classe MicMac.
 
@@ -65,13 +65,10 @@ class DetectionCCTag(DetecteurMire):
         Returns:
             None
         """
+        super().__init__(working_directory, output_dir)
         check_module_executable_path(path_cctag_directory, "CCTag")
-        self.working_directory = os.path.abspath(os.path.join(os.curdir, "cctag_working_directory"))
         self.path_cctag_directory = path_cctag_directory
         self.set_up_working_space()
-
-    def get_working_directory(self):
-        return self.working_directory
 
     def detection_mires(self, chemin_dossier_image) -> list[Image]:
         """

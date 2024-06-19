@@ -2,10 +2,18 @@ import re
 import yaml
 from dependency_injector import providers
 
+instance = None
+
 
 class ContainerIOC:
     def __init__(self, config_file: str):
+        global instance
         self.container: dict = load_from_yaml(config_file)
+        instance = self
+
+    @staticmethod
+    def get_instance():
+        global instance
 
     def get(self, name: str, kwargs_dict: dict = {}, **kwargs):
 
@@ -18,6 +26,9 @@ class ContainerIOC:
             args = kwargs_dict | kwargs
             if not set(args.keys()) <= set(attr.kwargs['args'].keys()):
                 raise Exception(f"bad arguments was given to create {name} tool")
+            for key, value in attr.kwargs['args'].items():
+                if isinstance(value, str):
+                    attr.kwargs['args'][key] = self._resolver(value)
             attr.kwargs['args'].update(args)
             return attr()
         else:

@@ -50,18 +50,15 @@ def photos_coord_to_3d_coords(chunk: ms.Chunk, x: float, y: float, camera_name: 
 
 class Metashape(SFM):
 
-    def __init__(self, downscale="8"):
+    def __init__(self, working_directory: str, output_dir: str, downscale="8"):
+        super().__init__(working_directory, output_dir)
         self.doc = ms.Document()  # création d'un projet
         self.chunk = self.doc.addChunk()  # ajout d'un chunk dans lequel nous allons travailler
-        self.working_directory = "metashape_working_directory"
         self.downscale = int(downscale)
         self.chunk_before = None
         self.chunk_after = None
 
         self.set_up_working_space()
-
-    def get_working_directory(self):
-        return self.working_directory
 
     def _add_photos_to_chunk(self, chemin_dossier_avant: str, chemin_dossier_apres: str):
         # Ajout des photos avant excavation avec le préfixe "0_"
