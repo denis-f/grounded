@@ -393,14 +393,19 @@ class DensityAnalyser:
                          display_padding, coords_mires_in_raster, min_height, max_height, min_width, max_width)
 
         with open(os.path.join(output_dir, "config.txt"), 'w') as file:
-            file.write(f"{self.sfm.get_config()}\n"
-                       f"{self.point_cloud_processor.get_config()}\n"
-                       f"{self.detecteur_mire.get_config()}")
+            file.write(self.get_config())
 
         if logger.get_verbosity() >= logging.WARN:
             self._clean()
 
         return holes_volumes
+
+    def get_config(self):
+        result = f"SFM : {self.sfm.get_config()}\n"\
+                 f"PointCloudProcessor : {self.point_cloud_processor.get_config()}\n"\
+                 f"DetecteurMire : {self.detecteur_mire.get_config()}\n"
+
+        return result
 
     def _mire_detection(self, photo_path_before_excavation: str, photo_path_after_excavation: str) -> list[Image]:
         print("Détection des mires présentes sur les images...")

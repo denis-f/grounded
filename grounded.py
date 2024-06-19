@@ -97,9 +97,9 @@ def main():
     point_cloud_processor = container.get(point_cloud_processor_name, kwargs_dict=point_cloud_processor_kwargs)
     detecteur_mire = container.get(detecteur_mire_name, kwargs_dict=detecteur_mire_kwargs)
 
-    display_config(sfm, point_cloud_processor, detecteur_mire)
-
     analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor)
+
+    display_config(analyser)
 
     # chargement des scales bars
     scale_bars = ScaleBarLoader.load(if_is_not_none(arguments.scalebar, container.get('default_scalebars_conf')))
@@ -146,9 +146,9 @@ def parse_arguments_parameters(arguments: Optional[List]) -> dict:
     return kwargs
 
 
-def display_config(sfm, point_cloud_processor, detector):
+def display_config(analyser):
     print("\033[34mConfiguration d'exécution :\n")
-    print(f"{sfm.get_config()}\n{point_cloud_processor.get_config()}\n{detector.get_config()}\n\033[0m")
+    print(f"{analyser.get_config()}\n\033[0m")
 
 
 if __name__ == '__main__':
