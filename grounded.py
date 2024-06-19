@@ -13,6 +13,7 @@ def config_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='Grounded est un logiciel permettant l\'analyse '
                                                  'de la densité apparente du sol par photogrammétrie')
 
+    # Paramètre de verbosité
     parser.add_argument('-v', '--verbosity', type=int, choices=[0, 1, 2],
                         default=1, help="Paramètre de verbosité  de l'application")
 
@@ -104,9 +105,13 @@ def main():
 
 def arguments_cheker(arguments):
     if arguments.directory_before_excavation is None:
-        raise argparse.ArgumentError("directory_before_excavation", "missing image file")
+        raise argparse.ArgumentError(None, "image directory before excavation is missing")
     if arguments.directory_after_excavation is None:
-        raise argparse.ArgumentError("directory_after_excavation", "missing image file")
+        raise argparse.ArgumentError(None, "image directory after excavation is missing")
+    if not os.path.exists(arguments.directory_before_excavation):
+        raise argparse.ArgumentError(None, "image directory before excavation does not exists")
+    if not os.path.exists(arguments.directory_after_excavation):
+        raise argparse.ArgumentError(None, "image directory after excavation does not exists")
 
 
 def if_is_not_none(argument, default):

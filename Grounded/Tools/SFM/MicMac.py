@@ -169,18 +169,21 @@ class MicMac(SFM):
         self.set_up_working_space()
 
         # création des raccourcis pour les fichiers avant
-        creer_raccourci_dossier_dans_avec_prefix(os.path.abspath(chemin_dossier_avant), self.working_directory, "0_")
+        creer_raccourci_dossier_dans_avec_prefix(chemin_dossier_avant, self.working_directory, "0_")
 
         # creation des raccourcis pour les fichiers après
-        creer_raccourci_dossier_dans_avec_prefix(os.path.abspath(chemin_dossier_apres), self.working_directory, "1_")
+        creer_raccourci_dossier_dans_avec_prefix(chemin_dossier_apres, self.working_directory, "1_")
 
         arguments = [self.path_mm3d, "Tapioca", self.tapioca_mode,
-                        f"{self.working_directory}{os.sep}.*JPG|.*tif", self.tapioca_resolution]
+                     f"{self.working_directory}{os.sep}.*JPG|.*tif", self.tapioca_resolution]
 
         if self.tapioca_mode == 'MulScale':
             arguments.append(self.tapioca_second_resolution)
 
+        current_dir = os.path.abspath(os.curdir)
+        os.chdir(self.working_directory)
         self.subprocess(arguments, os.path.join(self.working_directory, "Tapioca.log"))
+        os.chdir(current_dir)
 
     def calibration(self):
         """
@@ -191,9 +194,13 @@ class MicMac(SFM):
         """
         print("Calibration en cours, cela peut prendre un certain temps. Veuillez patienter...")
         arguments = [self.path_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG|.*tif"]
+        current_dir = os.path.abspath(os.curdir)
+        os.chdir(self.working_directory)
         self.subprocess(arguments, os.path.join(self.working_directory, "Tapas.log"))
+        os.chdir(current_dir)
 
-    def generer_nuages_de_points(self, chemin_dossier_avant: str, chemin_dossier_apres: str) -> tuple[PointCloud, PointCloud]:
+    def generer_nuages_de_points(self, chemin_dossier_avant: str, chemin_dossier_apres: str) -> tuple[
+        PointCloud, PointCloud]:
         """
         Méthode pour générer des nuages de points avant/après excavation.
 
@@ -214,7 +221,10 @@ class MicMac(SFM):
         # On génère le nuage de points des photos d'avant excavation
         arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG|.*tif",
                      self.distorsion_model]
+        current_dir = os.path.abspath(os.curdir)
+        os.chdir(self.working_directory)
         self.subprocess(arguments, os.path.join(self.working_directory, "C3DC_0.log"))
+        os.chdir(current_dir)
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_0.ply
         rename_file(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"), "C3DC_0")
@@ -227,7 +237,11 @@ class MicMac(SFM):
         # On génère le nuage de points des photos d'après excavation
         arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}1_.*JPG|.*tif",
                      self.distorsion_model]
+
+        current_dir = os.path.abspath(os.curdir)
+        os.chdir(self.working_directory)
         self.subprocess(arguments, os.path.join(self.working_directory, "C3DC_1.log"))
+        os.chdir(current_dir)
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_1.ply
         rename_file(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"), "C3DC_1")
@@ -271,12 +285,14 @@ class MicMac(SFM):
 
         # on génère nos coordonnées 3D dans un fichier
         nom_fichier_coordinates_3d = os.path.join(log_directory, f"{image.get_name_without_extension()}_3D_coord.txt")
-        subprocess.run([self.path_mm3d, "Im2XYZ", os.path.join(self.working_directory,
-                                                               f"PIMs-{self.zoom_final}{os.sep}Nuage-Depth-"
-                                                               f"{image_locale.name}.xml"),
-                        nom_fichier_coordinates, nom_fichier_coordinates_3d],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
+        current_dir = os.path.abspath(os.curdir)
+        os.chdir(self.working_directory)
+        self.subprocess([self.path_mm3d, "Im2XYZ", os.path.join(self.working_directory,
+                                                                f"PIMs-{self.zoom_final}{os.sep}Nuage-Depth-"
+                                                                f"{image_locale.name}.xml"),
+                         nom_fichier_coordinates, nom_fichier_coordinates_3d],
+                        os.path.join(self.working_directory, "Tapas.log"))
+        os.chdir(current_dir)
         nom_fichier_filtered = os.path.join(log_directory, f"Filtered_{image.get_name_without_extension()}_coord.txt")
 
         return recuperer_mires_3d(image, nom_fichier_coordinates_3d, nom_fichier_filtered)

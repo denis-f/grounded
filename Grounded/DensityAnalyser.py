@@ -317,6 +317,9 @@ class DensityAnalyser:
     def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, scale_bars: list[ScaleBar],
                 display_padding: bool = False):
 
+        photo_path_before_excavation = os.path.abspath(photo_path_before_excavation)
+        photo_path_after_excavation = os.path.abspath(photo_path_after_excavation)
+
         # Détection des mires présentes sur les images
         images = self._mire_detection(photo_path_before_excavation, photo_path_after_excavation)
 
