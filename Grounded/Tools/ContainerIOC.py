@@ -2,18 +2,10 @@ import re
 import yaml
 from dependency_injector import providers
 
-instance = None
-
 
 class ContainerIOC:
     def __init__(self, config_file: str):
-        global instance
         self.container: dict = load_from_yaml(config_file)
-        instance = self
-
-    @staticmethod
-    def get_instance():
-        global instance
 
     def get(self, name: str, kwargs_dict: dict = {}, **kwargs):
 
