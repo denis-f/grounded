@@ -4,11 +4,37 @@ from dependency_injector import providers
 
 
 class ContainerIOC:
+    """
+    Cette classe permet de faire le lien entre la ligne de commande et le code. Il s'agit d'un conteneur d'inversion de
+    dépendance. Celle-ci est fortement inspiré du conteneur builder de Symfony (framework php).
+    Cette classe permet l'instanciation de modules dynamiquement à partir de la configuration par défaut
+    de l'application stockée dans un fichier yaml
+    """
+
     def __init__(self, config_file: str):
+        """
+        Constructeur de la classe ContainerIOC, cette méthode prend en paramètre un fichier yaml contenant la
+        configuration par défaut de l'application
+
+        Args:
+            config_file (str): un fichier de configuration au format yaml
+        """
         self.container: dict = load_from_yaml(config_file)
 
     def get(self, name: str, kwargs_dict: dict = {}, **kwargs):
+        """
+        Cette fonction permet d'accéder à différentes variables stockées dans le conteneur. Elle se charge également
+        de l'instantiation des différents modules à partir de valeurs par défaut contenu dans un fichier yaml.
+        Ces valeurs par défaut peuvent être écrasé par l'utilisateur s'il les spécifie dans les paramètres kwargs.
 
+        Args:
+            name (str): nom du service/variable souhaité
+            kwargs_dict (dict): arguments utilisés lors de l'instanciation d'un service
+            **kwargs : arguments utilisés lors de l'instanciation d'un service
+
+        Returns: Une variable/Un service
+
+        """
         # Si le conteneur ne contient pas l'attribut on renvoie une erreur
         attr = self.container.get(name)
         if attr is None:
@@ -30,12 +56,26 @@ class ContainerIOC:
                 return attr
 
     def set(self, name, value):
+        """
+        Cette méthode permet d'insérer un nouvel objet dans le conteneur.
+
+        Args:
+            name: nom de l'objet qui sera utilisé par la suite pour y accéder
+            value: objet à insérer
+        """
         self.container[name] = value
 
-    def _resolver(self, string: str):
+    def _resolver(self, string: str) -> str:
+        """
+        Méthode interne de la classe ContainerIOC. Elle permet de résoudre l'inclusion de variables dans des
+        string par un appel récursif.
+
+        Returns:
+            str : Une chaîne de caractère dont les variables inclues ont été inséré
+        """
         def replace_match(match):
             # Retourne le remplacement correspondant
-            return self.container.get(match.group(1))
+            return self.container.get(match.group(1), match.group(0))
 
         # Pattern pour trouver les segments encadrés par des %
         pattern = r"%([^%]+)%"
