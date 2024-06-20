@@ -9,12 +9,20 @@ Grounded is a software that allows to compute 2.5D volumes of soil samples from 
 
 ## Installation
 
-### Dépendances python
+### Dépendances python  
+
+#### Installation générale
 Executez la commande : 
-    
+
 ```bash
 pip install -r requirements.txt
 ```
+
+#### Spécificité metashape
+* Se rendre sur la page de téléchargement de <a href="https://www.agisoft.com/downloads/installer">Metashape</a>
+* Télécharger les fichiers le module python3 correspondant à votre distribution
+* Effectuer la commande suivante sur le fichier qui vient d'être téléchargé : `pip install Metashape-*.whl`
+
 ### Dépendances logicielles
 
 ### _Linux_
