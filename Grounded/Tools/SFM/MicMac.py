@@ -120,6 +120,11 @@ class MicMac(SFM):
         Initialise une instance de la classe MicMac.
 
         Args:
+            working_directory (str): répertoire de travail
+            output_dir (str): fichier de sortie
+            tapioca_mode (str): mode utilisé par la commande tapioca
+            tapioca_resolution (str): résolution utilisée par la commande tapioca
+            tapioca_second_resolution (str): seconde résolution utilisée par la commande tapioca, uniquement avec le mode MulScale
             path_mm3d (str): Le chemin vers l'exécutable MicMac.
             distorsion_model (str): un modèle de distorsion
             zoom_final (str): un zoom final

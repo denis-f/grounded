@@ -1,11 +1,9 @@
 from .PointCloudProcessor import PointCloudProcessor
 from Grounded.DataObject import PointCloud, Raster
 from Grounded.utils import (find_files_regex, rename_file, move_file_to_directory, config_builer,
-                            check_module_executable_path, find_next_name_file)
+                            check_module_executable_path)
 
-import subprocess
 import os
-import shutil
 
 
 def compare_versions(version1, version2):
@@ -125,6 +123,18 @@ class CloudCompare(PointCloudProcessor):
         return Raster(raster_path)
 
     def crop_point_cloud(self, point_cloud: PointCloud, coordonnees_trace: list[tuple[float, float]]) -> PointCloud:
+        """
+        Méthode permettant de découper un nuage de points à partir d'une liste de coordonnées délimitant
+        les contours.
+
+        Args:
+            point_cloud (PointCloud): le nuage de point dans lequel effectuer la découpe
+            coordonnees_trace (list): coordonnées détourant la zone de découpe
+
+        Returns:
+            PointCloud: nuage de points de la partie découpée
+
+        """
         formated_coordinates = [str(coord) for point in coordonnees_trace for coord in point]
         command = ([self.path_cloud_compare, "-SILENT",
                     "-C_EXPORT_FMT", "ASC",

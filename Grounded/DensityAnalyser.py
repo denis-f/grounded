@@ -319,7 +319,20 @@ class DensityAnalyser:
             self.git_revision = None
 
     def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, scale_bars: list[ScaleBar],
-                display_padding: bool = False, output_dir: str = os.curdir, verbosity: int = 1):
+                display_padding: bool = False, output_dir: str = os.curdir, verbosity: int = 1) -> list[float]:
+        """
+
+        Args:
+            photo_path_before_excavation (str): chemin vers le fichier avant excavation
+            photo_path_after_excavation (str): chemin vers le fichier après excavation
+            scale_bars (list[ScaleBar]): réglets utilisés
+            display_padding (bool): Option d'affiche de la zone de détection sur la sortie graphique
+            output_dir (str): dossier de sortie
+            verbosity (int): un entier compris dans l'intervalle [0;2]
+
+        Returns:
+            list[float]: volumes des trous trouvés
+        """
 
         # Configuration des logs
         logger.config_logger(verbosity, os.path.join(output_dir, "grounded.log"))

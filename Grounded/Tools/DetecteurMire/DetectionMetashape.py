@@ -33,12 +33,35 @@ def parse_export_file(export_file_path, photos) -> list[Image]:
 
 
 class DetectionMetashape(DetecteurMire):
+    """
+    Implémente l'interface DetecteurMire et implémente les méthodes nécessaires pour l'exécution de detection,
+    une composante de CCTag
+
+    Elle est utilisée pour calculer les coordonnées de chacune des mires présentes sur une image
+    """
 
     def __init__(self, working_directory: str, output_dir: str):
+        """
+        Initialise une instance de la classe DetectionMetashape
+
+        Args:
+            working_directory: répertoire de travail
+            output_dir: dossier de sortie
+        """
         super().__init__(working_directory, output_dir)
         self.set_up_working_space()
 
     def detection_mires(self, chemin_dossier_image: str) -> list[Image]:
+        """
+        Détecte chacune des mires présentes sur une image, renvoyant une liste d'objet image contenant les mires
+        (Mire2D) qui apparaissent sur cette image.
+
+        Args:
+            chemin_dossier_image: un dossier contenant une ou plusieurs images en paramètre.
+
+        Returns:
+            list[Image]: une liste contenant toutes les images ayant été trouvé par le détecteur de mire
+        """
         doc = Metashape.Document()  # création d'un projet
         chunk = doc.addChunk()  # ajout d'un chunk dans lequel nous allons travailler
 

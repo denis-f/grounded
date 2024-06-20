@@ -43,6 +43,18 @@ class PointCloudProcessor(Tools, ABC):
 
     @abstractmethod
     def crop_point_cloud(self, point_cloud: PointCloud, coordonnees_trace: list[tuple[float, float]]) -> PointCloud:
+        """
+        Méthode abstraite permettant de découper un nuage de points à partir d'une liste de coordonnées délimitant
+        les contours.
+
+        Args:
+            point_cloud (PointCloud): le nuage de point dans lequel effectuer la découpe
+            coordonnees_trace (list): coordonnées détourant la zone de découpe
+
+        Returns:
+            PointCloud: nuage de points de la partie découpée
+
+        """
         pass
 
     @abstractmethod

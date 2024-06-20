@@ -6,6 +6,14 @@ logger_name = "grounded"
 
 
 def config_logger(verbosity, log_file=os.path.join(os.curdir, 'app.log')):
+    """
+    Configure le logger de l'application grounded
+
+    Args:
+        verbosity: un entier compris dans l'intervalle [0, 1]
+        log_file: le nom du fichier de sortie des logs
+
+    """
     if path_exist(log_file):
         os.remove(log_file)
 
@@ -32,8 +40,20 @@ def config_logger(verbosity, log_file=os.path.join(os.curdir, 'app.log')):
 
 
 def get_logger():
+    """
+    Retourne le logger de l'application grounded
+
+    Returns:
+        logger
+    """
     return logging.getLogger(logger_name)
 
 
 def get_verbosity():
+    """
+    Retourne le niveau de verbosité du logger de grounded
+
+    Returns:
+        level
+    """
     return logging.getLogger(logger_name).level

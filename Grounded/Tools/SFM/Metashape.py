@@ -49,8 +49,27 @@ def photos_coord_to_3d_coords(chunk: ms.Chunk, x: float, y: float, camera_name: 
 
 
 class Metashape(SFM):
+    """
+    Implémente l'interface SFM et implémente les méthodes nécessaires pour l'exécution de Metashape,
+    un logiciel de photogrammétrie.
+
+    Elle est utilisée pour effectuer diverses opérations telles que la détection de points homologues, la calibration
+    de la caméra, la génération de nuages de points, et le calcul des coordonnées 3D des mires dans une image.
+    """
 
     def __init__(self, working_directory: str, output_dir: str, downscale="8"):
+        """
+        Initialise une instance de la classe MicMac.
+
+        Args:
+            path_mm3d (str): Le chemin vers l'exécutable MicMac.
+            distorsion_model (str): un modèle de distorsion
+            zoom_final (str): un zoom final
+
+
+        Returns:
+            None
+        """
         super().__init__(working_directory, output_dir)
         self.doc = ms.Document()  # création d'un projet
         self.chunk = self.doc.addChunk()  # ajout d'un chunk dans lequel nous allons travailler
@@ -85,6 +104,18 @@ class Metashape(SFM):
 
     def generer_nuages_de_points(self, chemin_dossier_avant: str, chemin_dossier_apres: str) -> tuple[
         PointCloud, PointCloud]:
+        """
+        Méthode pour générer des nuages de points avant/après excavation.
+
+        Args:
+            chemin_dossier_avant (str): Le chemin vers le dossier contenant les images avant excavation.
+            chemin_dossier_apres (str): Le chemin vers le dossier contenant les images après excavation.
+
+        Returns:
+            Tuple[NuageDePoints, NuageDePoints]: Un tuple contenant deux objets NuageDePoints représentant les nuages de points
+            avant et après excavation.
+            tuple[0] ⇛ avant et tuple[1] ⇛ après
+        """
         self._add_photos_to_chunk(chemin_dossier_avant, chemin_dossier_apres)
         self._align_images()
 
@@ -101,6 +132,15 @@ class Metashape(SFM):
         return point_cloud_before, point_cloud_after
 
     def calculer_coordinates_3d_mires(self, image: Image) -> list[Mire3D]:
+        """
+        Méthode pour calculer les coordonnées 3D des cibles dans une image.
+
+        Args:
+            image (Image): un objet Image contenant des cibles
+
+        Returns:
+            List[Mire3D]: Une liste d'objets Mire3D contenant les coordonnées 3D des cibles.
+        """
         if len([camera for camera in self.chunk_before.cameras
                 if re.search(f"0_{image.get_name_without_extension()}", camera.label) is not None]) > 0:
             chunk = self.chunk_before

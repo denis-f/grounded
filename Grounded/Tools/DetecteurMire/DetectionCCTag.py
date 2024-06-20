@@ -56,7 +56,7 @@ class DetectionCCTag(DetecteurMire):
 
     def __init__(self, path_cctag_directory: str, working_directory: str, output_dir: str):
         """
-        Initialise une instance de la classe MicMac.
+        Initialise une instance de la classe DetectionCCTag
 
         Args:
             path_cctag_directory (str): le chemin vers le dossier contenant l'executable detection

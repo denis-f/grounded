@@ -4,9 +4,21 @@ import csv
 
 
 class ScaleBarLoader:
+    """
+    Classe permettant le chargement des réglets à partir d'un fichier csv
+    """
 
     @staticmethod
     def load(scale_bar_file_path: str) -> list[ScaleBar]:
+        """
+        Chargement des scales bars contenus dans le fichier fourni en paramètre
+
+        Args:
+            scale_bar_file_path: chemin vers le fichier contenant les scales bars
+
+        Returns:
+            list[ScaleBar]: Une liste de data object ScaleBar
+        """
         array_scale_bar = list()
         with open(scale_bar_file_path, newline='') as csvfile:
             lecteur_csv = csv.reader(csvfile, delimiter=',')
