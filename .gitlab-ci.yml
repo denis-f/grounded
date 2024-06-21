@@ -8,7 +8,7 @@ before_script:
 pages:
   script:
     - sphinx-apidoc -e -E -o docs .
-    - sphinx-build -b html . public
+    - sphinx-build -b html docs public
   artifacts:
     paths:
       # The folder that contains the files to be exposed at the Page URL
