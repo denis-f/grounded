@@ -9,7 +9,7 @@ before_script:
 
 pages:
   script:
-    - sphinx-apidoc -e -E -o docs .
+    - sphinx-apidoc -e -o docs .
     - sphinx-build -b html docs public
   artifacts:
     paths:
