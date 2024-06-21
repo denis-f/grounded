@@ -11,5 +11,4 @@ setup(
             'grounded = grounded:main',
         ],
     },
-    include_package_data=True,
 )
