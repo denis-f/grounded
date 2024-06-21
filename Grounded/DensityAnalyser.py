@@ -9,6 +9,7 @@ from Grounded.Tools.PointCloudProcessor import PointCloudProcessor
 from Grounded.Tools.SFM.SFM import SFM
 from Grounded.DataObject import PointCloud, Mire3D, Mire, Raster, ScaleBar, Mire2D, Image, File
 import Grounded.logger as logger
+from Grounded.utils import raise_logged
 
 import statistics
 import rasterio
@@ -296,21 +297,28 @@ class DensityAnalyser:
     under various soil conditions." - Guillaume Coulouma, Denis Feurer, Fabrice Vinatier, Olivier Huttel
     """
 
-    def __init__(self, sfm: SFM, detecteur_mire: DetecteurMire, point_cloud_processor: PointCloudProcessor):
+    def __init__(self, sfm: SFM, detecteur_mire: DetecteurMire, point_cloud_processor: PointCloudProcessor,
+                 output_dir: str = os.curdir, verbosity: int = 1):
         """
         Initialise une instance de la classe DensityAnalyser
         Args:
             sfm: un objet implémentant l'interface SFM
             detecteur_mire: un objet implémentant l'interface DetecteurMire
             point_cloud_processor: un objet implémentant l'interface PointCloudProcessor
+            output_dir (str): dossier de sortie
+            verbosity (int): un entier compris dans l'intervalle [0;2]
         """
-        if not isinstance(sfm, SFM): raise BadModuleError("sfm")
-        if not isinstance(detecteur_mire, DetecteurMire): raise BadModuleError("detecteur de mire")
-        if not isinstance(point_cloud_processor, PointCloudProcessor): raise BadModuleError("point cloud processor")
+        # Configuration des logs
+        logger.config_logger(verbosity, os.path.join(output_dir, "grounded.log"))
+        log = logger.get_logger()
+        if not isinstance(sfm, SFM): raise_logged(log.critical, BadModuleError("sfm"))
+        if not isinstance(detecteur_mire, DetecteurMire): raise_logged(log.critical, BadModuleError("detecteur de mire"))
+        if not isinstance(point_cloud_processor, PointCloudProcessor): raise_logged(log.critical, BadModuleError("point cloud processor"))
 
         self.sfm = sfm
         self.detecteur_mire = detecteur_mire
         self.point_cloud_processor = point_cloud_processor
+        self.output_dir = output_dir
         if shutil.which("git"):
             self.git_revision = subprocess.run(['git', '-C', File(__file__).get_path_directory(),
                                                 'rev-parse', 'HEAD'], stdout=subprocess.PIPE,
@@ -319,7 +327,7 @@ class DensityAnalyser:
             self.git_revision = None
 
     def analyse(self, photo_path_before_excavation: str, photo_path_after_excavation: str, scale_bars: list[ScaleBar],
-                display_padding: bool = False, output_dir: str = os.curdir, verbosity: int = 1) -> list[float]:
+                display_padding: bool = False) -> list[float]:
         """
 
         Args:
@@ -327,15 +335,10 @@ class DensityAnalyser:
             photo_path_after_excavation (str): chemin vers le fichier après excavation
             scale_bars (list[ScaleBar]): réglets utilisés
             display_padding (bool): Option d'affiche de la zone de détection sur la sortie graphique
-            output_dir (str): dossier de sortie
-            verbosity (int): un entier compris dans l'intervalle [0;2]
 
         Returns:
             list[float]: volumes des trous trouvés
         """
-
-        # Configuration des logs
-        logger.config_logger(verbosity, os.path.join(output_dir, "grounded.log"))
 
         photo_path_before_excavation = os.path.abspath(photo_path_before_excavation)
         photo_path_after_excavation = os.path.abspath(photo_path_after_excavation)
@@ -403,17 +406,17 @@ class DensityAnalyser:
         # ##############################################################################################################
 
         # on enregistre au format txt les résultats
-        with open(os.path.join(output_dir, "results.txt"), 'w') as file:
+        with open(os.path.join(self.output_dir, "results.txt"), 'w') as file:
             file.write(f"nombre de trous détectés : {len(holes_volumes)}\n"
                        "------------Trous triés de gauche à droite------------\n")
             for i in range(len(holes_volumes)):
                 file.write(f"volume du trou n°{i + 1} : {holes_volumes[i]}\n")
 
         # on enregistre au format pdf les résultats
-        save_plot_result(zone_tot, holes_polygons, holes_volumes, os.path.join(output_dir, "results.pdf"),
+        save_plot_result(zone_tot, holes_polygons, holes_volumes, os.path.join(self.output_dir, "results.pdf"),
                          display_padding, coords_mires_in_raster, min_height, max_height, min_width, max_width)
 
-        with open(os.path.join(output_dir, "config.txt"), 'w') as file:
+        with open(os.path.join(self.output_dir, "config.txt"), 'w') as file:
             file.write(self.get_config())
 
         if logger.get_verbosity() >= logging.WARN:

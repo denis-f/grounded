@@ -185,8 +185,10 @@ class MicMac(SFM):
 
         current_dir = os.path.abspath(os.curdir)
         os.chdir(self.working_directory)
-        self.subprocess(arguments, os.path.join(self.working_directory, "Tapioca.log"))
+        process = self.subprocess(arguments, os.path.join(self.working_directory, "Tapioca.log"))
         os.chdir(current_dir)
+        if process.returncode != 0:
+            raise
 
     def calibration(self):
         """

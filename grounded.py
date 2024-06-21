@@ -64,55 +64,67 @@ def config_parser() -> argparse.ArgumentParser:
     return parser
 
 
+class InvalidPathException(Exception):
+    pass
+
+
 def main():
-    file_dir = File(os.path.abspath(__file__)).get_path_directory()
-    parser = config_parser()
-    container = ContainerIOC(os.path.join(file_dir, "Configuration", "config.yml"))
-    container.set("root", file_dir)
-    arguments = parser.parse_args()
+    try:
+        file_dir = File(os.path.abspath(__file__)).get_path_directory()
+        parser = config_parser()
+        container = ContainerIOC(os.path.join(file_dir, "Configuration", "config.yml"))
+        container.set("root", file_dir)
+        arguments = parser.parse_args()
 
-    # vérification de la validité des arguments
-    arguments_cheker(arguments)
+        # vérification de la validité des arguments
+        try:
+            arguments_cheker(arguments)
+        except argparse.ArgumentError as e:
+            raise InvalidPathException(e.message)
 
-    # Changement du dossier de sortie par défaut dans le conteneur si celui si est renseigné
-    if arguments.output is not None:
-        container.set("default_outdir_name", arguments.output)
+        # Changement du dossier de sortie par défaut dans le conteneur si celui si est renseigné
+        if arguments.output is not None:
+            container.set("default_outdir_name", arguments.output)
 
-    # On récupère le dossier de sortie
-    output_dir = container.get("default_outdir_name")
+        # On récupère le dossier de sortie
+        output_dir = container.get("default_outdir_name")
 
-    # Récupération des paramètres des tools
-    sfm_kwargs = parse_arguments_parameters(arguments.SFM_arg)
-    point_cloud_processor_kwargs = parse_arguments_parameters(arguments.CloudProcessor_arg)
-    detecteur_mire_kwargs = parse_arguments_parameters(arguments.Detector_arg)
+        # Récupération des paramètres des tools
+        sfm_kwargs = parse_arguments_parameters(arguments.SFM_arg)
+        point_cloud_processor_kwargs = parse_arguments_parameters(arguments.CloudProcessor_arg)
+        detecteur_mire_kwargs = parse_arguments_parameters(arguments.Detector_arg)
 
-    # Récupération des noms des tools utilisés
-    sfm_name = if_is_not_none(arguments.SFM, container.get("default_sfm"))
-    point_cloud_processor_name = if_is_not_none(arguments.CloudProcessor, container.get("default_cloud_processor"))
-    detecteur_mire_name = if_is_not_none(arguments.Detector, container.get("default_detector"))
+        # Récupération des noms des tools utilisés
+        sfm_name = if_is_not_none(arguments.SFM, container.get("default_sfm"))
+        point_cloud_processor_name = if_is_not_none(arguments.CloudProcessor, container.get("default_cloud_processor"))
+        detecteur_mire_name = if_is_not_none(arguments.Detector, container.get("default_detector"))
 
-    # Instanciation des tools via le conteneur ioc
-    sfm = container.get(sfm_name, **sfm_kwargs)
-    point_cloud_processor = container.get(point_cloud_processor_name, **point_cloud_processor_kwargs)
-    detecteur_mire = container.get(detecteur_mire_name, **detecteur_mire_kwargs)
+        # Instanciation des tools via le conteneur ioc
+        sfm = container.get(sfm_name, **sfm_kwargs)
+        point_cloud_processor = container.get(point_cloud_processor_name, **point_cloud_processor_kwargs)
+        detecteur_mire = container.get(detecteur_mire_name, **detecteur_mire_kwargs)
 
-    analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor)
+        analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor,
+                                   output_dir, arguments.verbosity)
 
-    display_config(analyser)
+        display_config(analyser)
 
-    # chargement des scales bars
-    scale_bars = ScaleBarLoader.load(if_is_not_none(arguments.scalebar, container.get('default_scalebars_conf')))
+        # chargement des scales bars
+        scale_bars = ScaleBarLoader.load(if_is_not_none(arguments.scalebar, container.get('default_scalebars_conf')))
 
-    volumes_trous = analyser.analyse(arguments.directory_before_excavation,
-                                     arguments.directory_after_excavation, scale_bars,
-                                     arguments.display_padding, output_dir, arguments.verbosity)
+        volumes_trous = analyser.analyse(arguments.directory_before_excavation,
+                                         arguments.directory_after_excavation, scale_bars,
+                                         arguments.display_padding)
 
-    # Affichage des résultats
-    print("###########################################################################\n"
-          "############################# Fin d'exécution #############################\n"
-          "###########################################################################\n\n")
-    for i in range(len(volumes_trous)):
-        print(f"volume du trou n°{i + 1} : {volumes_trous[i]}")
+        # Affichage des résultats
+        print("###########################################################################\n"
+              "############################# Fin d'exécution #############################\n"
+              "###########################################################################\n\n")
+        for i in range(len(volumes_trous)):
+            print(f"volume du trou n°{i + 1} : {volumes_trous[i]}")
+
+    except Exception as e:
+        print(f"\033[31m\033[1m\033[4m{type(e).__name__}:\033[0m\033[31m\033[1m {e}\033[0m")
 
 
 def arguments_cheker(arguments):
@@ -152,3 +164,4 @@ def display_config(analyser):
 
 if __name__ == '__main__':
     main()
+

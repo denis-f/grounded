@@ -97,3 +97,8 @@ def check_module_executable_path(path: str, module_name):
 
 def path_exist(path: str) -> bool:
     return os.path.exists(path)
+
+
+def raise_logged(function_log, error: Exception):
+    function_log(error)
+    raise error
