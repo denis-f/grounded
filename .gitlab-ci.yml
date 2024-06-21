@@ -2,7 +2,7 @@
 image: python:3.7-alpine
 # Functions that should be executed before the build script is run
 before_script:
-  - sudo apt-get install python3-sphinx
+  - apt-get install python3-sphinx
   - pip install sphinx-rtd-theme
   - pip install -r requirements.txt
 pages:
