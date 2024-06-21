@@ -92,9 +92,9 @@ def main():
     detecteur_mire_name = if_is_not_none(arguments.Detector, container.get("default_detector"))
 
     # Instanciation des tools via le conteneur ioc
-    sfm = container.get(sfm_name, kwargs_dict=sfm_kwargs)
-    point_cloud_processor = container.get(point_cloud_processor_name, kwargs_dict=point_cloud_processor_kwargs)
-    detecteur_mire = container.get(detecteur_mire_name, kwargs_dict=detecteur_mire_kwargs)
+    sfm = container.get(sfm_name, **sfm_kwargs)
+    point_cloud_processor = container.get(point_cloud_processor_name, **point_cloud_processor_kwargs)
+    detecteur_mire = container.get(detecteur_mire_name, **detecteur_mire_kwargs)
 
     analyser = DensityAnalyser(sfm, detecteur_mire, point_cloud_processor)
 

@@ -21,7 +21,7 @@ class ContainerIOC:
         """
         self.container: dict = load_from_yaml(config_file)
 
-    def get(self, name: str, kwargs_dict: dict = {}, **kwargs):
+    def get(self, name: str, **kwargs):
         """
         Cette fonction permet d'accéder à différentes variables stockées dans le conteneur. Elle se charge également
         de l'instantiation des différents modules à partir de valeurs par défaut contenu dans un fichier yaml.
@@ -29,7 +29,6 @@ class ContainerIOC:
 
         Args:
             name (str): nom du service/variable souhaité
-            kwargs_dict (dict): arguments utilisés lors de l'instanciation d'un service
             **kwargs : arguments utilisés lors de l'instanciation d'un service
 
         Returns: Une variable/Un service
@@ -41,13 +40,12 @@ class ContainerIOC:
             raise DependencyNotFoundError(name)
 
         if isinstance(attr, providers.Factory):
-            args = kwargs_dict | kwargs
-            if not set(args.keys()) <= set(attr.kwargs['args'].keys()):
+            if not set(kwargs.keys()) <= set(attr.kwargs['args'].keys()):
                 raise Exception(f"bad arguments was given to create {name} tool")
             for key, value in attr.kwargs['args'].items():
                 if isinstance(value, str):
                     attr.kwargs['args'][key] = self._resolver(value)
-            attr.kwargs['args'].update(args)
+            attr.kwargs['args'].update(kwargs)
             return attr()
         else:
             if isinstance(attr, str):
