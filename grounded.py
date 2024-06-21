@@ -1,4 +1,4 @@
-import shutil
+#!/usr/bin/env python3
 
 from Grounded.DensityAnalyser import DensityAnalyser
 from Grounded.Tools import ContainerIOC
@@ -6,7 +6,6 @@ from Grounded.ScaleBarLoader import ScaleBarLoader
 from Grounded.DataObject import File
 
 import argparse
-import logging
 import os.path
 from typing import List, Optional
 
