@@ -1,5 +1,6 @@
 # Grounded
 
+## Access to the <a href="https://grounded-denis-feurer-020adb38a1d1673cb6c6c21b4744991eacb1d8769.pages.mia.inra.fr/"> documentation here </a>
 
 ## Description
 Grounded is a software that allows to compute 2.5D volumes of soil samples from two series of photogrammetric acquisitions. It requires the use of dedicated scalebars [to be described further]. Image processing can be done either with Micmac, either with Agisoft Metashape. Scale bars can be done either with Circular Coded Targets from Alice Vision, either with Agisoft's implementation of Schneider (1991) coded targets.
