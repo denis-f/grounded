@@ -1,0 +1,19 @@
+# The Docker image that will be used to build your app
+image: python:3.7-alpine
+# Functions that should be executed before the build script is run
+before_script:
+  - sudo apt-get install python3-sphinx
+  - pip install sphinx-rtd-theme
+  - pip install -r requirements.txt
+pages:
+  script:
+    - sphinx-apidoc -e -E -o docs .
+    - sphinx-build -b html . public
+  artifacts:
+    paths:
+      # The folder that contains the files to be exposed at the Page URL
+      - public
+  rules:
+    # This ensures that only pushes to the default branch will trigger
+    # a pages deploy
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
