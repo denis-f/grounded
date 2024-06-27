@@ -324,6 +324,7 @@ class MicMac(SFM):
     def get_config(self) -> str:
         return config_builer(self, "MicMac")
 
+
     def subprocess(self, arguments: list, out_file: str):
         current_dir = os.path.abspath(os.curdir)
         os.chdir(self.working_directory)
