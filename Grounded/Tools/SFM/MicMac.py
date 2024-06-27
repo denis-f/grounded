@@ -1,6 +1,7 @@
 from .SFM import SFM
 from Grounded.DataObject import Image, File, PointCloud, Mire2D, Mire3D
-from Grounded.utils import find_files_regex, rename_file, config_builer, check_module_executable_path
+from Grounded.utils import find_files_regex, rename_file, config_builer, check_module_executable_path, raise_logged
+import Grounded.logger as logger
 
 import subprocess
 import os
@@ -104,6 +105,13 @@ zoom_final_values = ["QuickMac", "MicMac", "BigMac"]
 tapioca_mode_values = ["All", "MulScale"]
 
 
+class MicMacException(Exception):
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
 class MicMac(SFM):
     """
     Implémente l'interface SFM et implémente les méthodes nécessaires pour l'exécution de MicMac,
@@ -183,12 +191,12 @@ class MicMac(SFM):
         if self.tapioca_mode == 'MulScale':
             arguments.append(self.tapioca_second_resolution)
 
-        current_dir = os.path.abspath(os.curdir)
-        os.chdir(self.working_directory)
-        process = self.subprocess(arguments, os.path.join(self.working_directory, "Tapioca.log"))
-        os.chdir(current_dir)
+        process = self.subprocess(arguments, os.path.join(self.working_directory, "Tapioca.log"))[0]
         if process.returncode != 0:
-            raise
+            raise_logged(logger.get_logger().critical,
+                         MicMacException("Une erreur est survenu lors de la détection des points homologues, "
+                                         "veuillez vérifier votre jeu de données")
+                         )
 
     def calibration(self):
         """
@@ -199,10 +207,12 @@ class MicMac(SFM):
         """
         print("Calibration en cours, cela peut prendre un certain temps. Veuillez patienter...")
         arguments = [self.path_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG|.*tif"]
-        current_dir = os.path.abspath(os.curdir)
-        os.chdir(self.working_directory)
-        self.subprocess(arguments, os.path.join(self.working_directory, "Tapas.log"))
-        os.chdir(current_dir)
+        process = self.subprocess(arguments, os.path.join(self.working_directory, "Tapas.log"))[0]
+        if process.returncode != 0:
+            raise_logged(logger.get_logger().critical,
+                         MicMacException("Une erreur est survenu lors de la détection de la caméra,"
+                                         "veuillez vérifier votre jeu de données")
+                         )
 
     def generer_nuages_de_points(self, chemin_dossier_avant: str, chemin_dossier_apres: str) -> tuple[
         PointCloud, PointCloud]:
@@ -226,10 +236,12 @@ class MicMac(SFM):
         # On génère le nuage de points des photos d'avant excavation
         arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG|.*tif",
                      self.distorsion_model]
-        current_dir = os.path.abspath(os.curdir)
-        os.chdir(self.working_directory)
-        self.subprocess(arguments, os.path.join(self.working_directory, "C3DC_0.log"))
-        os.chdir(current_dir)
+        process = self.subprocess(arguments, os.path.join(self.working_directory, "C3DC_0.log"))[0]
+        if process.returncode != 0:
+            raise_logged(logger.get_logger().critical,
+                         MicMacException("Une erreur est survenu lors de la génération du nuage de "
+                                         "points avant excavation, veuillez vérifier votre jeu de données")
+                         )
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_0.ply
         rename_file(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"), "C3DC_0")
@@ -243,10 +255,13 @@ class MicMac(SFM):
         arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}1_.*JPG|.*tif",
                      self.distorsion_model]
 
-        current_dir = os.path.abspath(os.curdir)
-        os.chdir(self.working_directory)
         self.subprocess(arguments, os.path.join(self.working_directory, "C3DC_1.log"))
-        os.chdir(current_dir)
+
+        if process.returncode != 0:
+            raise_logged(logger.get_logger().critical,
+                         MicMacException("Une erreur est survenu lors de la génération du nuage de "
+                                         "points après excavation, veuillez vérifier votre jeu de données")
+                         )
 
         # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_1.ply
         rename_file(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"), "C3DC_1")
@@ -290,17 +305,28 @@ class MicMac(SFM):
 
         # on génère nos coordonnées 3D dans un fichier
         nom_fichier_coordinates_3d = os.path.join(log_directory, f"{image.get_name_without_extension()}_3D_coord.txt")
-        current_dir = os.path.abspath(os.curdir)
-        os.chdir(self.working_directory)
-        self.subprocess([self.path_mm3d, "Im2XYZ", os.path.join(self.working_directory,
-                                                                f"PIMs-{self.zoom_final}{os.sep}Nuage-Depth-"
-                                                                f"{image_locale.name}.xml"),
-                         nom_fichier_coordinates, nom_fichier_coordinates_3d],
-                        os.path.join(self.working_directory, "Tapas.log"))
-        os.chdir(current_dir)
-        nom_fichier_filtered = os.path.join(log_directory, f"Filtered_{image.get_name_without_extension()}_coord.txt")
+        process = self.subprocess([self.path_mm3d, "Im2XYZ", os.path.join(self.working_directory,
+                                                                          f"PIMs-{self.zoom_final}{os.sep}Nuage-Depth-"
+                                                                          f"{image_locale.name}.xml"),
+                                   nom_fichier_coordinates, nom_fichier_coordinates_3d],
+                                  os.path.join(self.working_directory, "Im2XYZ.log"))[0]
 
-        return recuperer_mires_3d(image, nom_fichier_coordinates_3d, nom_fichier_filtered)
+        nom_fichier_filtered = os.path.join(log_directory, f"Filtered_{image.get_name_without_extension()}_coord.txt")
+        try:
+            return recuperer_mires_3d(image, nom_fichier_coordinates_3d, nom_fichier_filtered)
+        except FileNotFoundError:
+            if len(image.mires_visibles) > 0:
+                logger.get_logger().warning(f"Aucune mire visible dans la photo {image.name} "
+                                            f"n'a pu êre reporté dans l'espace 3D")
+            return []
+
 
     def get_config(self) -> str:
         return config_builer(self, "MicMac")
+
+    def subprocess(self, arguments: list, out_file: str):
+        current_dir = os.path.abspath(os.curdir)
+        os.chdir(self.working_directory)
+        process, out = super().subprocess(arguments, out_file)
+        os.chdir(current_dir)
+        return process, out

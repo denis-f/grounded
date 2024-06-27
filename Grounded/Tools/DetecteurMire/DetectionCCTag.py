@@ -91,7 +91,7 @@ class DetectionCCTag(DetecteurMire):
 
         os.chdir(current_dir)
 
-        out_file = os.path.join(chemin_absolue_dossier_image, "cctag3CC.log")
+        out_file = os.path.join(chemin_absolue_dossier_image, "cctag3CC.out")
         if path_exist(out_file):
             os.remove(out_file)
 
