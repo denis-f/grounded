@@ -91,26 +91,26 @@ pip install --editable .
 
 Il est possible d'utiliser le logiciel de façon simple avec les paramètres par défaut comme ceci : 
 ```bash
-python3 grounded.py path/to/photo_before_excavation path/to/photo_after_excavation
+grounded path/to/photo_before_excavation path/to/photo_after_excavation
 ```
 
 Il est également possible de choisir les modules ainsi que leurs paramètres qui seront utilisés lors de l'analyse de la façon suivante :
 ```bash
-python3 grounded.py -SFM micmac -SFM_arg distorsion_model=FraserBasic -SFM_arg zoom_final=BigMack -Detector detection_cctag path/to/photo_before_excavation path/to/photo_after_excavation
+grounded -SFM micmac -SFM_arg distorsion_model=FraserBasic -SFM_arg zoom_final=BigMack -Detector detection_cctag path/to/photo_before_excavation path/to/photo_after_excavation
 ```
 
 À des fins de débuggage, il est possible d'afficher la zone dans laquelle la détection des trous est effectuée en rajoutant la balise `-display_padding` de la façon suivante 
 ```bash
-python3 grounded.py -SFM metashape -SFM_arg downscale=8 -Detector detection_metashape -display_padding path/to/photo_before_excavation path/to/photo_after_excavation
+grounded -SFM metashape -SFM_arg downscale=8 -Detector detection_metashape -display_padding path/to/photo_before_excavation path/to/photo_after_excavation
 ```
 
 Une aide est présente via la commande :
 ```bash
-python3 grounded.py --h
+grounded --h
 ```
 ou
 ```bash
-python3 grounded.py -help
+grounded -help
 ```
 
 ### Avec le fichier main :
