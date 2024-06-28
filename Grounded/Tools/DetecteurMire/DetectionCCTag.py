@@ -7,7 +7,8 @@ from .DetecteurMire import DetecteurMire
 
 import subprocess
 
-from Grounded.utils import config_builer, check_module_executable_path, path_exist
+from Grounded.utils import config_builer, check_module_executable_path, path_exist, raise_logged
+import Grounded.logger as logger
 
 
 def parsing_result(resultat: str) -> list[Image]:
@@ -44,6 +45,10 @@ def parsing_result(resultat: str) -> list[Image]:
 
     tableau_image.pop()
     return tableau_image
+
+
+class DetectionCCTagException(Exception):
+    pass
 
 
 class DetectionCCTag(DetecteurMire):
@@ -87,6 +92,12 @@ class DetectionCCTag(DetecteurMire):
 
         arguments = ["./detection", "-n", "3", "-i", chemin_absolue_dossier_image]
         process, output = self.subprocess(arguments, os.path.join(self.working_directory, "Detection.log"))
+        if process.returncode != 0:
+            raise_logged(logger.get_logger().critical,
+                         DetectionCCTagException("Une erreur est survenu lors de la détection des mires dans les "
+                                                 "images. Veuillez revoir les consignes "
+                                                 "d'installation de la dépendance logicielle CCTag")
+                         )
         liste_image = parsing_result(output)
 
         os.chdir(current_dir)
