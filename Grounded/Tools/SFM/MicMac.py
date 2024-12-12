@@ -104,6 +104,8 @@ zoom_final_values = ["QuickMac", "MicMac", "BigMac"]
 
 tapioca_mode_values = ["All", "MulScale"]
 
+micmac_img_extensions_regex = ".*JPG|.*tif|.*jpg|.*TIF"
+
 
 class MicMacException(Exception):
 
@@ -186,7 +188,7 @@ class MicMac(SFM):
         creer_raccourci_dossier_dans_avec_prefix(chemin_dossier_apres, self.working_directory, "1_")
 
         arguments = [self.path_mm3d, "Tapioca", self.tapioca_mode,
-                     f"{self.working_directory}{os.sep}.*JPG|.*tif", self.tapioca_resolution]
+                     f"{self.working_directory}{os.sep}{micmac_img_extensions_regex}", self.tapioca_resolution]
 
         if self.tapioca_mode == 'MulScale':
             arguments.append(self.tapioca_second_resolution)
@@ -206,7 +208,7 @@ class MicMac(SFM):
             None
         """
         print("Calibration en cours, cela peut prendre un certain temps. Veuillez patienter...")
-        arguments = [self.path_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}/.*JPG|.*tif"]
+        arguments = [self.path_mm3d, "Tapas", self.distorsion_model, f"{self.working_directory}{os.sep}{micmac_img_extensions_regex}"]
         process = self.subprocess(arguments, os.path.join(self.working_directory, "Tapas.log"))[0]
         if process.returncode != 0:
             raise_logged(logger.get_logger().critical,
@@ -234,7 +236,7 @@ class MicMac(SFM):
         print("Génération des nuages de point en cours, cela peut prendre un certain temps. Veuillez patienter...")
 
         # On génère le nuage de points des photos d'avant excavation
-        arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_.*JPG|.*tif",
+        arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_{micmac_img_extensions_regex}",
                      self.distorsion_model]
         process = self.subprocess(arguments, os.path.join(self.working_directory, "C3DC_0.log"))[0]
         if process.returncode != 0:
@@ -252,7 +254,7 @@ class MicMac(SFM):
                   os.path.join(self.working_directory, "Tempo"))
 
         # On génère le nuage de points des photos d'après excavation
-        arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}1_.*JPG|.*tif",
+        arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}1_{micmac_img_extensions_regex}",
                      self.distorsion_model]
 
         self.subprocess(arguments, os.path.join(self.working_directory, "C3DC_1.log"))
