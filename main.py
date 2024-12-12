@@ -6,19 +6,21 @@ from Grounded.DensityAnalyser import DensityAnalyser
 from Grounded.ScaleBarLoader import ScaleBarLoader
 from Grounded.Tools.SFM.Metashape import Metashape
 
-scale_bars = ScaleBarLoader.load("Configuration/oldScaleBar.csv")
+#scale_bars = ScaleBarLoader.load("Configuration/oldScaleBar.csv")
+scale_bars = ScaleBarLoader.load("Configuration/scaleBar.csv")
 
 
-#m = MicMac("/opt/micmac/bin/mm3d", "FraserBasic", "QuickMac")  # initialisation d'un SFM
-m = Metashape(8)
-c = CloudCompare("'C:\Program Files\CloudCompare\CloudCompare.exe'", "2.13.1")  # initialisation de PointCloudProcessor
-d = DetectionMetashape()  # initialisation d'un DetecteurMire
+m = MicMac("/opt/micmac/bin/mm3d","micmac_working_directory","exec/ou", "FraserBasic", "QuickMac")  # initialisation d'un SFM
+#m = Metashape(8)
+c = CloudCompare("cloudcompare.CloudCompare", "cloudCompare_working_directory", "exec/ou", "2.13.1", )  # initialisation de PointCloudProcessor
+#d = DetectionMetashape()  # initialisation d'un DetecteurMire
+d = DetectionCCTag('/opt/CCTag/', 'cctag_working_directory', 'exec/ou')
 
 # instantiation d'un objet DensityAnalyser construit à partir des modules défini au-dessus
 analyser = DensityAnalyser(m, d, c)
 # analyse du volume des trous présents sur les photos
-volumes_trous = analyser.analyse("..\\avant", # à compléter par le dossier contenant les images avant excavation
-                                 "..\\apres",  # à compléter par le dossier contenant les images après excavation
+volumes_trous = analyser.analyse("exec/IN/avant/", # à compléter par le dossier contenant les images avant excavation
+                                 "exec/IN/apres/",  # à compléter par le dossier contenant les images après excavation
                                  scale_bars)
 
 print("###########################################################################\n"
