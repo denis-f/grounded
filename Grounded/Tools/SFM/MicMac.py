@@ -104,7 +104,7 @@ zoom_final_values = ["QuickMac", "MicMac", "BigMac"]
 
 tapioca_mode_values = ["All", "MulScale"]
 
-micmac_img_extensions_regex = ".*JPG|.*tif|.*jpg|.*TIF"
+micmac_img_extensions_regex = "(.*JPG|.*tif|.*jpg|.*TIF)"
 
 
 class MicMacException(Exception):

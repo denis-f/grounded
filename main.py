@@ -11,7 +11,7 @@ scale_bars = ScaleBarLoader.load("Configuration/scaleBar.csv")
 
 
 m = MicMac("/opt/micmac/bin/mm3d","micmac_working_directory","exec/ou", "FraserBasic", "QuickMac")  # initialisation d'un SFM
-#m = Metashape(8)
+#m = Metashape("metashape_working_directory", "exec/ou", 8)
 c = CloudCompare("cloudcompare.CloudCompare", "cloudCompare_working_directory", "exec/ou", "2.13.1", )  # initialisation de PointCloudProcessor
 #d = DetectionMetashape()  # initialisation d'un DetecteurMire
 d = DetectionCCTag('/opt/CCTag/', 'cctag_working_directory', 'exec/ou')
