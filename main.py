@@ -19,8 +19,8 @@ d = DetectionCCTag('/opt/CCTag/', 'cctag_working_directory', 'exec/ou')
 # instantiation d'un objet DensityAnalyser construit à partir des modules défini au-dessus
 analyser = DensityAnalyser(m, d, c)
 # analyse du volume des trous présents sur les photos
-volumes_trous = analyser.analyse("exec/IN/avant/", # à compléter par le dossier contenant les images avant excavation
-                                 "exec/IN/apres/",  # à compléter par le dossier contenant les images après excavation
+volumes_trous = analyser.analyse("exec/IN/bef/", # à compléter par le dossier contenant les images avant excavation
+                                 "exec/IN/aft/",  # à compléter par le dossier contenant les images après excavation
                                  scale_bars)
 
 print("###########################################################################\n"
