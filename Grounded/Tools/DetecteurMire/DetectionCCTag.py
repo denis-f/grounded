@@ -1,4 +1,7 @@
 import os
+from exif import Image as exifImage
+import numpy as np
+
 import shutil
 
 from Grounded.DataObject import Image
@@ -39,11 +42,25 @@ def parsing_result(resultat: str) -> list[Image]:
             chemin = ligne.split('/')
             tableau_image[compteur].name = chemin[-1]
             tableau_image[compteur].extension = chemin[-1].split(".")[-1] if "." in chemin[-1] else ''
-            tableau_image[compteur].path = "/".join(chemin[1:])
+            tableau_image[compteur].path = "/"+"/".join(chemin[1:])
             compteur += 1
             tableau_image.append(Image("", []))
 
     tableau_image.pop()
+
+    #detection binary from CCTag automatically rotates images before detecting targets. Image coordinates has then to be corrected
+    for im in tableau_image:
+        im_width = exifImage(im.path).pixel_x_dimension
+        im_height = exifImage(im.path).pixel_y_dimension
+        if exifImage(im.path).orientation.value == 3:
+            # case of a 180° rotation
+            for mire in im.mires_visibles:
+                # simply doing x' = width - x and y' = height - y
+                mire.coordinates = np.subtract((im_width, im_height), mire.coordinates)
+        elif exifImage(im.path).orientation.value != 1:
+            # cases where orientation is neither 180° rotation neither "normal case" - theses cases are currently not managed
+            print(f"""cas d'orientation d'image "{exifImage(im.path).orientation.name}" non traité""")
+
     return tableau_image
 
 
