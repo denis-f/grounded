@@ -12,15 +12,15 @@ scale_bars = ScaleBarLoader.load("Configuration/scaleBar.csv")
 
 m = MicMac("/opt/micmac/bin/mm3d","micmac_working_directory","exec/ou", "FraserBasic", "QuickMac")  # initialisation d'un SFM
 #m = Metashape("metashape_working_directory", "exec/ou", 8)
-c = CloudCompare("cloudcompare.CloudCompare", "cloudCompare_working_directory", "exec/ou", "2.13.1", )  # initialisation de PointCloudProcessor
+c = CloudCompare("cloudcompare.CloudCompare", "cloudCompare_working_directory", "exec/ou", "2.11.1", )  # initialisation de PointCloudProcessor
 #d = DetectionMetashape()  # initialisation d'un DetecteurMire
 d = DetectionCCTag('/opt/CCTag/', 'cctag_working_directory', 'exec/ou')
 
 # instantiation d'un objet DensityAnalyser construit à partir des modules défini au-dessus
-analyser = DensityAnalyser(m, d, c)
+analyser = DensityAnalyser(sfm= m,detecteur_mire= d, point_cloud_processor= c, output_dir= "exec/ou", verbosity=1)
 # analyse du volume des trous présents sur les photos
-volumes_trous = analyser.analyse("exec/IN/bef/", # à compléter par le dossier contenant les images avant excavation
-                                 "exec/IN/aft/",  # à compléter par le dossier contenant les images après excavation
+volumes_trous = analyser.analyse("exec/IN/avant/", # à compléter par le dossier contenant les images avant excavation
+                                 "exec/IN/apres/",  # à compléter par le dossier contenant les images après excavation
                                  scale_bars)
 
 print("###########################################################################\n"
