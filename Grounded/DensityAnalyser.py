@@ -21,7 +21,7 @@ from shapely import buffer
 from skimage import measure
 from matplotlib import pyplot, patches
 from matplotlib.colors import LinearSegmentedColormap
-
+import trimesh
 
 def calculate_average_mire_3d(mires_3d: list[Mire3D]) -> list[Mire3D]:
     dictionnaire_coordinates_mires = {}
@@ -366,7 +366,12 @@ class DensityAnalyser:
         # on calcule le facteur de redimmensionnement por mettre à l'echelle les nuages de points
         scale_factor = calculate_average_scale_factor(mires_3d, scale_bars)
 
-        print("Redimensionnement des nuages de points en cours...")
+        # Rotation des nuages de points pour être perpendiculaire au plan moyen des mires
+        mires_3d, point_cloud_before_excavation, point_cloud_after_excavation = self._rotate_point_clouds(
+            point_cloud_before_excavation, point_cloud_after_excavation, mires_3d
+        )
+
+        print(f"Redimensionnement des nuages de points en cours... (facteur d'échelle : {scale_factor})")
         point_cloud_before_excavation = self._resize_point_clouds(point_cloud_before_excavation, scale_factor)
         point_cloud_after_excavation = self._resize_point_clouds(point_cloud_after_excavation, scale_factor)
 
@@ -471,6 +476,81 @@ class DensityAnalyser:
         ecart_type = calculate_standard_deviation_mire_3d(mires_3d)
 
         return mires_3d_moyens, ecart_type
+
+    def _fit_plane(self, x, y, z):
+        tmp_A = []
+        tmp_b = []
+        for i in range(len(x)):
+            tmp_A.append([x[i], y[i], 1])
+            tmp_b.append(z[i])
+        b = np.matrix(tmp_b).T
+        A = np.matrix(tmp_A)
+        fit = (A.T * A).I * A.T * b
+        errors = b - A * fit
+        residual = np.linalg.norm(errors)
+        return fit[0, 0], fit[1, 0], fit[2, 0], errors, residual
+
+    def _rotate_points_to_abc_plane(self, points, a, b, c):
+        # Ensure points is a numpy array
+        points = np.array(points)
+
+        # Normal vector of the plane
+        normal = np.array([a, b, -1])
+        normal = normal / np.linalg.norm(normal)
+
+        # If normal[2] is negative, flip the normal to ensure positive Z # a priori ça sert à rien si mon met [-a, -b, 1] au dessus
+        if normal[2] < 0:
+            normal = -normal
+
+        # Calculate rotation axis (cross product of normal and [0, 0, 1])
+        rotation_axis = np.cross(normal, [0, 0, 1])
+        rotation_axis = rotation_axis / np.linalg.norm(rotation_axis)
+
+        # Calculate rotation angle
+        cos_theta = np.dot(normal, [0, 0, 1])
+        # sin_theta = np.linalg.norm(rotation_axis)
+        sin_theta = np.sqrt(1 - cos_theta ** 2)
+
+        # Construct rotation matrix using Rodriguez rotation formula
+        K = np.array([[0, -rotation_axis[2], rotation_axis[1]],
+                      [rotation_axis[2], 0, -rotation_axis[0]],
+                      [-rotation_axis[1], rotation_axis[0], 0]])
+        R = np.eye(3) + sin_theta * K + (1 - cos_theta) * np.dot(K, K)
+
+        # Apply rotation to all points
+        rotated_points = np.dot(points, R.T)
+
+        return rotated_points
+
+    def _rotate_point_clouds(self, point_cloud1: PointCloud, point_cloud2: PointCloud, mires_3d: Mire3D ):
+
+        # Get 3D coordinates of mires_3d
+        x = [mire.coordinates[0] for mire in mires_3d]
+        y = [mire.coordinates[1] for mire in mires_3d]
+        z = [mire.coordinates[2] for mire in mires_3d]
+        # fit a plane to these 3D points
+        a, b, c, errors, residual = self._fit_plane(x, y, z)
+        res = self._rotate_points_to_abc_plane(np.array([x, y, z]).T, a, b, c)
+        # mise à jour des coordonnées des mires
+        for i in np.arange(len(mires_3d)):
+            mires_3d[i].coordinates = res[i,:]
+
+        PTS_0 = trimesh.load(point_cloud1.path)
+        PTS_0_rotated = PTS_0
+        PTS_0_rotated.vertices = self._rotate_points_to_abc_plane(PTS_0.vertices, a, b, c)
+        out_file = open(point_cloud1.path, 'wb')
+        out_file.write(trimesh.exchange.ply.export_ply(PTS_0_rotated))
+        out_file.close()
+
+        PTS_1 = trimesh.load(point_cloud2.path)
+        PTS_1_rotated = PTS_1
+        PTS_1_rotated.vertices = self._rotate_points_to_abc_plane(PTS_1.vertices, a, b, c)
+        out_file = open(point_cloud2.path, 'wb')
+        out_file.write(trimesh.exchange.ply.export_ply(PTS_1_rotated))
+        out_file.close()
+
+
+        return mires_3d, point_cloud1, point_cloud2
 
     def _resize_point_clouds(self, point_cloud: PointCloud, scale_factor: float):
         # on redimensionne les nuages de points à l'aide de ce facteur d'échelle
