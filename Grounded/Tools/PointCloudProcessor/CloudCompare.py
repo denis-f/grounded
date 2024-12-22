@@ -4,32 +4,9 @@ from Grounded.utils import (find_files_regex, rename_file, move_file_to_director
                             check_module_executable_path)
 
 import os
-
-
-def compare_versions(version1, version2):
-    """
-    Compare deux versions de logiciel.
-
-    Args:
-    version1 (str): La première version à comparer.
-    version2 (str): La deuxième version à comparer.
-
-    Returns:
-    int: 0 si les deux versions sont égales, -1 si version1 est antérieure à version2, 1 si version1 est postérieure à version2.
-    """
-    v1 = version1.split('.')
-    v2 = version2.split('.')
-
-    for i in range(max(len(v1), len(v2))):
-        num1 = int(v1[i]) if i < len(v1) else 0
-        num2 = int(v2[i]) if i < len(v2) else 0
-
-        if num1 < num2:
-            return -1
-        elif num1 > num2:
-            return 1
-
-    return 0
+import re
+import Grounded.logger as logger
+import logging
 
 
 class CloudCompare(PointCloudProcessor):
@@ -38,7 +15,7 @@ class CloudCompare(PointCloudProcessor):
     en utilisant l'outil CloudCompare.
     """
 
-    def __init__(self, path_cloud_compare: str, working_directory: str, output_dir: str, version: str,):
+    def __init__(self, path_cloud_compare: str, working_directory: str, output_dir: str):
         """
         Constructeur de la classe CloudCompare.
         """
@@ -46,8 +23,33 @@ class CloudCompare(PointCloudProcessor):
         check_module_executable_path(path_cloud_compare, "CloudCompare")
 
         self.path_cloud_compare = path_cloud_compare
-        self.is_v1_12_or_higher = compare_versions(version, '2.12') >= 0
         self.set_up_working_space()
+        self.is_v2_12_or_higher = self.check_version(path_cloud_compare)
+
+    def check_version(self, path_cloud_compare):
+        # on crée un appel de cloudCompare en logguant les sorties dans un fichier et en appellant l'option CSF, disponible seulement à partir de la 2.12
+        # comme on fait exprès d'aller chercher (ou pas) une erreur dans un appel à CloudCompare, on met temporairement le niveau de débugage au mini
+        log = logger.get_logger()
+        saveLogLevel = log.level
+        log.level = logging.INFO
+        self.subprocess([path_cloud_compare,"-SILENT", "-LOG_FILE", "logCC.txt", "-CSF"],
+                   os.path.join(self.working_directory, "DummyCCCall.log"))
+        # Une fois l'appel CloudCompare réalisé on restaure le niveau de debug à l'initial
+        log.level = saveLogLevel
+
+        # On ouvre ensuite ce texte
+        text_file = open("logCC.txt", "r")
+        # a priori si pas d'erreur on est en version >=2.12
+        is_v2_12_or_higher = True
+        for line in text_file:
+            # on cherche le pattern "Unknown"
+            if re.search("Unknown", line):
+                # et si c'est associé au pattern "CSF" c'est qu'on est en version 2.11 ou inférieure
+                if re.search("CSF", line):
+                    is_v2_12_or_higher = False
+        # ici il faudrait supprimer le fichier logCC.txt
+        os.remove("logCC.txt")
+        return is_v2_12_or_higher
 
     def mise_a_echelle(self, point_cloud: PointCloud, facteur: float) -> PointCloud:
         """
@@ -103,7 +105,7 @@ class CloudCompare(PointCloudProcessor):
             entre les deux nuages de points.
         """
         output_raster_option = "-OUTPUT_RASTER_Z"
-        if self.is_v1_12_or_higher:
+        if self.is_v2_12_or_higher:
             output_raster_option += "_and_SF"
 
         self.subprocess([self.path_cloud_compare, "-SILENT", "-NO_TIMESTAMP",
