@@ -1,23 +1,3 @@
-########### gestion de l'orientation
-#on importe la fonction Image de exif en la renommant car on a déjà un dataObject Image
-import numpy as np
-from exif import Image as exifImage
-#on regarde si l'orientation est une orientation paysage par défaut
-exifImage('exec/IN/bef/IMG_3534.jpg').orientation.value==1
-
-# boucle pour corriger tableau_image quand l'orientation est à 180° (pour l'instant on ne gère pas les autres)
-for im in tableau_image:
-    im_width = exifImage(im.path).pixel_x_dimension
-    im_height = exifImage(im.path).pixel_y_dimension
-    if exifImage(im.path).orientation.value == 3:
-        #on est dans le cas de rotation à 180°
-        for mire in im.mires_visibles:
-            mire.coordinates = np.subtract((im_width,im_height),mire.coordinates)
-    elif exifImage(im.path).orientation.value != 1:
-        #on est dans le cas où l'orientation n'est ni la rotation à 180° ni l'orientation normale - cas non traité
-        print(f"""cas d'orientation d'image "{exifImage(im.path).orientation.name}" non traité""")
-
-
 #sauvegarde point clouds
 import trimesh
 PTS_0 = trimesh.load(point_cloud_before_excavation.path)
@@ -94,13 +74,7 @@ ax.plot(np.mean(x),np.mean(y),'ro')
 
 from mpl_toolkits.mplot3d import Axes3D
 
-
 # Issu de https://stackoverflow.com/a/44315488
-plt.figure()
-ax=plt.subplot(111,projection='3d')
-ax.scatter(x,y,z)
-ax.set_aspect('equal')
-
 def fit_plane(x,y,z):
     tmp_A = []
     tmp_b = []
@@ -116,33 +90,28 @@ def fit_plane(x,y,z):
 
 a, b, c, errors, residual = fit_plane(x,y,z)
 
-
-print("solution: %f x + %f y + %f = z" % (a, b, c))
-print("errors:")
-print(errors)
-print("residual: {}".format(residual))
-xlim = ax.get_xlim()
-ylim = ax.get_ylim()
-X,Y = np.meshgrid(np.arange(xlim[0], xlim[1]),
-                  np.arange(ylim[0], ylim[1]))
-Z = np.zeros(X.shape)
-for r in range(X.shape[0]):
-    for s in range(X.shape[1]):
-        Z[r,s] = a * X[r,s] + b * Y[r,s] + c
-ax.plot_wireframe(X,Y,Z, color='k')
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.set_zlabel('z')
-plt.show()
-
-
-
-####
-
-
-
-
-
+def affichage_3d(x,y,z,a,b,c,errors,residual):
+    plt.figure()
+    ax=plt.subplot(111,projection='3d')
+    ax.scatter(x,y,z)
+    ax.set_aspect('equal')
+    print("solution: %f x + %f y + %f = z" % (a, b, c))
+    print("errors:")
+    print(errors)
+    print("residual: {}".format(residual))
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    X,Y = np.meshgrid(np.arange(xlim[0], xlim[1]),
+                      np.arange(ylim[0], ylim[1]))
+    Z = np.zeros(X.shape)
+    for r in range(X.shape[0]):
+        for s in range(X.shape[1]):
+            Z[r,s] = a * X[r,s] + b * Y[r,s] + c
+    ax.plot_wireframe(X,Y,Z, color='k')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
+    plt.show()
 
 
 ####### Rotation de points sur un plan - issu de perplexity
@@ -181,37 +150,33 @@ def rotate_points_to_xy_plane(points, a, b, c):
 
     return rotated_points
 
-#points=np.array([x,y,z]).T
-
 res=rotate_points_to_xy_plane(np.array([x,y,z]).T,a,b,c)
-x_1=res[:,0]
-y_1=res[:,1]
-z_1=res[:,2]
+def affichage_mires_2(res,mires_3d):
+    x_1=res[:,0]
+    y_1=res[:,1]
+    z_1=res[:,2]
+    #plot3d
+    plt.figure()
+    ax=plt.subplot(111,projection='3d')
+    ax.scatter(x_1,y_1,z_1)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
 
-plt.figure()
-ax=plt.subplot(111,projection='3d')
-ax.scatter(x_1,y_1,z_1)
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.set_zlabel('z')
+    # mise à jour des coordonnées des mires
+    for i in np.arange(len(mires_3d)):
+        mires_3d[i].coordinates = (x_1[i], y_1[i], z_1[i])
 
-# mise à jour des coordonnées des mires
-for i in np.arange(len(mires_3d)):
-    mires_3d[i].coordinates = (x_1[i], y_1[i], z_1[i])
+    #plot2d
+    fig, ax = plt.subplots()
+    ax.plot(x_1,y_1,'yo')
+    for mire in mires_3d:
+        ax.annotate('{}'.format(mire.identifier),(mire.coordinates[0],mire.coordinates[1]))
+    ax.plot(np.mean(x_1),np.mean(y_1),'ro')
 
-fig, ax = plt.subplots()
-ax.plot(x_1,y_1,'yo')
-
-# les lignes suivantes ne marchent plus car les coordonnées ont changé
-for mire in mires_3d:
-    ax.annotate('{}'.format(mire.identifier),(mire.coordinates[0],mire.coordinates[1]))
-ax.plot(np.mean(x_1),np.mean(y_1),'ro')
-
-
-
-slope, intercept = np.polyfit(x_1, y_1, 1)
-abline_values = [slope * i + intercept for i in x_1]
-plt.plot(x_1, abline_values, 'b')
+    slope, intercept = np.polyfit(x_1, y_1, 1)
+    abline_values = [slope * i + intercept for i in x_1]
+    plt.plot(x_1, abline_values, 'b')
 
 
 
