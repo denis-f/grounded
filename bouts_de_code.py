@@ -31,7 +31,7 @@ out_file.close()
 ########### lecture et afffichage des mires 3D
 import pickle
 import numpy as np
-with open('xyz.pkl','rb') as f:  # Python 3: open(..., 'rb')
+with open('exec/xyz.pkl','rb') as f:  # Python 3: open(..., 'rb')
     x, y, z, mires_3d = pickle.load(f)
 
 x=[mire.coordinates[0] for mire in mires_3d]
@@ -42,16 +42,59 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use("TkAgg")
 fig, ax = plt.subplots()
+ax.set_aspect('equal', adjustable='box')
 ax.plot(x,y,'o')
 for mire in mires_3d:
     ax.annotate('{}'.format(mire.identifier),(mire.coordinates[0],mire.coordinates[1]))
-ax.plot(np.mean(x),np.mean(y),'ro')
-# x_min=np.min(x)
-# x_mean=np.mean(x)
-# x_max=np.max(x)
-# y_min=np.min(y)
-# y_mean=np.mean(y)
-# y_max=np.max(y)
+ax.plot(np.median(x),np.median(y),'ro')
+
+# def box_centre(x,y):
+#     return (np.min(x)+np.max(x))/2,(np.min(y)+np.max(y))/2
+
+box_centre_x, box_centre_y = (np.min(x) + np.max(x)) / 2, (np.min(y) + np.max(y)) / 2
+#ax.plot(box_centre(x,y)[0],box_centre(x,y)[1],'go')
+ax.plot(box_centre_x,box_centre_y,'go')
+
+# l'angle de la rotation pour passer d'un vecteur (x,y) à un vecteur (0,1) c'est arctan (x/y) on fait donc arctan2(x,y)
+# voir arctan2 https://numpy.org/doc/2.1/reference/generated/numpy.arctan2.html#numpy.arctan2
+angle = np.arctan2((np.median(x) - box_centre_x), (np.median(y) - box_centre_y))
+
+
+
+#plt.plot([np.median(x),box_centre(x,y)[0]],[np.median(y),box_centre(x,y)[1]])
+#plt.arrow(box_centre(x,y)[0],box_centre(x,y)[1],np.median(x)-box_centre(x,y)[0],np.median(y)-box_centre(x,y)[1],width=0.03,length_includes_head=True)
+plt.arrow(box_centre_x,box_centre_y,np.median(x)-box_centre_x,np.median(y)-box_centre_y,width=0.03,length_includes_head=True)
+
+# def rot(xy, angle):
+#     #/!\ xy doit avoir la forme [x,y] /!\
+#     # ce serait bien de faire une vérification ici / tentative (pas sûr que ça marche
+#     if type(xy)==list:
+#         if len(xy)==2:
+            rotmat = np.array([[np.cos(angle), -np.sin(angle)],
+                               [np.sin(angle), np.cos(angle)]])
+    #         return np.dot(rotmat, xy)
+    #     else : print(f"probleme : {xy} n'est pas une liste à deux éléments, rotation d'angle {angle} impossible")
+    # else:
+    #     print(f"probleme : {xy} n'est pas une liste, rotation d'angle {angle} impossible")
+
+x1,y1 = np.dot(rotmat, [x, y])
+box_centre_x1, box_centre_y1 = (np.min(x1) + np.max(x1)) / 2, (np.min(y1) + np.max(y1)) / 2
+# [x1,y1] = rot([x, y], np.arctan2 ( (np.median(x)-box_centre(x,y)[0]), (np.median(y)-box_centre(x,y)[1]) ) )
+
+# [x1,y1] = rot([x, y],- 3.14/12 )
+
+ax.plot(x1,y1,'.')
+ax.plot(np.median(x1),np.median(y1),'r.')
+#ax.plot(box_centre(x1,y1)[0],box_centre(x1,y1)[1],'g.')
+ax.plot(box_centre_x1,box_centre_y1,'g.')
+plt.arrow(box_centre_x1,box_centre_y1,np.median(x1)-box_centre_x1,np.median(y1)-box_centre_y1,width=0.03,length_includes_head=True)
+
+
+x_min=np.min(x)
+x_max=np.max(x)
+y_min=np.min(y)
+y_max=np.max(y)
+
 # ax.plot(x_min,y_min,'go')
 # ax.plot(x_min,y_max,'go')
 # ax.plot(x_max,y_max,'go')
@@ -61,6 +104,24 @@ ax.plot(np.mean(x),np.mean(y),'ro')
 # ax.plot(x[np.argmax(y)],y[np.argmax(y)],'ro', mfc='none')
 # ax.plot(x[np.argmax(x)],y[np.argmax(x)],'o', mfc='none')
 
+### rotation des mires dans le plan xy pour que les mires horizontales soient en haut et les mires verticales soient verticales
+# on postule que le "bas" est défini par l'endroit où il n'y a pas de réglet
+#   => c'est raccord avec la config en vertical/fosse =  le bas est le côté où est le bac de prélévèement
+#   => c'est raccord avec la config en horizontal/par-dessus = le "bas" est le côté où se situe l'opérateur qui prélève, on laisse un côté sans mire pour simplifier
+# dans ce cas de figure le barycentre des mires sera tiré du côté opposé où il n'y a pas de mire.
+# on calcule le barycentre des mires avec la médiane (moins sensible aux extrèmes) => point H
+# on calcule le point milieu du rectangle englobant => point O
+# => la verticale orientée vers le haut est définie par le vecteur OH
+
+bary_mires=np.median(x),np.median(y)
+dists=[]
+for index,scale_bar in enumerate(scale_bars):
+    first_mire,last_mire=scale_bar.start.identifier,scale_bar.end.identifier
+    first_mire_coords = mires_3d[[mire.identifier for mire in mires_3d].index(first_mire)].coordinates[0:2]
+    last_mire_coords = mires_3d[[mire.identifier for mire in mires_3d].index(last_mire)].coordinates[0:2]
+    scale_bar_middle_coords = np.add(first_mire_coords,last_mire_coords)/2
+    dists.append(np.linalg.norm( scale_bar_middle_coords - bary_mires))
+scale_bars_up=np.array(scale_bars)[np.argsort(dists)[:(len(scale_bars)-2)]].tolist()
 
 #### FIT d'un plan (et représentation)
 # l'idée est de transformer le système de coordonnées de manière à ce que

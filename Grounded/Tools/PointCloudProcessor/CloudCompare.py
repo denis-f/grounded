@@ -78,7 +78,7 @@ class CloudCompare(PointCloudProcessor):
         # déplacement du nuage de point nouvellement généré se trouvant dans le dossier du nuage de points
         # donné en paramètre
         path_point_cloud = self.move_file_to_working_directory(point_cloud.get_path_directory(),
-                                                               "TRANSFORMED", point_cloud.get_name_without_extension())
+                                                               "TRANSFORMED", point_cloud.get_name_without_extension()) #TODO : ajouter un CC_rescaled au nom de base
 
         # suppression de la matrice
         try:

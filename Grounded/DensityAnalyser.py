@@ -478,6 +478,7 @@ class DensityAnalyser:
         return mires_3d_moyens, ecart_type
 
     def _fit_plane(self, x, y, z):
+        # Solution de Ben trouvée sur StackOverFlow https://stackoverflow.com/a/44315488
         tmp_A = []
         tmp_b = []
         for i in range(len(x)):
@@ -522,6 +523,26 @@ class DensityAnalyser:
 
         return rotated_points
 
+    def _apply_rotations_to_one_point_cloud(self, point_cloud: PointCloud, a, b , c, rotmat):
+        # on charge le premier nuage
+        PTS = trimesh.load(point_cloud.path)
+        # on le clone
+        PTS_rotated = PTS
+        # on change les points du nuage de point par la rotation des points du nuage initial pour que le Z face face au plan d'équation ax + by + c = z
+        PTS_rotated.vertices = self._rotate_points_to_abc_plane(PTS.vertices, a, b, c)
+        # on fait la rotation autour de Z pour avoir l'endroit où il y a le moins de mires en bas (= les réglets du haut en haut)
+        x1, y1 = np.dot(rotmat,PTS_rotated.vertices[:,0:2])
+        #on met à jour les coordonnées x, y du nuage de point
+        PTS_rotated.vertices[:,0:2] = [x1,y1]
+        # on crée un nouveau nom de fichier en ajoutant _Rotated au nuage de base
+        path_point_cloud = os.sep.join(
+            [point_cloud.get_path_directory(), point_cloud.get_name_without_extension() + '_Rotated.ply'])
+        out_file = open(path_point_cloud, 'wb')
+        out_file.write(trimesh.exchange.ply.export_ply(PTS_rotated))
+        out_file.close()
+
+        return PointCloud(path_point_cloud)
+
     def _rotate_point_clouds(self, point_cloud1: PointCloud, point_cloud2: PointCloud, mires_3d: Mire3D ):
 
         # Get 3D coordinates of mires_3d
@@ -530,24 +551,51 @@ class DensityAnalyser:
         z = [mire.coordinates[2] for mire in mires_3d]
         # fit a plane to these 3D points
         a, b, c, errors, residual = self._fit_plane(x, y, z)
+        # compute the result of the rotation of the mires_3d (x,y,z)
         res = self._rotate_points_to_abc_plane(np.array([x, y, z]).T, a, b, c)
         # mise à jour des coordonnées des mires
+        rotated_mires_3d = mires_3d
         for i in np.arange(len(mires_3d)):
-            mires_3d[i].coordinates = res[i,:]
+            rotated_mires_3d[i].coordinates = res[i,:]
 
-        PTS_0 = trimesh.load(point_cloud1.path)
-        PTS_0_rotated = PTS_0
-        PTS_0_rotated.vertices = self._rotate_points_to_abc_plane(PTS_0.vertices, a, b, c)
-        out_file = open(point_cloud1.path, 'wb')
-        out_file.write(trimesh.exchange.ply.export_ply(PTS_0_rotated))
-        out_file.close()
+        # at this point we get a,b,c the plane fitted to initial position of the mires_3d and rotated_mires_3d
+        # we need to rotate point clouds around the Z axis so that les mires horizontales soient en haut et les mires verticales soient verticales
+        # # on postule que le "bas" est défini par l'endroit où il n'y a pas de réglet
+        # #   => c'est raccord avec la config en vertical/fosse =  le bas est le côté où est le bac de prélévèement
+        # #   => c'est raccord avec la config en horizontal/par-dessus = le "bas" est le côté où se situe l'opérateur qui prélève, on laisse un côté sans mire pour simplifier
+        # # dans ce cas de figure le barycentre des mires sera tiré du côté opposé où il n'y a pas de mire.
+        # # on calcule le barycentre des mires avec la médiane (moins sensible aux extrèmes) => point H (np.median(x) , np.median(y))
+        # # on calcule le point milieu du rectangle englobant => point O, box_centre
+        # # => la verticale orientée vers le haut est définie par le vecteur OH
+        box_centre_x, box_centre_y = (np.min(x) + np.max(x)) / 2, (np.min(y) + np.max(y)) / 2
+        # l'angle de la rotation pour passer d'un vecteur (x,y) à un vecteur (0,1) c'est arctan (x/y) on fait donc arctan2(x,y)
+        # voir arctan2 https://numpy.org/doc/2.1/reference/generated/numpy.arctan2.html#numpy.arctan2
+        angle = np.arctan2 ( (np.median(x)-box_centre_x), (np.median(y)-box_centre_y) )
+        rotmat = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
 
-        PTS_1 = trimesh.load(point_cloud2.path)
-        PTS_1_rotated = PTS_1
-        PTS_1_rotated.vertices = self._rotate_points_to_abc_plane(PTS_1.vertices, a, b, c)
-        out_file = open(point_cloud2.path, 'wb')
-        out_file.write(trimesh.exchange.ply.export_ply(PTS_1_rotated))
-        out_file.close()
+        ## APPLICATION
+        # MIRES 3D
+        #on calcule les nouvelles coordonnées x,y
+        x,y = np.dot(rotmat, [x, y])
+        # on met à jour les mires déjà tournées dans le plan
+        for i in np.arange(len(mires_3d)):
+            rotated_mires_3d[i].coordinates[0] = x[i]
+            rotated_mires_3d[i].coordinates[1] = y[i]
+
+        # NUAGES DE POINTS
+        #fonction qui fait les deux rotation sur un fichier ply
+
+
+        point_cloud1 = self._apply_rotations_to_one_point_cloud(point_cloud1, a, b, c, rotmat)
+        point_cloud2 = self._apply_rotations_to_one_point_cloud(point_cloud2, a, b, c, rotmat)
+        # PTS_1 = trimesh.load(point_cloud2.path)
+        # PTS_1_rotated = PTS_1
+        # PTS_1_rotated.vertices = self._rotate_points_to_abc_plane(PTS_1.vertices, a, b, c)
+        # x2, y2 = np.dot(rotmat, PTS_1_rotated.vertices[0:2])
+        # PTS_1_rotated.vertices[0:2] = [x2, y2]
+        # out_file = open(point_cloud2.path, 'wb')
+        # out_file.write(trimesh.exchange.ply.export_ply(PTS_1_rotated))
+        # out_file.close()
 
 
         return mires_3d, point_cloud1, point_cloud2
