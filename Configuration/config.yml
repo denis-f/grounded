@@ -18,6 +18,7 @@ tools:
       tapioca_mode: 'All'
       tapioca_resolution: '1000'
       tapioca_second_resolution: '1000'
+      reuse_wd: 'False'
 
   metashape:
     class: Grounded.Tools.SFM.Metashape.Metashape
@@ -33,7 +34,6 @@ tools:
       path_cloud_compare: 'cloudcompare.CloudCompare'
       working_directory: 'cloudCompare_working_directory'
       output_dir: '%default_outdir_name%'
-      version: '2.11.1'
 
   # DetecteurMire
   detection_cctag:

@@ -10,7 +10,7 @@ from Grounded.ScaleBarLoader import ScaleBarLoader
 scale_bars = ScaleBarLoader.load("Configuration/scaleBar.csv")
 
 
-m = MicMac("/opt/micmac/bin/mm3d","micmac_working_directory","exec/test_2024-11_Carafe_F12_H7_nikon/OUT", "FraserBasic", "QuickMac")  # initialisation d'un SFM
+m = MicMac("/opt/micmac/bin/mm3d","micmac_working_directory","exec/test_2024-11_Carafe_F12_H7_nikon/OUT", "FraserBasic", "QuickMac", reuse_wd=True)  # initialisation d'un SFM
 #m = Metashape("metashape_working_directory", "exec/ou", 8)
 c = CloudCompare("cloudcompare.CloudCompare", "cloudCompare_working_directory", "exec/test_2024-11_Carafe_F12_H7_nikon/OUT", "2.11.1", )  # initialisation de PointCloudProcessor
 #d = DetectionMetashape()  # initialisation d'un DetecteurMire

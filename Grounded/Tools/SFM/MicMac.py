@@ -125,7 +125,7 @@ class MicMac(SFM):
 
     def __init__(self, path_mm3d: str, working_directory: str, output_dir: str, distorsion_model: str = "FraserBasic",
                  zoom_final: str = "QuickMac", tapioca_mode: str = "All", tapioca_resolution: str = "1000",
-                 tapioca_second_resolution="1000"):
+                 tapioca_second_resolution: str ="1000", reuse_wd: bool = False):
         """
         Initialise une instance de la classe MicMac.
 
@@ -138,6 +138,7 @@ class MicMac(SFM):
             path_mm3d (str): Le chemin vers l'exécutable MicMac.
             distorsion_model (str): un modèle de distorsion
             zoom_final (str): un zoom final
+            reuse_wd (bool): pour ré-utiliser les calculs de micmac plutôt que tout recalculer
 
 
         Returns:
@@ -164,8 +165,10 @@ class MicMac(SFM):
         self.tapioca_resolution = tapioca_resolution
         self.tapioca_second_resolution = tapioca_second_resolution
         self.zoom_final = zoom_final
+        self.reuse_wd = reuse_wd
 
-        self.set_up_working_space()
+        if not reuse_wd:
+            self.set_up_working_space()
 
     def detection_points_homologues(self, chemin_dossier_avant: str, chemin_dossier_apres: str):
         """
@@ -230,53 +233,57 @@ class MicMac(SFM):
             avant et après excavation.
             tuple[0] ⇛ avant et tuple[1] ⇛ après
         """
-        self.detection_points_homologues(chemin_dossier_avant, chemin_dossier_apres)
-        self.calibration()
+        if not self.reuse_wd :
+            self.detection_points_homologues(chemin_dossier_avant, chemin_dossier_apres)
+            self.calibration()
 
-        print("Génération des nuages de point en cours, cela peut prendre un certain temps. Veuillez patienter...")
+            print("Génération des nuages de point en cours, cela peut prendre un certain temps. Veuillez patienter...")
 
-        # On génère le nuage de points des photos d'avant excavation
-        arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_{micmac_img_extensions_regex}",
-                     self.distorsion_model]
-        process = self.subprocess(arguments, os.path.join(self.working_directory, "C3DC_0.log"))[0]
-        if process.returncode != 0:
-            raise_logged(logger.get_logger().critical,
-                         MicMacException("Une erreur est survenu lors de la génération du nuage de "
-                                         "points avant excavation, veuillez vérifier votre jeu de données")
-                         )
+            # On génère le nuage de points des photos d'avant excavation
+            arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}0_{micmac_img_extensions_regex}",
+                         self.distorsion_model]
+            process = self.subprocess(arguments, os.path.join(self.working_directory, "C3DC_0.log"))[0]
+            if process.returncode != 0:
+                raise_logged(logger.get_logger().critical,
+                             MicMacException("Une erreur est survenu lors de la génération du nuage de "
+                                             "points avant excavation, veuillez vérifier votre jeu de données")
+                             )
 
-        # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_0.ply
-        rename_file(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"), "C3DC_0")
+            # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_0.ply
+            rename_file(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"), "C3DC_0")
 
-        # On déplace le fichier PIMs-{self.zoom_final} en Tempo de façon temporaire afin de générer le nuage de point
-        # d'après excavation sans effets de bords
-        os.rename(os.path.join(self.working_directory, f"PIMs-{self.zoom_final}"),
-                  os.path.join(self.working_directory, "Tempo"))
+            # On déplace le fichier PIMs-{self.zoom_final} en Tempo de façon temporaire afin de générer le nuage de point
+            # d'après excavation sans effets de bords
+            os.rename(os.path.join(self.working_directory, f"PIMs-{self.zoom_final}"),
+                      os.path.join(self.working_directory, "Tempo"))
 
-        # On génère le nuage de points des photos d'après excavation
-        arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}1_{micmac_img_extensions_regex}",
-                     self.distorsion_model]
+            # On génère le nuage de points des photos d'après excavation
+            arguments = [self.path_mm3d, "C3DC", self.zoom_final, f"{self.working_directory}{os.sep}1_{micmac_img_extensions_regex}",
+                         self.distorsion_model]
 
-        self.subprocess(arguments, os.path.join(self.working_directory, "C3DC_1.log"))
+            self.subprocess(arguments, os.path.join(self.working_directory, "C3DC_1.log"))
 
-        if process.returncode != 0:
-            raise_logged(logger.get_logger().critical,
-                         MicMacException("Une erreur est survenu lors de la génération du nuage de "
-                                         "points après excavation, veuillez vérifier votre jeu de données")
-                         )
+            if process.returncode != 0:
+                raise_logged(logger.get_logger().critical,
+                             MicMacException("Une erreur est survenu lors de la génération du nuage de "
+                                             "points après excavation, veuillez vérifier votre jeu de données")
+                             )
 
-        # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_1.ply
-        rename_file(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"), "C3DC_1")
+            # On renomme le fichier C3DC_{self.zoom_final}.ply généré automatiquement en C3DC_1.ply
+            rename_file(os.path.join(self.working_directory, f"C3DC_{self.zoom_final}.ply"), "C3DC_1")
 
-        # On déplace le contenu de Tempo à l'intérieur de PIMs-{self.zoom_final} sans les fichiers pouvant générer
-        # des conflits
-        effacer_fichier_si_existe(os.path.join(self.working_directory, "Tempo", "PimsEtat.xml"))
-        effacer_fichier_si_existe(os.path.join(self.working_directory, "Tempo", "PimsFile.xml"))
-        copier_contenu_dossier(os.path.join(self.working_directory, "Tempo"),
-                               os.path.join(self.working_directory, f"PIMs-{self.zoom_final}"))
+            # On déplace le contenu de Tempo à l'intérieur de PIMs-{self.zoom_final} sans les fichiers pouvant générer
+            # des conflits
+            effacer_fichier_si_existe(os.path.join(self.working_directory, "Tempo", "PimsEtat.xml"))
+            effacer_fichier_si_existe(os.path.join(self.working_directory, "Tempo", "PimsFile.xml"))
+            copier_contenu_dossier(os.path.join(self.working_directory, "Tempo"),
+                                   os.path.join(self.working_directory, f"PIMs-{self.zoom_final}"))
 
-        # On supprime le dossier Tempo
-        os.rmdir(os.path.join(self.working_directory, "Tempo"))
+            # On supprime le dossier Tempo
+            os.rmdir(os.path.join(self.working_directory, "Tempo"))
+
+        else:
+            print("Micmac - reprise des calculs existants (points homologues, orientation, nuages de points)")
 
         return PointCloud(os.path.join(self.working_directory, "C3DC_0.ply")), PointCloud(
             os.path.join(self.working_directory, "C3DC_1.ply"))
