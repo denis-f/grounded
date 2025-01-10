@@ -10,18 +10,18 @@ from Grounded.ScaleBarLoader import ScaleBarLoader
 scale_bars = ScaleBarLoader.load("Configuration/scaleBar.csv")
 
 
-m = MicMac("/opt/micmac/bin/mm3d","micmac_working_directory","exec/ou4", "FraserBasic", "QuickMac")  # initialisation d'un SFM
+m = MicMac("/opt/micmac/bin/mm3d","micmac_working_directory","exec/test_2024-11_Carafe_F12_H7_nikon/OUT", "FraserBasic", "QuickMac", reuse_wd=True)  # initialisation d'un SFM
 #m = Metashape("metashape_working_directory", "exec/ou", 8)
-c = CloudCompare("cloudcompare.CloudCompare", "cloudCompare_working_directory", "exec/ou4")  # initialisation de PointCloudProcessor
+c = CloudCompare("cloudcompare.CloudCompare", "cloudCompare_working_directory", "exec/test_2024-11_Carafe_F12_H7_nikon/OUT", "2.11.1", )  # initialisation de PointCloudProcessor
 #d = DetectionMetashape()  # initialisation d'un DetecteurMire
-d = DetectionCCTag('/opt/CCTag/', 'cctag_working_directory', 'exec/ou4')
+d = DetectionCCTag('/opt/CCTag/', 'cctag_working_directory', 'exec/test_2024-11_Carafe_F12_H7_nikon/OUT')
 
 # instantiation d'un objet DensityAnalyser construit à partir des modules défini au-dessus
-analyser = DensityAnalyser(m, d, c, 'exec/ou4')
+analyser = DensityAnalyser(m, d, c, 'exec/test_2024-11_Carafe_F12_H7_nikon/OUT')
 # analyse du volume des trous présents sur les photos
-volumes_trous = analyser.analyse("exec/IN/avant/", # à compléter par le dossier contenant les images avant excavation
-                                 "exec/IN/apres/",  # à compléter par le dossier contenant les images après excavation
-                                 scale_bars)
+volumes_trous = analyser.analyse("exec/test_2024-11_Carafe_F12_H7_nikon/IN/bef/", # à compléter par le dossier contenant les images avant excavation
+                                 "exec/test_2024-11_Carafe_F12_H7_nikon/IN/aft/",  # à compléter par le dossier contenant les images après excavation
+                                 scale_bars,display_padding=True)
 
 print("###########################################################################\n"
       "############################# Fin d'exécution #############################\n"

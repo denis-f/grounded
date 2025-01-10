@@ -18,6 +18,7 @@ tools:
       tapioca_mode: 'All'
       tapioca_resolution: '1000'
       tapioca_second_resolution: '1000'
+      reuse_wd: 'False'
 
   metashape:
     class: Grounded.Tools.SFM.Metashape.Metashape
