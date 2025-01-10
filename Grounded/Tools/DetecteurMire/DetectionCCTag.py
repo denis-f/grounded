@@ -6,6 +6,7 @@ import shutil
 
 from Grounded.DataObject import Image
 from Grounded.DataObject import Mire2D
+from Grounded.DataObject import File
 from .DetecteurMire import DetecteurMire
 
 import subprocess
@@ -63,6 +64,32 @@ def parsing_result(resultat: str) -> list[Image]:
 
     return tableau_image
 
+def save_liste_image(tableau_image:list[Image],aFile:File):
+    with open(aFile.path, 'w') as f:
+        for im in tableau_image:
+            for mir in im.mires_visibles:
+                f.write(f"{im.name},{mir.identifier},{mir.coordinates[0]:.3f},{mir.coordinates[1]:.3f}")
+                f.write("\n")
+
+
+def load_liste_image(aFile: File, path_images: str) -> list[Image]:
+    tableau_image = []
+    current_image = None
+
+    with open(aFile.path, 'r') as f:
+        for line in f:
+            name, identifier, x, y = line.strip().split(',')
+            if current_image is None or current_image.name != name:
+                if current_image:
+                    tableau_image.append(current_image)
+                current_image = Image(path = os.sep.join([path_images,name]), mires_visibles=[])
+            mire = Mire2D(identifier = identifier, coordinates=(float(x), float(y)))
+            current_image.mires_visibles.append(mire)
+
+    if current_image:
+        tableau_image.append(current_image)
+
+    return tableau_image
 
 class DetectionCCTagException(Exception):
     pass
@@ -76,7 +103,7 @@ class DetectionCCTag(DetecteurMire):
     Elle est utilisée pour calculer les coordonnées de chacune des mires présentes sur une image
     """
 
-    def __init__(self, path_cctag_directory: str, working_directory: str, output_dir: str):
+    def __init__(self, path_cctag_directory: str, working_directory: str, output_dir: str, reuse_wd: bool = False):
         """
         Initialise une instance de la classe DetectionCCTag
 
@@ -90,7 +117,10 @@ class DetectionCCTag(DetecteurMire):
         super().__init__(working_directory, output_dir)
         check_module_executable_path(path_cctag_directory, "CCTag")
         self.path_cctag_directory = path_cctag_directory
-        self.set_up_working_space()
+        self.reuse_wd = reuse_wd
+
+        if not reuse_wd:
+            self.set_up_working_space()
 
     def detection_mires(self, chemin_dossier_image) -> list[Image]:
         """
@@ -103,25 +133,30 @@ class DetectionCCTag(DetecteurMire):
         Returns:
             list[Image]: une liste contenant toutes les images ayant été trouvé par le détecteur de mire
         """
-        current_dir = os.path.abspath(os.curdir)
-        chemin_absolue_dossier_image = os.path.abspath(chemin_dossier_image)
-        os.chdir(self.path_cctag_directory)
+        if not self.reuse_wd:
+            current_dir = os.path.abspath(os.curdir)
+            chemin_absolue_dossier_image = os.path.abspath(chemin_dossier_image)
+            os.chdir(self.path_cctag_directory)
 
-        arguments = ["./detection", "-n", "3", "-i", chemin_absolue_dossier_image]
-        process, output = self.subprocess(arguments, os.path.join(self.working_directory, "Detection.log"))
-        if process.returncode != 0:
-            raise_logged(logger.get_logger().critical,
-                         DetectionCCTagException("Une erreur est survenu lors de la détection des mires dans les "
-                                                 "images. Veuillez revoir les consignes "
-                                                 "d'installation de la dépendance logicielle CCTag")
-                         )
-        liste_image = parsing_result(output)
+            arguments = ["./detection", "-n", "3", "-i", chemin_absolue_dossier_image]
+            process, output = self.subprocess(arguments, os.path.join(self.working_directory, "Detection.log"))
+            if process.returncode != 0:
+                raise_logged(logger.get_logger().critical,
+                             DetectionCCTagException("Une erreur est survenu lors de la détection des mires dans les "
+                                                     "images. Veuillez revoir les consignes "
+                                                     "d'installation de la dépendance logicielle CCTag")
+                             )
+            liste_image = parsing_result(output)
 
-        os.chdir(current_dir)
+            os.chdir(current_dir)
 
-        out_file = os.path.join(chemin_absolue_dossier_image, "cctag3CC.out")
-        if path_exist(out_file):
-            os.remove(out_file)
+            out_file = os.path.join(chemin_absolue_dossier_image, "cctag3CC.out")
+            save_liste_image(liste_image, File(os.path.join(self.working_directory, "cctag3CC_result.txt")))
+            if path_exist(out_file):
+                os.remove(out_file)
+
+        else:
+            liste_image=load_liste_image(File(os.path.join(self.working_directory, "cctag3CC_result.txt")),chemin_absolue_dossier_image)
 
         return liste_image
 
