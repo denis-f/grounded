@@ -64,8 +64,8 @@ def parsing_result(resultat: str) -> list[Image]:
 
     return tableau_image
 
-def save_liste_image(tableau_image:list[Image],aFile:File):
-    with open(aFile.path, 'w') as f:
+def save_liste_image(tableau_image:list[Image], aFile:File, write_mode:str):
+    with open(aFile.path, write_mode) as f:
         for im in tableau_image:
             for mir in im.mires_visibles:
                 f.write(f"{im.name},{mir.identifier},{mir.coordinates[0]:.3f},{mir.coordinates[1]:.3f}")
@@ -150,13 +150,19 @@ class DetectionCCTag(DetecteurMire):
 
             os.chdir(current_dir)
 
+            cctagResults_filename = os.path.join(self.working_directory, "cctag3CC_result.txt")
+            if path_exist(cctagResults_filename):
+                write_mode = 'a'
+            else:
+                write_mode='w'
+            save_liste_image(liste_image, File(cctagResults_filename), write_mode)
+
             out_file = os.path.join(chemin_absolue_dossier_image, "cctag3CC.out")
-            save_liste_image(liste_image, File(os.path.join(self.working_directory, "cctag3CC_result.txt")))
             if path_exist(out_file):
                 os.remove(out_file)
 
         else:
-            liste_image=load_liste_image(File(os.path.join(self.working_directory, "cctag3CC_result.txt")),chemin_absolue_dossier_image)
+            liste_image=load_liste_image(File(os.path.join(self.working_directory, "cctag3CC_result.txt")),os.path.abspath(chemin_dossier_image))
 
         return liste_image
 
