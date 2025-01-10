@@ -12,9 +12,9 @@ scale_bars = ScaleBarLoader.load("Configuration/scaleBar.csv")
 
 m = MicMac("/opt/micmac/bin/mm3d","micmac_working_directory","exec/test_2024-11_Carafe_F12_H7_nikon/OUT", "FraserBasic", "QuickMac", reuse_wd=True)  # initialisation d'un SFM
 #m = Metashape("metashape_working_directory", "exec/ou", 8)
-c = CloudCompare("cloudcompare.CloudCompare", "cloudCompare_working_directory", "exec/test_2024-11_Carafe_F12_H7_nikon/OUT", "2.11.1", )  # initialisation de PointCloudProcessor
+c = CloudCompare("cloudcompare.CloudCompare", "cloudCompare_working_directory", "exec/test_2024-11_Carafe_F12_H7_nikon/OUT")  # initialisation de PointCloudProcessor
 #d = DetectionMetashape()  # initialisation d'un DetecteurMire
-d = DetectionCCTag('/opt/CCTag/', 'cctag_working_directory', 'exec/test_2024-11_Carafe_F12_H7_nikon/OUT')
+d = DetectionCCTag('/opt/CCTag/', 'cctag_working_directory', 'exec/test_2024-11_Carafe_F12_H7_nikon/OUT', reuse_wd=True)
 
 # instantiation d'un objet DensityAnalyser construit à partir des modules défini au-dessus
 analyser = DensityAnalyser(m, d, c, 'exec/test_2024-11_Carafe_F12_H7_nikon/OUT')
