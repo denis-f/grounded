@@ -531,9 +531,9 @@ class DensityAnalyser:
         # on change les points du nuage de point par la rotation des points du nuage initial pour que le Z face face au plan d'équation ax + by + c = z
         PTS_rotated.vertices = self._rotate_points_to_abc_plane(PTS.vertices, a, b, c)
         # on fait la rotation autour de Z pour avoir l'endroit où il y a le moins de mires en bas (= les réglets du haut en haut)
-        x1, y1 = np.dot(rotmat,PTS_rotated.vertices[:,0:2])
+        x1, y1 = np.dot(rotmat,PTS_rotated.vertices[:,0:2].T)
         #on met à jour les coordonnées x, y du nuage de point
-        PTS_rotated.vertices[:,0:2] = [x1,y1]
+        PTS_rotated.vertices[:,0:2] = np.array([x1,y1]).T
         # on crée un nouveau nom de fichier en ajoutant _Rotated au nuage de base
         path_point_cloud = os.sep.join(
             [point_cloud.get_path_directory(), point_cloud.get_name_without_extension() + '_Rotated.ply'])
