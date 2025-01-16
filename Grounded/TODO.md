@@ -1,0 +1,1 @@
+Une fois les nuages de points tournés, faire aussi un crop des nuages de points sur un rectangle englobant les mires ; peut-être faisable très facilement juste avec un seuillage sur les coordonnées X et Y vu que les nuages de points ont été tournés pour que le Z soit bien perpendiculaire au plan moyen des mires ? 

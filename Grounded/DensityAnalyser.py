@@ -367,7 +367,7 @@ class DensityAnalyser:
         scale_factor = calculate_average_scale_factor(mires_3d, scale_bars)
 
         # Rotation des nuages de points pour être perpendiculaire au plan moyen des mires
-        mires_3d, point_cloud_before_excavation, point_cloud_after_excavation = self._rotate_point_clouds(
+        mires_3d, point_cloud_before_excavation, point_cloud_after_excavation = self._rotate_2point_clouds_and_3Dtargets(
             point_cloud_before_excavation, point_cloud_after_excavation, mires_3d
         )
 
@@ -496,12 +496,8 @@ class DensityAnalyser:
         points = np.array(points)
 
         # Normal vector of the plane
-        normal = np.array([a, b, -1])
+        normal = np.array([-a, -b, 1])
         normal = normal / np.linalg.norm(normal)
-
-        # If normal[2] is negative, flip the normal to ensure positive Z # a priori ça sert à rien si mon met [-a, -b, 1] au dessus
-        if normal[2] < 0:
-            normal = -normal
 
         # Calculate rotation axis (cross product of normal and [0, 0, 1])
         rotation_axis = np.cross(normal, [0, 0, 1])
@@ -523,12 +519,12 @@ class DensityAnalyser:
 
         return rotated_points
 
-    def _apply_rotations_to_one_point_cloud(self, point_cloud: PointCloud, a, b , c, rotmat):
+    def _apply_two_rotations_to_one_point_cloud(self, point_cloud: PointCloud, a, b, c, rotmat):
         # on charge le premier nuage
         PTS = trimesh.load(point_cloud.path)
         # on le clone
         PTS_rotated = PTS
-        # on change les points du nuage de point par la rotation des points du nuage initial pour que le Z face face au plan d'équation ax + by + c = z
+        # on change les points du nuage de point par la rotation des points du nuage initial pour que le Z fasse face au plan d'équation ax + by + c = z
         PTS_rotated.vertices = self._rotate_points_to_abc_plane(PTS.vertices, a, b, c)
         # on fait la rotation autour de Z pour avoir l'endroit où il y a le moins de mires en bas (= les réglets du haut en haut)
         x1, y1 = np.dot(rotmat,PTS_rotated.vertices[:,0:2].T)
@@ -543,7 +539,7 @@ class DensityAnalyser:
 
         return PointCloud(path_point_cloud)
 
-    def _rotate_point_clouds(self, point_cloud1: PointCloud, point_cloud2: PointCloud, mires_3d: Mire3D ):
+    def _rotate_2point_clouds_and_3Dtargets(self, point_cloud1: PointCloud, point_cloud2: PointCloud, mires_3d: Mire3D):
 
         # Get 3D coordinates of mires_3d
         x = [mire.coordinates[0] for mire in mires_3d]
@@ -555,8 +551,12 @@ class DensityAnalyser:
         res = self._rotate_points_to_abc_plane(np.array([x, y, z]).T, a, b, c)
         # mise à jour des coordonnées des mires
         rotated_mires_3d = mires_3d
+        xr = x
+        yr = y
         for i in np.arange(len(mires_3d)):
             rotated_mires_3d[i].coordinates = res[i,:]
+            xr[i] = rotated_mires_3d[i].coordinates[0]
+            yr[i] = rotated_mires_3d[i].coordinates[1]
 
         # at this point we get a,b,c the plane fitted to initial position of the mires_3d and rotated_mires_3d
         # we need to rotate point clouds around the Z axis so that les mires horizontales soient en haut et les mires verticales soient verticales
@@ -564,30 +564,30 @@ class DensityAnalyser:
         # #   => c'est raccord avec la config en vertical/fosse =  le bas est le côté où est le bac de prélévèement
         # #   => c'est raccord avec la config en horizontal/par-dessus = le "bas" est le côté où se situe l'opérateur qui prélève, on laisse un côté sans mire pour simplifier
         # # dans ce cas de figure le barycentre des mires sera tiré du côté opposé où il n'y a pas de mire.
-        # # on calcule le barycentre des mires avec la médiane (moins sensible aux extrèmes) => point H (np.median(x) , np.median(y))
+        # # on calcule le barycentre des mires avec la médiane (moins sensible aux extrèmes) => point H (np.median(xr) , np.median(yr))
         # # on calcule le point milieu du rectangle englobant => point O, box_centre
         # # => la verticale orientée vers le haut est définie par le vecteur OH
-        box_centre_x, box_centre_y = (np.min(x) + np.max(x)) / 2, (np.min(y) + np.max(y)) / 2
-        # l'angle de la rotation pour passer d'un vecteur (x,y) à un vecteur (0,1) c'est arctan (x/y) on fait donc arctan2(x,y)
+        box_centre_xr, box_centre_yr = (np.min(xr) + np.max(xr)) / 2, (np.min(yr) + np.max(yr)) / 2
+        # l'angle de la rotation pour passer d'un vecteur (xr,yr) à un vecteur (0,1) c'est arctan (xr/yr) on fait donc arctan2(xr,yr)
         # voir arctan2 https://numpy.org/doc/2.1/reference/generated/numpy.arctan2.html#numpy.arctan2
-        angle = np.arctan2 ( (np.median(x)-box_centre_x), (np.median(y)-box_centre_y) )
+        angle = np.arctan2 ( (np.median(xr)-box_centre_xr), (np.median(yr)-box_centre_yr) )
         rotmat = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
 
         ## APPLICATION
         # MIRES 3D
         #on calcule les nouvelles coordonnées x,y
-        x,y = np.dot(rotmat, [x, y])
+        xr2,yr2 = np.dot(rotmat, [xr, yr])
         # on met à jour les mires déjà tournées dans le plan
-        for i in np.arange(len(mires_3d)):
-            rotated_mires_3d[i].coordinates[0] = x[i]
-            rotated_mires_3d[i].coordinates[1] = y[i]
+        for i in np.arange(len(rotated_mires_3d)):
+            rotated_mires_3d[i].coordinates[0] = xr2[i]
+            rotated_mires_3d[i].coordinates[1] = yr2[i]
 
         # NUAGES DE POINTS
         #fonction qui fait les deux rotation sur un fichier ply
 
 
-        point_cloud1 = self._apply_rotations_to_one_point_cloud(point_cloud1, a, b, c, rotmat)
-        point_cloud2 = self._apply_rotations_to_one_point_cloud(point_cloud2, a, b, c, rotmat)
+        point_cloud1 = self._apply_two_rotations_to_one_point_cloud(point_cloud1, a, b, c, rotmat)
+        point_cloud2 = self._apply_two_rotations_to_one_point_cloud(point_cloud2, a, b, c, rotmat)
         # PTS_1 = trimesh.load(point_cloud2.path)
         # PTS_1_rotated = PTS_1
         # PTS_1_rotated.vertices = self._rotate_points_to_abc_plane(PTS_1.vertices, a, b, c)
@@ -598,7 +598,7 @@ class DensityAnalyser:
         # out_file.close()
 
 
-        return mires_3d, point_cloud1, point_cloud2
+        return rotated_mires_3d, point_cloud1, point_cloud2
 
     def _resize_point_clouds(self, point_cloud: PointCloud, scale_factor: float):
         # on redimensionne les nuages de points à l'aide de ce facteur d'échelle
