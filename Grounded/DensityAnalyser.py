@@ -370,6 +370,8 @@ class DensityAnalyser:
         mires_3d, point_cloud_before_excavation, point_cloud_after_excavation = self._rotate_2point_clouds_and_3Dtargets(
             point_cloud_before_excavation, point_cloud_after_excavation, mires_3d
         )
+        with open(os.path.join(self.output_dir, "scaleFactor.txt"), 'w') as file:
+            file.write(f"facteur d'échelle : {scale_factor}")
 
         print(f"Redimensionnement des nuages de points en cours... (facteur d'échelle : {scale_factor})")
         point_cloud_before_excavation = self._resize_point_clouds(point_cloud_before_excavation, scale_factor)
