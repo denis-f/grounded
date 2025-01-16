@@ -42,6 +42,7 @@ tools:
       path_cctag_directory: '/opt/CCTag/'
       working_directory: 'cctag_working_directory'
       output_dir: '%default_outdir_name%'
+      reuse_wd: 'False'
 
   detection_metashape:
     class: Grounded.Tools.DetecteurMire.DetectionMetashape.DetectionMetashape

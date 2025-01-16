@@ -457,7 +457,7 @@ class DensityAnalyser:
             for mir in im.mires_visibles:
                 if mir.identifier not in id_scalebars:
                     detected_target_are_in_loaded_scalebar = False
-                    logger.get_logger().warn(f"/!\ La mire {mir.identifier} détectée dans l'image "
+                    logger.get_logger().warn(f"/!\\ La mire {mir.identifier} détectée dans l'image "
                                              f"{im.name} n'est pas dans les scalebars. Vérifier le fichier chargé.")
 
         return detected_target_are_in_loaded_scalebar
