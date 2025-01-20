@@ -366,6 +366,9 @@ class DensityAnalyser:
         # on calcule le facteur de redimmensionnement por mettre à l'echelle les nuages de points
         scale_factor = calculate_average_scale_factor(mires_3d, scale_bars)
 
+        with open(os.path.join(self.output_dir, "scaleFactor.txt"), 'w') as file:
+            file.write(f"facteur d'échelle : {scale_factor}")
+
         print("Redimensionnement des nuages de points en cours...")
         point_cloud_before_excavation = self._resize_point_clouds(point_cloud_before_excavation, scale_factor)
         point_cloud_after_excavation = self._resize_point_clouds(point_cloud_after_excavation, scale_factor)
@@ -461,10 +464,21 @@ class DensityAnalyser:
         print("Début du calcul des nuages de points.")
         return self.sfm.generer_nuages_de_points(photo_path_before_excavation, photo_path_after_excavation)
 
+    def _save_mires3d(self, images:list[Image], mires_3d: list[Mire3D], aFile:File):
+        with open(aFile.path, 'w') as f:
+            for im in images:
+                for mir in im.mires_visibles:
+                    #rajouter ici un test sur les coordonnées 3D
+                    f.write(f"{im.name},{mir.identifier},{mir.coordinates[0]:.3f},{mir.coordinates[1]:.3f}")
+                    f.write("\n")
+
     def _calculate_mire3d(self, images: list[Image]) -> (list[Mire3D], dict[int, float]):
         mires_3d: list[Mire3D] = []
         for image in images:
             mires_3d += self.sfm.calculer_coordinates_3d_mires(image)
+
+        # sauvegarde des mires3d
+        self._save_mires3d(images, mires_3d, File(os.path.join(self.output_dir, "toutes_mires_2D_et_3D.txt")))
 
         # on calcule les coordonnées moyennes de chaque mire 3d ainsi que l'écart type
         mires_3d_moyens = calculate_average_mire_3d(mires_3d)
