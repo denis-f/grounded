@@ -363,17 +363,17 @@ class DensityAnalyser:
         # Suppression des ScaleBars dont au moins l'une des extrémités est manquante
         scale_bars = scale_bars_filter_without_pair(mires_3d, scale_bars)
 
-        # on calcule le facteur de redimmensionnement por mettre à l'echelle les nuages de points
+        # on calcule le facteur de redimensionnement pour mettre à l'echelle les nuages de points
         scale_factor = calculate_average_scale_factor(mires_3d, scale_bars)
 
         # Rotation des nuages de points pour être perpendiculaire au plan moyen des mires
         mires_3d, point_cloud_before_excavation, point_cloud_after_excavation = self._rotate_2point_clouds_and_3Dtargets(
             point_cloud_before_excavation, point_cloud_after_excavation, mires_3d
         )
-        with open(os.path.join(self.output_dir, "scaleFactor.txt"), 'w') as file:
+        with open(os.path.join(self.output_dir, "02.2_SfM_scaleFactor.txt"), 'w') as file:
             file.write(f"facteur d'échelle : {scale_factor}")
 
-        print(f"Redimensionnement des nuages de points en cours... (facteur d'échelle : {scale_factor})")
+        print("Redimensionnement des nuages de points en cours...")
         point_cloud_before_excavation = self._resize_point_clouds(point_cloud_before_excavation, scale_factor)
         point_cloud_after_excavation = self._resize_point_clouds(point_cloud_after_excavation, scale_factor)
 
@@ -469,9 +469,34 @@ class DensityAnalyser:
         return self.sfm.generer_nuages_de_points(photo_path_before_excavation, photo_path_after_excavation)
 
     def _calculate_mire3d(self, images: list[Image]) -> (list[Mire3D], dict[int, float]):
+        #on crée une liste vide de mires 3D que l'on va utiliser pour calculer la valeur moyenne et l'écart-type
         mires_3d: list[Mire3D] = []
-        for image in images:
-            mires_3d += self.sfm.calculer_coordinates_3d_mires(image)
+        # on ouvre aussi un fichier où on va sauvegarder toutes les mires, coordonnées 2D et 3D
+        # le "3Dorig" dans le nom du fichier est lié au fait que les coordonnées 3D des mires seront changées après rotation et mise à l'échelle
+        with open(os.path.join(self.output_dir, "02.1_Sfm_toutes_mires_2D_et_3Dorig.txt"), 'w') as f:
+            # ensuite on boucle sur les images
+            for image in images:
+                # sur chaque image on calcule les coordonnées 3D des mires
+                mires_3d_in_this_image = self.sfm.calculer_coordinates_3d_mires(image)
+                # on repart ensuite de toutes les mires visibles pour écrire dans le fichier les coordonnées 2D + (si existantes) les coordonnées 3D
+                for mir in image.mires_visibles:
+                    # on commence par regarder si cette mire est dans la liste des mires dont on a calculé la coordonnée 3D
+                    # on crée donc la liste des identifiants des mires calculées en 3D
+                    list_identifier_mires_3d_in_this_image = [mir3d.identifier for mir3d in mires_3d_in_this_image]
+                    if mir.identifier in list_identifier_mires_3d_in_this_image :
+                        # si cette mire a des coordonnées 3D on les récupère
+                        mir_3D_coordinates = mires_3d_in_this_image[list_identifier_mires_3d_in_this_image.index(mir.identifier)].coordinates
+                        mir_3D_coordinates_str = f"{mir_3D_coordinates[0]:.3f},{mir_3D_coordinates[1]:.3f},{mir_3D_coordinates[2]:.3f}"
+                    else:
+                        # sinon on met des valeurs vides
+                        mir_3D_coordinates_str = " , , "
+                    # dans les deux cas on écrit dans le fichier la ligne correspondant à cette image et cette mire
+                    f.write(f"{image.name},{mir.identifier},"
+                            f"{mir.coordinates[0]:.3f},{mir.coordinates[1]:.3f},"
+                            f"{mir_3D_coordinates_str}")
+                    f.write("\n")
+                # on ajoute ces nouvelles mires 3D au vecteur sur lequel on fait des stats en suite (moyenne, écart-type)
+                mires_3d += mires_3d_in_this_image
 
         # on calcule les coordonnées moyennes de chaque mire 3d ainsi que l'écart type
         mires_3d_moyens = calculate_average_mire_3d(mires_3d)
