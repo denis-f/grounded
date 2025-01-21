@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from Grounded.DataObject import Image, PointCloud, Mire3D
+from Grounded.DataObject import Image, PointCloud, Mire2D, Mire3D
 from Grounded.Tools.Tools import Tools
 
 
@@ -28,7 +28,7 @@ class SFM(Tools, ABC):
         pass
 
     @abstractmethod
-    def calculer_coordinates_3d_mires(self, image: Image) -> list[Mire3D]:
+    def calculer_coordinates_3d_mires(self, image: Image) -> (list[Mire2D],list[Mire3D]):
         """
         Calcule les coordonnées 3D des mires dans une image.
 
@@ -36,7 +36,7 @@ class SFM(Tools, ABC):
             image (Image): Une image contenant des mires.
 
         Returns:
-            list[Mire3D]: Une liste d'objets Mire3D contenant les coordonnées 3D des mires.
+            list[Mire2D,Mire3D]: Une liste d'objets [Mire2D,Mire3D] contenant les coordonnées 3D des mires.
         """
         pass
 

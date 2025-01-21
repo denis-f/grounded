@@ -8,7 +8,7 @@ import os
 import shutil
 
 
-def recuperer_mires_3d(image: Image, fichier_coordinates_3d, fichier_filtered) -> list[Mire3D]:
+def recuperer_mires_3d(image: Image, fichier_coordinates_3d, fichier_filtered) -> (list[Mire2D], list[Mire3D]):
     if not os.path.exists(fichier_coordinates_3d):  # si le fichier contenant les coordonnées 3d n'est pas trouvé
         raise FileNotFoundError(f"le fichier \"{fichier_coordinates_3d}\" est introuvable")
 
@@ -16,10 +16,11 @@ def recuperer_mires_3d(image: Image, fichier_coordinates_3d, fichier_filtered) -
     with open(fichier_coordinates_3d) as file:
         contenu = file.read()
 
-    mires = []
+    mires2d = []
+    mires3d = []
     # si le fichier de coordonnées 3D est vide, aucune coordonnées n'est retrouvé, donc on renvoie une liste vide
     if len(contenu) == 0:
-        return mires
+        return mires2d, mires3d
 
     # ici, on parse les coordonnées 3d
     coordinates_3d = []
@@ -36,10 +37,11 @@ def recuperer_mires_3d(image: Image, fichier_coordinates_3d, fichier_filtered) -
     if not os.path.exists(fichier_filtered):
         for i in range(len(image.mires_visibles)):
             mire_courante = image.mires_visibles[i]
-            mires.append(Mire3D(mire_courante.identifier, (coordinates_3d[i][0],
+            mires2d.append(mire_courante)
+            mires3d.append(Mire3D(mire_courante.identifier, (coordinates_3d[i][0],
                                                            coordinates_3d[i][1],
                                                            coordinates_3d[i][2])))
-        return mires
+        return mires2d,mires3d
 
     # si nous ne sommes dans aucun des cas suivant, alors seulement certaines coordonnées n'ont pas pu être reconnu,
     # il est donc nécessaire de vérifier par comparaison à quels mires sont associées chacune des coordonnées
@@ -62,11 +64,12 @@ def recuperer_mires_3d(image: Image, fichier_coordinates_3d, fichier_filtered) -
         coordinates_2d = coordinates_filtered[i]
         for mir_2d in image.mires_visibles:
             if mir_2d.coordinates[0] == coordinates_2d[0] and mir_2d.coordinates[1] == coordinates_2d[1]:
-                mires.append(Mire3D(mir_2d.identifier, (coordinates_3d[i][0],
+                mires2d.append(mir_2d)
+                mires3d.append(Mire3D(mir_2d.identifier, (coordinates_3d[i][0],
                                                         coordinates_3d[i][1],
                                                         coordinates_3d[i][2])))
 
-    return mires
+    return mires2d,mires3d
 
 
 def copier_contenu_dossier(dossier_source: str, dossier_destination: str):
@@ -288,7 +291,7 @@ class MicMac(SFM):
         return PointCloud(os.path.join(self.working_directory, "C3DC_0.ply")), PointCloud(
             os.path.join(self.working_directory, "C3DC_1.ply"))
 
-    def calculer_coordinates_3d_mires(self, image: Image) -> list[Mire3D]:
+    def calculer_coordinates_3d_mires(self, image: Image) -> (list[Mire2D],list[Mire3D]):
         """
         Méthode pour calculer les coordonnées 3D des cibles dans une image.
 
