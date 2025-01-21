@@ -484,9 +484,12 @@ class DensityAnalyser:
                     # on crée donc la liste des identifiants des mires calculées en 3D
                     list_identifier_mires_3d_in_this_image = [mir3d.identifier for mir3d in mires_3d_in_this_image]
                     if mir.identifier in list_identifier_mires_3d_in_this_image :
-                        # si cette mire a des coordonnées 3D on les récupère
+                        # si cette mire a des coordonnées 3D on les récupère (les premières, s'il y a plusieurs mires avec le même identifiant)
                         mir_3D_coordinates = mires_3d_in_this_image[list_identifier_mires_3d_in_this_image.index(mir.identifier)].coordinates
                         mir_3D_coordinates_str = f"{mir_3D_coordinates[0]:.3f},{mir_3D_coordinates[1]:.3f},{mir_3D_coordinates[2]:.3f}"
+                        # si cette mire est présente plusieurs fois on supprime cet élément des mires_3d_in_this_image
+                        if list_identifier_mires_3d_in_this_image.count(mir.identifier)>1:
+                            mires_3d_in_this_image.pop(list_identifier_mires_3d_in_this_image.index(mir.identifier))
                     else:
                         # sinon on met des valeurs vides
                         mir_3D_coordinates_str = " , , "
