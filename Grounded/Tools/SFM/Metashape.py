@@ -131,7 +131,7 @@ class Metashape(SFM):
 
         return point_cloud_before, point_cloud_after
 
-    def calculer_coordinates_3d_mires(self, image: Image) -> list[Mire3D]:
+    def calculer_coordinates_3d_mires(self, image: Image) -> (list[Mire2D], list[Mire3D]):
         """
         Méthode pour calculer les coordonnées 3D des cibles dans une image.
 
@@ -154,7 +154,7 @@ class Metashape(SFM):
             x, y, z = photos_coord_to_3d_coords(chunk, mire2d.coordinates[0], mire2d.coordinates[1], local_name)
             mires3d.append(Mire3D(mire2d.identifier, (x, y, z)))
 
-        return mires3d
+        return image.mires_visibles,mires3d
 
     def get_config(self) -> str:
         return f"Metashape(working_directory={self.working_directory}, downscale={self.downscale})"

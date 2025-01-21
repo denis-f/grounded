@@ -472,46 +472,26 @@ class DensityAnalyser:
         #on crée une liste vide de mires 3D que l'on va utiliser pour calculer la valeur moyenne et l'écart-type
         mires_3d: list[Mire3D] = []
         images_et_mires_2d_et_3d: list = [] #chaque élément de cette liste sera lui-même une liste contenant le nom de l'image, l'identifiant de la mire, ses coordonnées 2D et 3D
-        images_avec_mires2D_detectees_plusieurs_fois: list = [] #On prépare aussi une liste qui contiendra les [image.name,mire.identifier] pour chaque image et mire concernée
-        images_avec_mires3D_calculees_plusieurs_fois: list = []  # On prépare aussi une liste qui contiendra les [image.name,mire.identifier] pour chaque image et mire concernée
-#mettre plus bas        # on ouvre aussi un fichier où on va sauvegarder toutes les mires, coordonnées 2D et 3D
-
-        #mettre plus bas        # le "3Dorig" dans le nom du fichier est lié au fait que les coordonnées 3D des mires seront changées après rotation et mise à l'échelle
-        #mettre plus bas        with open(os.path.join(self.output_dir, "02.1_Sfm_toutes_mires_2D_et_3Dorig.txt"), 'w') as f:
         # ensuite on boucle sur les images
         for image in images:
             # sur chaque image on calcule les coordonnées 3D des mires
             mires_2d_in_this_image,mires_3d_in_this_image = self.sfm.calculer_coordinates_3d_mires(image)
-            # on repart ensuite de toutes les mires 2D visibles pour écrire dans le fichier les coordonnées 2D + (si existantes) les coordonnées 3D
-            for mir in mires_2d_in_this_image:
-                # on regarde si cette mire a été détectée plusieurs fois en 2D et on sauvegarde l'info
-                if [mirz.identifier for mirz in mires_2d_in_this_image].count(mir.identifier)>1 and mir.identifier != -1:
-                    images_avec_mires2D_detectees_plusieurs_fois.append([image.name, mir.identifier])
-                # ensuite on regarde si cette mire est dans la liste des mires dont on a calculé la coordonnée 3D
-                # on crée donc la liste des identifiants des mires calculées en 3D
-                list_identifier_mires_3d_in_this_image = [mir3d.identifier for mir3d in mires_3d_in_this_image]
-                if mir.identifier in list_identifier_mires_3d_in_this_image :
-                    # si cette mire a des coordonnées 3D on les récupère (les premières, s'il y a plusieurs mires avec le même identifiant)
-                    mir_3D_coordinates = mires_3d_in_this_image[list_identifier_mires_3d_in_this_image.index(mir.identifier)].coordinates
-#delete                        mir_3D_coordinates_str = f"{mir_3D_coordinates[0]:.3f},{mir_3D_coordinates[1]:.3f},{mir_3D_coordinates[2]:.3f}"
-                    # si cette mire est présente plusieurs fois dans les mires 3D ou si c'est une mire 2D dupliquée on supprime cet élément des mires_3d_in_this_image
-                    if list_identifier_mires_3d_in_this_image.count(mir.identifier)>1:
-                        mires_3d_in_this_image.pop(list_identifier_mires_3d_in_this_image.index(mir.identifier)) #WARNING on peut associer la coordonnée 3D à la mauvaise mire 2D
-                        images_avec_mires3D_calculees_plusieurs_fois.append([image.name, mir.identifier])
-                else:
-                    # sinon on met des valeurs vides
-                    mir_3D_coordinates = (None,None,None)
-#delete                        mir_3D_coordinates_str = " , , "
+            for index, (mir2d, mir3d) in enumerate(zip(mires_2d_in_this_image, mires_3d_in_this_image)):
                 # on stocke tout ça
-                images_et_mires_2d_et_3d.append([image.name,mir.identifier,mir.coordinates,mir_3D_coordinates])
-
-                #mettre plus bas                   # dans les deux cas on écrit dans le fichier la ligne correspondant à cette image et cette mire
-                    #mettre plus bas f.write(f"{image.name},{mir.identifier},"
-                    #mettre plus bas        f"{mir.coordinates[0]:.3f},{mir.coordinates[1]:.3f},"
-                #mettre plus bas        f"{mir_3D_coordinates_str}")
-                #mettre plus bas f.write("\n")
+                if mir2d.identifier==mir3d.identifier:
+                    images_et_mires_2d_et_3d.append([image.name,mir2d.identifier,mir2d.coordinates,mir3d.coordinates])
+                else:
+                    print(f"erreur {image}, pas le même identifiant pour la mire 2D ({mir2d.identifier}) et la mire 3D ({mir3d.identifier}")
             # on ajoute ces nouvelles mires 3D au vecteur sur lequel on fait des stats en suite (moyenne, écart-type)
             mires_3d += mires_3d_in_this_image
+
+        # sauvegarde : le "3Dorig" dans le nom du fichier est lié au fait que les coordonnées 3D des mires seront changées après rotation et mise à l'échelle
+        with open(os.path.join(self.output_dir, "02.1_Sfm_toutes_mires_2D_et_3Dorig.txt"), 'w') as f:
+            for line in images_et_mires_2d_et_3d:
+                f.write(f"{line[0]},{line[1]},"
+                        f"{line[2][0]:.3f},{line[2][1]:.3f},"
+                        f"{line[3][0]:.3f},{line[3][1]:.3f},{line[3][2]:.3f}")
+                f.write("\n")
 
         # on calcule les coordonnées moyennes de chaque mire 3d ainsi que l'écart type
         mires_3d_moyens = calculate_average_mire_3d(mires_3d)
