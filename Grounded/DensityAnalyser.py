@@ -34,9 +34,9 @@ def calculate_average_mire_3d(mires_3d: list[Mire3D]) -> list[Mire3D]:
 
     mires_3d_moyens: list[Mire3D] = []
     for identifier in dictionnaire_coordinates_mires.keys():
-        moyenne_x = statistics.mean(dictionnaire_coordinates_mires[identifier]['x'])
-        moyenne_y = statistics.mean(dictionnaire_coordinates_mires[identifier]['y'])
-        moyenne_z = statistics.mean(dictionnaire_coordinates_mires[identifier]['z'])
+        moyenne_x = statistics.median(dictionnaire_coordinates_mires[identifier]['x'])
+        moyenne_y = statistics.median(dictionnaire_coordinates_mires[identifier]['y'])
+        moyenne_z = statistics.median(dictionnaire_coordinates_mires[identifier]['z'])
 
         mires_3d_moyens.append(Mire3D(identifier, (moyenne_x, moyenne_y, moyenne_z)))
 
@@ -471,19 +471,92 @@ class DensityAnalyser:
     def _calculate_mire3d(self, images: list[Image]) -> (list[Mire3D], dict[int, float]):
         #on crée une liste vide de mires 3D que l'on va utiliser pour calculer la valeur moyenne et l'écart-type
         mires_3d: list[Mire3D] = []
-        images_et_mires_2d_et_3d: list = [] #chaque élément de cette liste sera lui-même une liste contenant le nom de l'image, l'identifiant de la mire, ses coordonnées 2D et 3D
-        # ensuite on boucle sur les images
+        # on crée aussi une liste qui contiendra pour chaque élément le nom de l'image, l'identifiant de la mire, ses coordonnées 2D et 3D
+        images_et_mires_2d_et_3d: list = []
+        # pour calculer la bonne valeur de référence de coordonnées 3D de la mire on a besoin de d'abord calculer sur les mires non dupliquées
+        index_mires_non_dupliquees: list[int] = []
+        # pour filtrer la bonne mire on a besoin de savoir pour chaque image quels sont les index de ligne avec mire dupliquée (traitement par image)
+        dict_images_avec_mires_dupliquées = {}
+        # lors de chaque traitement par image, pour savoir à quel élément du tableau global on est, on a besoin de savoir combien de lignes on a traité avant
+        n_lines_processed_before_this_image = 0
+
+        # Boucle sur les images pour créer lignes du tableau global et détecter les lignes et les images correspondant à des mires détectées plusieurs fois dans une seule image
         for image in images:
             # sur chaque image on calcule les coordonnées 3D des mires
             mires_2d_in_this_image,mires_3d_in_this_image = self.sfm.calculer_coordinates_3d_mires(image)
-            for index, (mir2d, mir3d) in enumerate(zip(mires_2d_in_this_image, mires_3d_in_this_image)):
-                # on stocke tout ça
-                if mir2d.identifier==mir3d.identifier:
+            if len(mires_2d_in_this_image)!=len(mires_3d_in_this_image):
+                print(f"WARNING on n'a pas le même nombre de mires 2D et 3D dans l'image {image.name} WARNING")
+            # dans certains cas l'algo SfM ne trouve pas de point 3D, on se restreint donc au cas où il y en a
+            if len(mires_3d_in_this_image)>0:
+                # on cherche les éventuelles mires doublons ; on aura besoin de savoir si une mire est dupliquée pour faire un traitemetn particulier
+                identifiers = [mir.identifier for mir in mires_2d_in_this_image]
+                duplicate_in_image=[identifiers.count(a)>1 for a in identifiers]
+                # pour chaque mire de l'image on ajoute la ligne dans le tableau
+                for index, (dupl,mir2d, mir3d) in enumerate(zip(duplicate_in_image,mires_2d_in_this_image, mires_3d_in_this_image)):
                     images_et_mires_2d_et_3d.append([image.name,mir2d.identifier,mir2d.coordinates,mir3d.coordinates])
-                else:
-                    print(f"erreur {image}, pas le même identifiant pour la mire 2D ({mir2d.identifier}) et la mire 3D ({mir3d.identifier}")
-            # on ajoute ces nouvelles mires 3D au vecteur sur lequel on fait des stats en suite (moyenne, écart-type)
+                    # si la ligne correspond à une mire dupliquée on l'ajoute dans le dictionnaire des mires dupliquées par image
+                    if dupl:
+                        # l'ajout ne se fait pas de la même manière selon qu'on a déjà l'entrée dans le dictionnaire ou pas (à vérifier)
+                        if image not in dict_images_avec_mires_dupliquées:
+                            dict_images_avec_mires_dupliquées[image]=list([index + n_lines_processed_before_this_image])
+                        else:
+                            dict_images_avec_mires_dupliquées[image].append(index + n_lines_processed_before_this_image)
+                    else:
+                        # on garde les index de lignes de mires non dupliquée pour le calcul de la coordonée 3D de référence
+                        index_mires_non_dupliquees.append(index + n_lines_processed_before_this_image)
+                # on met à jour le nombre de lignes traitées
+                n_lines_processed_before_this_image += index + 1
+            # on ajoute ces nouvelles mires 3D au vecteur sur lequel on fera nos stats en suite (moyenne, écart-type)
             mires_3d += mires_3d_in_this_image
+
+        # Traitement des mires dupliquées
+        # on calcule les mires_3d_moyennes à partir des images où les mires ne sont pas dupliquées
+        mires_3d_moyens_tmp = calculate_average_mire_3d([mires_3d[i] for i in index_mires_non_dupliquees])
+
+        # on boucle sur les images qui ont des mires dupliquées
+        # on prépare une liste des index de mauvaises mires qu'il faudra sortir du tableau
+        index_bad_mires=[]
+        for im in dict_images_avec_mires_dupliquées.keys():
+            # pour chaque image qui a une mire dupliquée on récupère les index de lignes de ces mires dans le tableau global
+            idxs_lines_duplicate_mires_this_im = dict_images_avec_mires_dupliquées[im]
+            # on crée une liste qui contiendra pour chaque mire la distance de la mire3D courante avec la mire3d moyenne
+            dist_mir3D_mir3Dmoyenne = []
+            # on crée une liste des id de mire dupliquées de cette image pour vérifier qu'il n'y en a qu'une, seul cas traité pour l'instant. Tous les éléments de cette liste devraient être identiques
+            ids_de_mires_dupliquees = []
+            # on traite donc les mires dupliquées de cette image
+            for idx in idxs_lines_duplicate_mires_this_im:
+                # on récupère les coordonnées 3D de cette mire2D
+                x = images_et_mires_2d_et_3d[idx][3][0]
+                y = images_et_mires_2d_et_3d[idx][3][1]
+                z = images_et_mires_2d_et_3d[idx][3][2]
+                # ainsi que son identifiant
+                id_mire = images_et_mires_2d_et_3d[idx][1]
+                # que l'on sauvegarde dans le liste des identifiants de mires dupliquées de cette image
+                ids_de_mires_dupliquees.append(id_mire)
+                # on récupère la coordonnée 3D moyenne temporaire de cette mire via son identifiant
+                (xm, ym, zm) = mires_3d_moyens_tmp[[mir.identifier for mir in mires_3d_moyens_tmp].index(id_mire)].coordinates
+                # on calcule la distance 3D
+                dist=((x-xm)**2+(y-ym)**2+(z-zm)**2)**.5
+                # que l'on sauvegarde dans la liste
+                dist_mir3D_mir3Dmoyenne.append(dist)
+            if len(set(ids_de_mires_dupliquees))>1 :
+                logger.get_logger().warn(f"/!\\ Plusieurs mires dupliquées ({set(ids_de_mires_dupliquees)}) "
+                                         f"dans une seule image (image {im.name}). Cas non traité, bug potentiel")
+            # à la fin de cette boucle la liste dist_mir3D_mir3Dmoyenne a la même longeur que idxs_lines_duplicate_mires_in_this_im
+            # on récupère l'index de dist_mir3D_mir3Dmoyenne qui a la valeur minimale
+            index_good_mire_this_image=dist_mir3D_mir3Dmoyenne.index(min(dist_mir3D_mir3Dmoyenne))
+            # on en déduit l'index de la bonne mire dans le tableau général
+            index_good_mire=idxs_lines_duplicate_mires_this_im[index_good_mire_this_image]
+            # on ajoute l'index de ligne du grand tableau correspondant à cette mire
+            index_mires_non_dupliquees.append(index_good_mire)
+            # on sauve aussi les index de lignes des mauvaises mires dans le tableau général
+            idxs_lines_duplicate_mires_this_im.remove(index_good_mire)
+            index_bad_mires+=idxs_lines_duplicate_mires_this_im
+
+        # boucle sur toutes les images terminée, on nettoie le grand tableau en supprimant les lignes qui n'ont pas cet index et idem pour la liste de mires3D
+        images_et_mires_2d_et_3d = [line for index, line in enumerate(images_et_mires_2d_et_3d) if index not in index_bad_mires]
+        mires_3d = [mire for index, mire in enumerate(mires_3d) if index not in index_bad_mires]
+        # ATTENTION arrivé ici tous les index sont devenus caducs car on a extrait les mauvaises mires des listes
 
         # sauvegarde : le "3Dorig" dans le nom du fichier est lié au fait que les coordonnées 3D des mires seront changées après rotation et mise à l'échelle
         with open(os.path.join(self.output_dir, "02.1_Sfm_toutes_mires_2D_et_3Dorig.txt"), 'w') as f:

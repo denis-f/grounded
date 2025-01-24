@@ -315,15 +315,23 @@ class MicMac(SFM):
         # On récupère le nom de l'image dans l'espace de travail MicMac
         image_locale = File(find_files_regex(self.working_directory, image.get_name_without_extension())[0])
 
-        # on génère nos coordonnées 3D dans un fichier
+        # Micmac va créer un fichier de coordonnées 3D et éventuellement un fichier Filtered (si certains points 2D ne peuvent pas être calculés)
         nom_fichier_coordinates_3d = os.path.join(log_directory, f"{image.get_name_without_extension()}_3D_coord.txt")
+        nom_fichier_filtered = os.path.join(log_directory, f"Filtered_{image.get_name_without_extension()}_coord.txt")
+        # Si ces fichiers existent déjà (Filtered et 3D_coord), on les supprime pour éviter des bugs liés au recalcul des coordonnées 3D
+        # TODO idéalement ces calculs ne devraient pas être strictement dans l'espace de travail micmac puisque c'est un mix entre SFM et Detector ?
+        if os.path.exists(nom_fichier_coordinates_3d):
+            os.remove(nom_fichier_coordinates_3d)
+        if os.path.exists(nom_fichier_filtered):
+            os.remove(nom_fichier_filtered)
+
+        # on génère nos coordonnées 3D dans un fichier
         process = self.subprocess([self.path_mm3d, "Im2XYZ", os.path.join(self.working_directory,
                                                                           f"PIMs-{self.zoom_final}{os.sep}Nuage-Depth-"
                                                                           f"{image_locale.name}.xml"),
                                    nom_fichier_coordinates, nom_fichier_coordinates_3d],
                                   os.path.join(self.working_directory, "Im2XYZ.log"))[0]
 
-        nom_fichier_filtered = os.path.join(log_directory, f"Filtered_{image.get_name_without_extension()}_coord.txt")
         try:
             return recuperer_mires_3d(image, nom_fichier_coordinates_3d, nom_fichier_filtered)
         except FileNotFoundError:
