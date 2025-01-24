@@ -1,7 +1,7 @@
 import shutil
 
 from .SFM import SFM
-from Grounded.DataObject import Image, Mire3D, PointCloud
+from Grounded.DataObject import Image, Mire2D, Mire3D, PointCloud
 
 import Metashape as ms
 import os

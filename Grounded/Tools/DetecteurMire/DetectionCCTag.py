@@ -35,9 +35,10 @@ def parsing_result(resultat: str) -> list[Image]:
     for ligne in tableau_ligne_trie:
         if ligne.endswith("1") and not "frame" in ligne:
             infos_mire = ligne.split(" ")
-            tableau_image[compteur].mires_visibles.append(
-                (Mire2D(int(infos_mire[2]), (float(infos_mire[0]), float(infos_mire[1]))))
-            )
+            if int(infos_mire[2]) != -1 :
+                tableau_image[compteur].mires_visibles.append(
+                    (Mire2D(int(infos_mire[2]), (float(infos_mire[0]), float(infos_mire[1]))))
+                )
 
         if ligne.startswith("Done"):
             chemin = ligne.split('/')
