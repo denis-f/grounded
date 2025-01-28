@@ -9,15 +9,16 @@ import shutil
 
 
 def recuperer_mires_3d(image: Image, fichier_coordinates_3d, fichier_filtered) -> (list[Mire2D], list[Mire3D]):
+
+    mires2d = []
+    mires3d = []
     if not os.path.exists(fichier_coordinates_3d):  # si le fichier contenant les coordonnées 3d n'est pas trouvé
-        raise FileNotFoundError(f"le fichier \"{fichier_coordinates_3d}\" est introuvable")
+        return mires2d, mires3d
 
     # on ouvre le fichier de coordonnées 3d pour récupérer son contenu
     with open(fichier_coordinates_3d) as file:
         contenu = file.read()
 
-    mires2d = []
-    mires3d = []
     # si le fichier de coordonnées 3D est vide, aucune coordonnées n'est retrouvé, donc on renvoie une liste vide
     if len(contenu) == 0:
         return mires2d, mires3d
