@@ -42,8 +42,12 @@ def photos_coord_to_3d_coords(chunk: ms.Chunk, x: float, y: float, camera_name: 
         if camera.label == camera_name:
             ray_origin = camera.unproject(ms.Vector([x, y, 0]))
             ray_target = camera.unproject(ms.Vector([x, y, 1]))
-            coord = crs.project(transform_matrix.mulp(surface.pickPoint(ray_origin, ray_target)))
-            return coord.x, coord.y, coord.z
+            point = surface.pickPoint(ray_origin, ray_target)
+            if point is not None:
+                coord = crs.project(transform_matrix.mulp(point))
+                return coord.x, coord.y, coord.z
+            else:
+                return None,None,None
 
     raise ValueError("Aucune camera alignée ne porte ce nom")
 
@@ -152,7 +156,8 @@ class Metashape(SFM):
         mires3d = []
         for mire2d in image.mires_visibles:
             x, y, z = photos_coord_to_3d_coords(chunk, mire2d.coordinates[0], mire2d.coordinates[1], local_name)
-            mires3d.append(Mire3D(mire2d.identifier, (x, y, z)))
+            if x is not None and y is not None and z is not None:
+                mires3d.append(Mire3D(mire2d.identifier, (x, y, z)))
 
         return image.mires_visibles,mires3d
 
