@@ -59,8 +59,22 @@ def parsing_result(resultat: str) -> list[Image]:
             for mire in im.mires_visibles:
                 # simply doing x' = width - x and y' = height - y
                 mire.coordinates = np.subtract((im_width, im_height), mire.coordinates)
+        elif exifImage(im.path).orientation.value == 6:
+            # case of a CW 90° rotation (right_top)
+            for mire in im.mires_visibles:
+                # simply doing x' = y and y' = height - x
+                x = mire.coordinates[0]
+                y = mire.coordinates[1]
+                mire.coordinates = (y, im_height - x)
+        elif exifImage(im.path).orientation.value == 8:
+            # case of a CW 270° rotation (left_bottom)
+            for mire in im.mires_visibles:
+                # simply doing x' = width - y and y' = x
+                x = mire.coordinates[0]
+                y = mire.coordinates[1]
+                mire.coordinates = (im_width - y, x)
         elif exifImage(im.path).orientation.value != 1:
-            # cases where orientation is neither 180° rotation neither "normal case" - theses cases are currently not managed
+            # cases where orientation is neither 180° rotation neither 90° neither 270° neither "normal case" - theses cases (if exist) are currently not managed
             print(f"""cas d'orientation d'image "{exifImage(im.path).orientation.name}" non traité""")
 
     return tableau_image

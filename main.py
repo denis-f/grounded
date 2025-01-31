@@ -9,18 +9,19 @@ from Grounded.ScaleBarLoader import ScaleBarLoader
 #scale_bars = ScaleBarLoader.load("Configuration/oldScaleBar.csv")
 scale_bars = ScaleBarLoader.load("Configuration/scaleBar.csv")
 
+output_dir = "exec/Surface_iPhone/out"
 
-m = MicMac("/opt/micmac/bin/mm3d","micmac_working_directory","exec/test_2024-11_Carafe_F9_H4_iPhone/out", "FraserBasic", "QuickMac", reuse_wd=True)  # initialisation d'un SFM
+m = MicMac("/opt/micmac/bin/mm3d","micmac_working_directory",output_dir, "FraserBasic", "QuickMac", reuse_wd=False)  # initialisation d'un SFM
 #m = Metashape("metashape_working_directory", "exec/ou", 8)
-c = CloudCompare("cloudcompare.CloudCompare", "cloudCompare_working_directory", "exec/test_2024-11_Carafe_F9_H4_iPhone/out")  # initialisation de PointCloudProcessor
+c = CloudCompare("cloudcompare.CloudCompare", "cloudCompare_working_directory", output_dir)  # initialisation de PointCloudProcessor
 #d = DetectionMetashape()  # initialisation d'un DetecteurMire
-d = DetectionCCTag('/opt/CCTag/', 'cctag_working_directory', 'exec/test_2024-11_Carafe_F9_H4_iPhone/out', reuse_wd=True)
+d = DetectionCCTag('/opt/CCTag/', 'cctag_working_directory', output_dir, reuse_wd=False)
 
 # instantiation d'un objet DensityAnalyser construit à partir des modules défini au-dessus
-analyser = DensityAnalyser(m, d, c, 'exec/test_2024-11_Carafe_F9_H4_iPhone/out')
+analyser = DensityAnalyser(m, d, c, output_dir)
 # analyse du volume des trous présents sur les photos
-volumes_trous = analyser.analyse("exec/test_2024-11_Carafe_F9_H4_iPhone/bef/", # à compléter par le dossier contenant les images avant excavation
-                                 "exec/test_2024-11_Carafe_F9_H4_iPhone/aft/",  # à compléter par le dossier contenant les images après excavation
+volumes_trous = analyser.analyse("exec/Surface_iPhone/bef", # à compléter par le dossier contenant les images avant excavation
+                                 "exec/Surface_iPhone/aft/",  # à compléter par le dossier contenant les images après excavation
                                  scale_bars,display_padding=True)
 
 print("###########################################################################\n"
