@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     qttools5-dev qttools5-dev-tools libqt5websockets5-dev && \
     rm -rf /var/lib/apt/lists/* && \
     pip install -r requirements.txt && \
- # Installation des dépendances
+ # Installer les dépendances logicielles
     # CloudCompare
     git clone https://github.com/CloudCompare/CloudCompare.git /opt/CloudCompare && \
     cd /opt/CloudCompare && \
@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cmake ../ && \
     make -j"$(nproc)" install; \
     \
-    # CCTag (création explicite du dossier build)
+    # CCTag
     git clone https://github.com/alicevision/CCTag.git /opt/CCTag && \
     cd /opt/CCTag && \
     mkdir build && cd build && \
