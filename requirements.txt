@@ -7,3 +7,5 @@ matplotlib
 PyYAML
 dependency-injector
 Metashape
+exif
+trimesh
