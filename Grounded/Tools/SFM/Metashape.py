@@ -64,12 +64,15 @@ class Metashape(SFM):
     def __init__(self, working_directory: str, output_dir: str, point_cloud_generation_downscale: str,
                  match_photos_downscale: str, match_photos_keypoint_limit: str, match_photos_tiepoint_limit: str):
         """
-        Initialise une instance de la classe MicMac.
+        Initialise une instance de la classe Metashape.
 
         Args:
-            path_mm3d (str): Le chemin vers l'exécutable MicMac.
-            distorsion_model (str): un modèle de distorsion
-            zoom_final (str): un zoom final
+            working_directory (str): dossier de travail de metashape
+            output_dir (str): dossier de sortie
+            point_cloud_generation_downscale (str): downscale appliqué à la génération des nuages de points
+            match_photos_downscale (str): downscale appliqué à la fonction match_photos
+            match_photos_keypoint_limit (str): limite de keypoint appliqué à la fonction match_photos
+            match_photos_tiepoint_limit (str): limite de tiepoint appliqué à la fonction match_photos
 
 
         Returns:
