@@ -102,3 +102,12 @@ def path_exist(path: str) -> bool:
 def raise_logged(function_log, error: Exception):
     function_log(error)
     raise error
+
+def parse_bool(value: str) -> bool:
+    clean_value = value.strip().lower()
+    if clean_value in ["true", "1"]:
+        return True
+    elif clean_value in ["false", "0"]:
+        return False
+    else:
+        raise ValueError(f"Valeur booléenne invalide : {value}")

@@ -11,7 +11,7 @@ from .DetecteurMire import DetecteurMire
 
 import subprocess
 
-from Grounded.utils import config_builer, check_module_executable_path, path_exist, raise_logged
+from Grounded.utils import config_builer, check_module_executable_path, path_exist, raise_logged, parse_bool
 import Grounded.logger as logger
 
 
@@ -132,9 +132,12 @@ class DetectionCCTag(DetecteurMire):
         super().__init__(working_directory, output_dir)
         check_module_executable_path(path_cctag_directory, "CCTag")
         self.path_cctag_directory = path_cctag_directory
-        self.reuse_wd = bool(reuse_wd)
+        try:
+            self.reuse_wd = parse_bool(reuse_wd)
+        except ValueError:
+            raise ValueError(f"Invalid reuse_wd. {reuse_wd} is not a boolean.")
 
-        if not reuse_wd:
+        if not self.reuse_wd:
             self.set_up_working_space()
 
     def detection_mires(self, chemin_dossier_image) -> list[Image]:

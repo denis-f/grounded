@@ -1,6 +1,6 @@
 from .SFM import SFM
 from Grounded.DataObject import Image, File, PointCloud, Mire2D, Mire3D
-from Grounded.utils import find_files_regex, rename_file, config_builer, check_module_executable_path, raise_logged
+from Grounded.utils import find_files_regex, rename_file, config_builer, check_module_executable_path, raise_logged, parse_bool
 import Grounded.logger as logger
 
 import subprocess
@@ -108,8 +108,6 @@ zoom_final_values = ["QuickMac", "MicMac", "BigMac"]
 
 tapioca_mode_values = ["All", "MulScale"]
 
-reuse_wd_values = ["False", "True", "false", "true", "0", "1"]
-
 micmac_img_extensions_regex = "(.*JPG|.*tif|.*jpg|.*TIF)"
 
 
@@ -162,9 +160,7 @@ class MicMac(SFM):
             raise ValueError(
                 f"Invalid tapioca mode: {tapioca_mode} provided. Allowed values are {tapioca_mode_values}.")
 
-        if reuse_wd not in reuse_wd_values:
-            raise ValueError(
-                f"Invalid tapioca mode: {reuse_wd} provided. Allowed values are {reuse_wd_values}.")
+
 
         check_module_executable_path(path_mm3d, "MicMac")
 
@@ -175,9 +171,13 @@ class MicMac(SFM):
         self.tapioca_resolution = tapioca_resolution
         self.tapioca_second_resolution = tapioca_second_resolution
         self.zoom_final = zoom_final
-        self.reuse_wd = bool(reuse_wd)
+        try:
+            self.reuse_wd = parse_bool(reuse_wd)
+        except ValueError:
+            raise ValueError(f"Invalid reuse_wd. {reuse_wd} is not a boolean.")
 
-        if not reuse_wd:
+
+        if not self.reuse_wd:
             self.set_up_working_space()
 
     def detection_points_homologues(self, chemin_dossier_avant: str, chemin_dossier_apres: str):
