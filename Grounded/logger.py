@@ -4,8 +4,7 @@ from Grounded.utils import path_exist
 
 logger_name = "grounded"
 
-
-def config_logger(verbosity, log_file=os.path.join(os.curdir, 'app.log')):
+def config_logger(verbosity=logging.ERROR, log_file=os.path.join(os.curdir, 'grounded.log')):
     """
     Configure le logger de l'application grounded
 

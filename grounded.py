@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import logging
 
 from Grounded.DensityAnalyser import DensityAnalyser
 from Grounded.Tools import ContainerIOC
@@ -8,6 +9,8 @@ from Grounded.DataObject import File
 import argparse
 import os.path
 from typing import List, Optional
+
+from Grounded.logger import get_logger, config_logger
 
 
 def config_parser() -> argparse.ArgumentParser:
@@ -124,6 +127,7 @@ def main():
             print(f"volume du trou n°{i + 1} : {volumes_trous[i]}")
 
     except Exception as e:
+        get_logger().exception(e)
         print(f"\033[31m\033[1m\033[4m{type(e).__name__}:\033[0m\033[31m\033[1m {e}\033[0m")
 
 
