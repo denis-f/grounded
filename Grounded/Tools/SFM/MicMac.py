@@ -108,6 +108,8 @@ zoom_final_values = ["QuickMac", "MicMac", "BigMac"]
 
 tapioca_mode_values = ["All", "MulScale"]
 
+reuse_wd_values = ["False", "True", "false", "true", "0", "1"]
+
 micmac_img_extensions_regex = "(.*JPG|.*tif|.*jpg|.*TIF)"
 
 
@@ -129,7 +131,7 @@ class MicMac(SFM):
 
     def __init__(self, path_mm3d: str, working_directory: str, output_dir: str, distorsion_model: str = "FraserBasic",
                  zoom_final: str = "QuickMac", tapioca_mode: str = "All", tapioca_resolution: str = "1000",
-                 tapioca_second_resolution: str ="1000", reuse_wd: bool = False):
+                 tapioca_second_resolution: str ="1000", reuse_wd: str ="False"):
         """
         Initialise une instance de la classe MicMac.
 
@@ -160,6 +162,10 @@ class MicMac(SFM):
             raise ValueError(
                 f"Invalid tapioca mode: {tapioca_mode} provided. Allowed values are {tapioca_mode_values}.")
 
+        if reuse_wd not in reuse_wd_values:
+            raise ValueError(
+                f"Invalid tapioca mode: {reuse_wd} provided. Allowed values are {reuse_wd_values}.")
+
         check_module_executable_path(path_mm3d, "MicMac")
 
         super().__init__(working_directory, output_dir)
@@ -169,7 +175,7 @@ class MicMac(SFM):
         self.tapioca_resolution = tapioca_resolution
         self.tapioca_second_resolution = tapioca_second_resolution
         self.zoom_final = zoom_final
-        self.reuse_wd = reuse_wd
+        self.reuse_wd = bool(reuse_wd)
 
         if not reuse_wd:
             self.set_up_working_space()

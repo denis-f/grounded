@@ -118,7 +118,7 @@ class DetectionCCTag(DetecteurMire):
     Elle est utilisée pour calculer les coordonnées de chacune des mires présentes sur une image
     """
 
-    def __init__(self, path_cctag_directory: str, working_directory: str, output_dir: str, reuse_wd: bool = False):
+    def __init__(self, path_cctag_directory: str, working_directory: str, output_dir: str, reuse_wd: str = 'False'):
         """
         Initialise une instance de la classe DetectionCCTag
 
@@ -132,7 +132,7 @@ class DetectionCCTag(DetecteurMire):
         super().__init__(working_directory, output_dir)
         check_module_executable_path(path_cctag_directory, "CCTag")
         self.path_cctag_directory = path_cctag_directory
-        self.reuse_wd = reuse_wd
+        self.reuse_wd = bool(reuse_wd)
 
         if not reuse_wd:
             self.set_up_working_space()

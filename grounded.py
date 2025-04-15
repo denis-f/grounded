@@ -151,10 +151,6 @@ def parse_arguments_parameters(arguments: Optional[List]) -> dict:
         decomposed_arg = arg.split('=')
         if len(decomposed_arg) != 2:
             raise SyntaxError("bad arguments format")
-        if decomposed_arg[1] == 'False':
-            decomposed_arg[1] = False
-        if decomposed_arg[1] == 'True':
-            decomposed_arg[1] = True
         kwargs[decomposed_arg[0]] = decomposed_arg[1]
 
     return kwargs
