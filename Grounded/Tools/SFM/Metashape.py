@@ -61,7 +61,8 @@ class Metashape(SFM):
     de la caméra, la génération de nuages de points, et le calcul des coordonnées 3D des mires dans une image.
     """
 
-    def __init__(self, working_directory: str, output_dir: str, downscale="8"):
+    def __init__(self, working_directory: str, output_dir: str, point_cloud_generation_downscale: str,
+                 match_photos_downscale: str, match_photos_keypoint_limit: str, match_photos_tiepoint_limit: str):
         """
         Initialise une instance de la classe MicMac.
 
@@ -77,7 +78,10 @@ class Metashape(SFM):
         super().__init__(working_directory, output_dir)
         self.doc = ms.Document()  # création d'un projet
         self.chunk = self.doc.addChunk()  # ajout d'un chunk dans lequel nous allons travailler
-        self.downscale = int(downscale)
+        self.point_cloud_generation_downscale = int(point_cloud_generation_downscale)
+        self.match_photos_downscale = int(match_photos_downscale)
+        self.match_photos_keypoint_limit = match_photos_keypoint_limit
+        self.match_photos_tiepoint_limit = match_photos_tiepoint_limit
         self.chunk_before = None
         self.chunk_after = None
 
@@ -98,9 +102,9 @@ class Metashape(SFM):
         self.chunk = self.doc.chunks[-1]
 
     def _align_images(self):
-        self.chunk.matchPhotos(downscale=1, generic_preselection=True, reference_preselection=True,
-                               reference_preselection_mode=ms.ReferencePreselectionSource, keypoint_limit=100000,
-                               tiepoint_limit=10000, keep_keypoints=True)
+        self.chunk.matchPhotos(downscale=self.match_photos_downscale, generic_preselection=True, reference_preselection=True,
+                               reference_preselection_mode=ms.ReferencePreselectionSource, keypoint_limit=self.match_photos_keypoint_limit,
+                               tiepoint_limit=self.match_photos_tiepoint_limit, keep_keypoints=True)
         self.chunk.alignCameras()
         self.chunk.resetRegion()
         self.chunk.optimizeCameras()
@@ -126,12 +130,12 @@ class Metashape(SFM):
         self.chunk_before = copy_chunk_with_camera_with_prefix(self.chunk, "0_")
         point_cloud_before = build_point_cloud(self.chunk_before,
                                                os.path.join(self.working_directory, "point_cloud_0.ply"),
-                                               self.downscale)
+                                               self.point_cloud_generation_downscale)
 
         self.chunk_after = copy_chunk_with_camera_with_prefix(self.chunk, "1_")
         point_cloud_after = build_point_cloud(self.chunk_after,
                                               os.path.join(self.working_directory, "point_cloud_1.ply"),
-                                              self.downscale)
+                                              self.point_cloud_generation_downscale)
 
         return point_cloud_before, point_cloud_after
 
@@ -162,4 +166,4 @@ class Metashape(SFM):
         return image.mires_visibles,mires3d
 
     def get_config(self) -> str:
-        return f"Metashape(working_directory={self.working_directory}, downscale={self.downscale})"
+        return f"Metashape(working_directory={self.working_directory}, downscale={self.point_cloud_generation_downscale})"

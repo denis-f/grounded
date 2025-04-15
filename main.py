@@ -4,6 +4,8 @@ from Grounded.Tools.SFM import MicMac
 from Grounded.Tools.PointCloudProcessor import CloudCompare
 from Grounded.DensityAnalyser import DensityAnalyser
 from Grounded.ScaleBarLoader import ScaleBarLoader
+from Grounded.Tools.SFM.Metashape import Metashape
+
 #from Grounded.Tools.SFM.Metashape import Metashape
 
 #scale_bars = ScaleBarLoader.load("Configuration/oldScaleBar.csv")
@@ -11,7 +13,7 @@ scale_bars = ScaleBarLoader.load("Configuration/scaleBar.csv")
 
 output_dir = "exec/Surface_iPhone/out"
 
-m = MicMac("/opt/micmac/bin/mm3d","micmac_working_directory",output_dir, "FraserBasic", "QuickMac", reuse_wd=False)  # initialisation d'un SFM
+m = Metashape("/opt/micmac/bin/mm3d","micmac_working_directory",output_dir, "FraserBasic", "QuickMac", reuse_wd=False)  # initialisation d'un SFM
 #m = Metashape("metashape_working_directory", "exec/ou", 8)
 c = CloudCompare("cloudcompare.CloudCompare", "cloudCompare_working_directory", output_dir)  # initialisation de PointCloudProcessor
 #d = DetectionMetashape()  # initialisation d'un DetecteurMire

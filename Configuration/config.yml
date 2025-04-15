@@ -25,7 +25,10 @@ tools:
     arguments:
       working_directory: 'metashape_working_directory'
       output_dir: '%default_outdir_name%'
-      downscale: '8'
+      match_photos_downscale: '1'
+      match_photos_keypoint_limit: '100000'
+      match_photos_tiepoint_limit: '10000'
+      point_cloud_generation_downscale: '8'
 
   # PointCloudProcessor
   cloudcompare:
