@@ -182,7 +182,7 @@ class MicMac(SFM):
 
     def detection_points_homologues(self, chemin_dossier_avant: str, chemin_dossier_apres: str):
         """
-        Méthode pour détecter les points homologues entre des images avant et après un événement.
+        Méthode pour détecter les points homologues entre des images avant et après un événement  .
 
         Args:
             chemin_dossier_avant (str): Le chemin vers le dossier contenant les images avant excavation.
