@@ -1,42 +1,79 @@
-FROM python:3.12
+FROM ubuntu:22.04 AS builder
 
-# Définir le répertoire de travail
-WORKDIR /usr/local/app
+ARG DEBIAN_FRONTEND=noninteractive
 
-# Copier le projet dans le conteneur
-COPY . /usr/local/app
-
-# Installer les dépendances système et de build en limitant les paquets installés
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    make imagemagick libimage-exiftool-perl exiv2 proj-bin \
+    make imagemagick libimage-exiftool-perl exiv2 proj-bin wget \
     qtbase5-dev qt5-qmake libqt5svg5-dev g++ git-all \
     libpng-dev libjpeg-dev libeigen3-dev libboost-all-dev \
     libtbb-dev libopencv-dev cmake build-essential \
-    qttools5-dev qttools5-dev-tools libqt5websockets5-dev && \
-    rm -rf /var/lib/apt/lists/* && \
-    pip install -r requirements.txt && \
- # Installer les dépendances logicielles
-    # CloudCompare
-    git clone https://github.com/CloudCompare/CloudCompare.git /opt/CloudCompare && \
+    qttools5-dev qttools5-dev-tools libqt5websockets5-dev libqt5opengl5-dev
+
+# Compilation de CloudCompare
+RUN wget https://github.com/CloudCompare/CloudCompare/archive/refs/tags/v2.11.1.tar.gz -O /tmp/CloudCompare.tar.gz && \
+    mkdir -p /opt/CloudCompare && \
+    tar -xzf /tmp/CloudCompare.tar.gz --strip-components=1 -C /opt/CloudCompare && \
     cd /opt/CloudCompare && \
-    git submodule update --init --recursive && \
+    git submodule update --init --recursive || true && \
     mkdir build && cd build && \
     cmake .. && \
     make -j"$(nproc)" && \
-    make install; \
-    \
-    # MicMac
-    git clone https://github.com/micmacIGN/micmac.git /opt/micmac && \
+    make install
+
+# Compilation de MicMac
+RUN git clone https://github.com/micmacIGN/micmac.git /opt/micmac && \
     cd /opt/micmac && \
     mkdir build && cd build && \
     cmake ../ && \
-    make -j"$(nproc)" install; \
-    \
-    # CCTag
-    git clone https://github.com/alicevision/CCTag.git /opt/CCTag && \
-    cd /opt/CCTag && \
-    mkdir build && cd build && \
-    (cmake ../ || (echo "CUDA non trouvé, désactivation de CUDA" && cmake -DCCTAG_WITH_CUDA:BOOL=OFF ../)) && \
-    make -j"$(( $(nproc) / 2 ))" install
+    make -j"$(nproc)" && \
+    make install
 
-CMD ["/bin/bash"]
+# Compilaton de CCTag
+COPY ./CCTag-1.0.4 ./cctag
+RUN cd ./cctag && \
+    mkdir build && cd build && \
+    (cmake -DCMAKE_BUILD_TYPE=Release ../ || (echo "CUDA non trouvé, désactivation de CUDA" && cmake -DCMAKE_BUILD_TYPE=Release -DCCTAG_WITH_CUDA:BOOL=OFF ../)) && \
+    make -j"$(( $(nproc) / 2 ))" && \
+    make install && \
+    mv Linux-* /opt/CCTag
+
+
+#--------------------------------------------------------------------------------------------
+FROM ubuntu:22.04 AS final
+
+WORKDIR /app
+
+COPY . /opt/grounded
+
+RUN apt-get update && apt-get install -y pip \
+    # Dépendances minimales de CloudCompare
+    libqt5printsupport5 libqt5opengl5 libgomp1 libqt5concurrent5 \
+    # Dépendances minimales de MicMac
+    imagemagick libimage-exiftool-perl exiv2 proj-bin make \
+    # Dépendances minimales de CCTag
+    libtbb12 libopencv-highgui4.5d libboost-filesystem1.74.0 libboost-program-options1.74.0 libboost-timer1.74.0 libboost-serialization1.74.0 libopencv-videoio4.5d
+
+# Configuration du fichier yaml
+RUN sed -i 's/^\([[:space:]]*path_cloud_compare:[[:space:]]*\).*/\1"CloudCompare"/' /opt/grounded/Configuration/config.yml && \
+    sed -i 's/^\([[:space:]]*path_mm3d:[[:space:]]*\).*/\1"\/opt\/micmac\/bin\/mm3d"/' /opt/grounded/Configuration/config.yml && \
+    sed -i 's/^\([[:space:]]*path_cctag_directory:[[:space:]]*\).*/\1"\/opt\/CCTag\/"/' /opt/grounded/Configuration/config.yml && \
+    sed -i 's/^\([[:space:]]*path_cctag_directory:[[:space:]]*\).*/\1"\/opt\/CCTag\/"/' /opt/grounded/Configuration/config.yml
+
+RUN pip install -e /opt/grounded
+
+# Copie du build de CloudCompare
+COPY --from=builder /usr/local/bin/CloudCompare /usr/local/bin/CloudCompare
+COPY --from=builder /usr/local/lib/cloudcompare /usr/local/lib/cloudcompare
+COPY --from=builder /usr/local/lib/cloudcompare/plugins /usr/local/lib/cloudcompare/plugins
+COPY --from=builder /usr/local/share/cloudcompare /usr/local/share/cloudcompare
+
+# Copie du build de MicMac
+COPY --from=builder /opt/micmac/bin /opt/micmac/bin
+COPY --from=builder /opt/micmac/include /opt/micmac/include
+
+# Copie du build de CCTag
+COPY --from=builder /opt/CCTag /opt/CCTag
+
+
+ENV PATH="/usr/local/bin:${PATH}"
+ENV QT_QPA_PLATFORM=offscreen
