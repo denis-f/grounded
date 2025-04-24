@@ -3,22 +3,11 @@ FROM ubuntu:22.04 AS builder
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    make imagemagick libimage-exiftool-perl exiv2 proj-bin wget \
+    make imagemagick libimage-exiftool-perl exiv2 proj-bin \
     qtbase5-dev qt5-qmake libqt5svg5-dev g++ git-all \
     libpng-dev libjpeg-dev libeigen3-dev libboost-all-dev \
     libtbb-dev libopencv-dev cmake build-essential \
-    qttools5-dev qttools5-dev-tools libqt5websockets5-dev libqt5opengl5-dev
-
-# Compilation de CloudCompare
-RUN wget https://github.com/CloudCompare/CloudCompare/archive/refs/tags/v2.11.1.tar.gz -O /tmp/CloudCompare.tar.gz && \
-    mkdir -p /opt/CloudCompare && \
-    tar -xzf /tmp/CloudCompare.tar.gz --strip-components=1 -C /opt/CloudCompare && \
-    cd /opt/CloudCompare && \
-    git submodule update --init --recursive || true && \
-    mkdir build && cd build && \
-    cmake .. && \
-    make -j"$(nproc)" && \
-    make install
+    qttools5-dev qttools5-dev-tools libqt5websockets5-dev libqt5opengl5-dev libcgal-dev gdal-bin libgdal-dev libgmp-dev libmpfr-dev
 
 # Compilation de MicMac
 RUN git clone https://github.com/micmacIGN/micmac.git /opt/micmac && \
@@ -36,6 +25,14 @@ RUN cd ./cctag && \
     make -j"$(( $(nproc) / 2 ))" && \
     make install && \
     mv Linux-* /opt/CCTag
+
+# Compilation de CloudCompare
+RUN git clone --branch v2.13.2  --single-branch --recursive https://github.com/CloudCompare/CloudCompare.git /opt/CloudCompare && \
+    cd /opt/CloudCompare && \
+    mkdir build && cd build && \
+    cmake -DCCCORELIB_USE_CGAL=ON -DOPTION_USE_GDAL=ON -DCMAKE_BUILD_TYPE=Release  -DPLUGIN_STANDARD_QCSF=ON .. && \
+    make -j"$(nproc)" && \
+    make install;
 
 
 #--------------------------------------------------------------------------------------------
