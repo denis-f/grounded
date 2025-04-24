@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     qttools5-dev qttools5-dev-tools libqt5websockets5-dev libqt5opengl5-dev libcgal-dev gdal-bin libgdal-dev libgmp-dev libmpfr-dev
 
 # Compilation de MicMac
-RUN git clone https://github.com/micmacIGN/micmac.git /opt/micmac && \
+RUN git clone --branch v1.1.1 --single-branch --depth 1 https://github.com/micmacIGN/micmac.git /opt/micmac && \
     cd /opt/micmac && \
     mkdir build && cd build && \
     cmake ../ && \
@@ -18,8 +18,8 @@ RUN git clone https://github.com/micmacIGN/micmac.git /opt/micmac && \
     make install
 
 # Compilaton de CCTag
-COPY ./CCTag-1.0.4 ./cctag
-RUN cd ./cctag && \
+RUN git clone --branch v1.0.4  --single-branch --depth 1 https://github.com/alicevision/CCTag.git ./cctag && \
+    cd ./cctag && \
     mkdir build && cd build && \
     (cmake -DCMAKE_BUILD_TYPE=Release ../ || (echo "CUDA non trouvé, désactivation de CUDA" && cmake -DCMAKE_BUILD_TYPE=Release -DCCTAG_WITH_CUDA:BOOL=OFF ../)) && \
     make -j"$(( $(nproc) / 2 ))" && \
@@ -27,7 +27,7 @@ RUN cd ./cctag && \
     mv Linux-* /opt/CCTag
 
 # Compilation de CloudCompare
-RUN git clone --branch v2.13.2  --single-branch --recursive https://github.com/CloudCompare/CloudCompare.git /opt/CloudCompare && \
+RUN git clone --branch v2.13.2  --single-branch --depth 1 --recursive https://github.com/CloudCompare/CloudCompare.git /opt/CloudCompare && \
     cd /opt/CloudCompare && \
     mkdir build && cd build && \
     cmake -DCCCORELIB_USE_CGAL=ON -DOPTION_USE_GDAL=ON -DCMAKE_BUILD_TYPE=Release  -DPLUGIN_STANDARD_QCSF=ON .. && \
