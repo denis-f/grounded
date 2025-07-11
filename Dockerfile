@@ -56,7 +56,7 @@ RUN sed -i 's/^\([[:space:]]*path_cloud_compare:[[:space:]]*\).*/\1"CloudCompare
     sed -i 's/^\([[:space:]]*path_cctag_directory:[[:space:]]*\).*/\1"\/opt\/CCTag\/"/' /opt/grounded/Configuration/config.yml && \
     sed -i 's/^\([[:space:]]*path_cctag_directory:[[:space:]]*\).*/\1"\/opt\/CCTag\/"/' /opt/grounded/Configuration/config.yml
 
-RUN pip install -e /opt/grounded
+RUN pip install --progress-bar off --no-cache-dir -e /opt/grounded
 
 # Copie du build de CloudCompare
 COPY --from=builder /usr/local/bin/CloudCompare /usr/local/bin/CloudCompare
