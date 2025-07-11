@@ -1,6 +1,9 @@
 # Grounded
 
 ## Access to the <a href="https://grounded-denis-feurer-020adb38a1d1673cb6c6c21b4744991eacb1d8769.pages.mia.inra.fr/"> documentation here </a>
+The main repository is https://forge.inrae.fr/Denis.Feurer/grounded. Consider going there to be at the right place.
+
+https://github.com/denis-f/grounded is a push mirror of the main repository. Translation to english has still to be done.
 
 ## Description
 Grounded is a software that allows to compute 2.5D volumes of soil samples from two series of photogrammetric acquisitions. It requires the use of dedicated scalebars [to be described further]. Image processing can be done either with [Micmac](https://micmac.ensg.eu/index.php/Accueil), either with [Agisoft Metashape](https://www.agisoft.com/downloads/installer/). Scale bars can be done either with Circular Coded Targets from Alice Vision, either with Agisoft's implementation of Schneider (1991) coded targets.
@@ -131,4 +134,4 @@ python3 main.py
 Licenced under CC-BY-SA 4.0.
 
 ## Project status
-Project in development. Repository is private at the moment. To be changed
+Project in development.
