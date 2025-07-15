@@ -292,6 +292,10 @@ class MicMac(SFM):
             # On supprime le dossier Tempo
             os.rmdir(os.path.join(self.working_directory, "Tempo"))
 
+            # Suppression des fichiers de micmac qui prennent beaucoup de place (micmac les recalcule s'il en a besoin)
+            os.rmdir(os.path.join(self.working_directory, "Tmp-MM-Dir"))
+            os.rmdir(os.path.join(self.working_directory, "Pyram"))
+
         else:
             print("Micmac - reprise des calculs existants (points homologues, orientation, nuages de points)")
 
