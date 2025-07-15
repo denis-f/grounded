@@ -170,14 +170,11 @@ class CloudCompare(PointCloudProcessor):
         self.subprocess(arguments, os.path.join(self.working_directory, "Volume.log"))
 
         # Lecture des résultats dans le fichier généré automatiquement
-        report_path = find_files_regex(crop_before.get_path_directory(), "VolumeCalculationReport")[0]
+        report_path = find_files_regex(crop_before.get_path_directory(), "VolumeCalculationReport")[0] # TODO maybe the file is not at the right place ; to be checked
         with open(report_path, 'r') as file:
             content = file.read()
 
         volume = float(content.split("\n")[0].split()[1])
-
-        # Suppression du fichier contenant les résultats
-        os.remove(report_path)
 
         return volume
 
